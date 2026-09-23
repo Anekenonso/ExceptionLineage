@@ -2,25 +2,34 @@
 
 ## Current Stage
 
-**Stage 10** — Project foundation established.
+**Stage 11** — Domain Models + Data Contracts established.
 
 ## What Works
 
 - FastAPI backend with `GET /health` endpoint
 - Next.js frontend with system status page
-- Backend test suite (pytest)
-- Project documentation structure
+- Backend test suite with 57 passing tests (pytest)
+- Core domain models and contracts in `app.models`:
+  - `Customer`
+  - `Contract`, `Amendment`, `SOW`
+  - `Exception` (aliased as `TransactionException`), `Approval`
+  - `Invoice` (exact Decimal money representation)
+  - `Evidence` (source tracking, locator, confidence bounded $[0.0, 1.0]$, effective date ranges)
+  - `Investigation` (8 lifecycle statuses), `InvestigationEvent` (audit trail)
+  - `ValidationResult` (tri-state: `PASS`, `FAIL`, `UNKNOWN`)
+- Data contract documentation (`docs/data-contracts.md`) and architectural decision records (`docs/decisions.md`)
 
-## What Does Not Exist Yet
+## What Does Not Exist Yet (Intentionally)
 
-- Investigation system
-- AI agent
-- Neo4j graph database integration
+- Investigation agent engine
+- LLM integrations / prompts
+- Neo4j graph database integration / queries
 - Zetaris data integration
-- Evidence collection and validation
-- Authentication
-- Production deployment
+- Deterministic validation engine logic
+- Evidence ingestion and retrieval pipelines
+- Production seed dataset / fake evaluation results
+- User authentication and authorization
 
 ## Next Steps
 
-The next task should build on this foundation by introducing one of the core systems (e.g., data models, graph schema, or the investigation pipeline skeleton).
+**Stage 12**: Graph schema definition & initial repository/graph representation (or deterministic validation rules) to connect contracts, invoices, and evidence relationships.
