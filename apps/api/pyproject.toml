@@ -1,0 +1,5 @@
+[project]
+name = "exceptionlineage-api"
+version = "0.1.0"
+description = "ExceptionLineage API — evidence-backed investigation for enterprise transaction exceptions"
+requires-python = ">=3.11"
