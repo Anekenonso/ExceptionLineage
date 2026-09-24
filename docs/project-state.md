@@ -2,13 +2,13 @@
 
 ## Current Stage
 
-**Stage 13** — Neo4j Graph Schema + Seed Loader COMPLETE.
+**Stage 14** — Deterministic Validation Engine COMPLETE.
 
 ## What Works
 
 - FastAPI backend with `GET /health` endpoint
 - Next.js frontend with system status page
-- Backend test suite with 111 passing unit/integration tests and 1 conditional live test (pytest)
+- Backend test suite with 144 passing unit/integration tests and 1 conditional live test (pytest)
 - Core domain models and contracts in `app.models`:
   - `Customer`
   - `Contract`, `Amendment`, `SOW`
@@ -29,13 +29,19 @@
   - Ground truth verifier validating graph state across all 8 benchmark cases (`app.graph.verifier`)
   - Docker Compose Neo4j 5 community service configuration with health-ready ports
   - Test suites runnable without Docker or live database dependency
+- Deterministic Validation Engine (`app.validation`):
+  - Clean separation of retrieval and evaluation via `InvestigationContext`
+  - 8 core deterministic rules (`CustomerGoverningContractRule`, `ContractApplicabilityRule`, `ConflictingAuthorityRule`, `ApplicableAmendmentRule`, `AmendmentEffectivenessRule`, `AmendmentScopeRule`, `ApprovalAuthorizationRule`, `AuthorizedAmountRule`)
+  - Tri-state verification (`PASS`, `FAIL`, `UNKNOWN`)
+  - Conflict-aware outcome aggregation into `InvestigationOutcome` (`VERIFIED`, `NOT_VERIFIED`, `INSUFFICIENT_EVIDENCE`, `NEEDS_REVIEW`)
+  - Zero runtime dependence on ground-truth files or hardcoded case IDs
+  - Automated benchmark test suite confirming 100% accuracy on all 8 ground-truth cases (`tests/test_validation_benchmark.py`)
 - Automated dataset consistency and schema validation test suite (`apps/api/tests/test_dataset_consistency.py`)
 - Data contract documentation (`docs/data-contracts.md`), dataset specification (`data/README.md`), and ADRs (`docs/decisions.md`)
 
 ## What Does Not Exist Yet (Intentionally)
 
 - Investigation agent engine & LLM prompts
-- Deterministic validation engine logic
 - Zetaris data integration
 - Evidence ingestion and automated retrieval pipelines
 - Production seed dataset / fake evaluation results
@@ -43,4 +49,5 @@
 
 ## Next Steps
 
-**Stage 14**: Deterministic Validation Engine or Investigation Agent Engine to evaluate exceptions against retrieved graph evidence.
+**Stage 15**: Investigation Agent Engine & Orchestration to bridge AI ambiguity handling with deterministic code authority.
+

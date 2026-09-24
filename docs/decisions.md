@@ -94,3 +94,19 @@
 4. **Bi-directional Navigation for Investigation Traversal**: Traversals must navigate top-down (`Contract -> Amendment -> SOW`) and bottom-up (`Invoice -> Governed Contract`, `Approval -> Approves Exception`, `Evidence -> Evidence For`). Dual directed relationships provide intuitive, performant paths for deterministic audit queries.
 5. **Idempotent Seed Loading**: Using Cypher `MERGE` across nodes and relationships ensures that seed data ingestion can be rerun deterministically without duplicating nodes or corrupting relationship cardinality.
 6. **Docker & Non-Docker Testability**: While a standard Neo4j 5 community container is added to `docker-compose.yml`, the codebase provides 100% testability via mocked driver sessions and transformation tests without requiring a running Docker daemon.
+
+---
+
+## ADR-009: Deterministic Validation Engine and Tri-State Authority Evaluation
+
+**Date:** 2026-09-24
+
+**Decision:** Implement a pure, deterministic validation engine (`app.validation`) that evaluates explicit, auditable rules against normalized graph traversal context (`InvestigationContext`) without LLMs, probabilistic reasoning, or runtime ground-truth shortcuts. Maintain strict tri-state check semantics (`PASS`, `FAIL`, `UNKNOWN`) and aggregate checks into explicit investigation determinations (`VERIFIED`, `NOT_VERIFIED`, `INSUFFICIENT_EVIDENCE`, `NEEDS_REVIEW`).
+
+**Rationale:**
+1. **Code Handles Authority**: In accordance with the foundational architecture (*AI handles ambiguity. Code handles authority*), legal and contractual compliance cannot depend on probabilistic model generation. Rule evaluation must be deterministic, reproducible, and explainable in legal audits.
+2. **Strict Tri-State Evaluation**: Collapsing `UNKNOWN` into `PASS` or `FAIL` destroys evidentiary nuance. A missing approval record or an absent governing contract represents incomplete evidence (`UNKNOWN` $\rightarrow$ `INSUFFICIENT_EVIDENCE`), not an explicit contract breach (`FAIL` $\rightarrow$ `NOT_VERIFIED`).
+3. **Decoupled Input Contract**: By separating graph traversal (`get_invoice_lineage`) from evaluation (`ValidationEngine.validate`), the engine receives a pure data structure (`InvestigationContext` or raw lineage dict) without binding to Neo4j network calls or sessions. This makes validation tests fast and isolated.
+4. **No Ground Truth as Runtime Input**: Ground truth definitions in `data/ground_truth/` exist solely for evaluation and regression benchmarking. Production validation logic derives all determinations purely from the supplied evidentiary lineage.
+5. **Conflict-Aware Aggregation**: Contradictory amendments (competing rate schedules) and pending legal escalations automatically map to `NEEDS_REVIEW` rather than premature automated failure or false pass-through.
+
