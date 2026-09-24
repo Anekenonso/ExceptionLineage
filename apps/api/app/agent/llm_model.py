@@ -104,6 +104,7 @@ class LLMDecisionModel(AgentModel):
         self.llm_failures = 0
         self.llm_retries = 0
         self.malformed_actions = 0
+        self.llm_timeouts = 0
         self.prompt_tokens: int | None = None
         self.completion_tokens: int | None = None
         self.total_tokens: int | None = None
@@ -286,6 +287,7 @@ class LLMDecisionModel(AgentModel):
 
         except (httpx.TimeoutException, httpx.ConnectTimeout) as exc:
             self.llm_failures += 1
+            self.llm_timeouts += 1
             raise AgentToolExecutionError(f"LLM request timed out after {self.timeout_seconds}s: {exc}") from exc
         except (httpx.ConnectError, httpx.NetworkError) as exc:
             self.llm_failures += 1

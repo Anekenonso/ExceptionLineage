@@ -91,6 +91,7 @@ class InvestigationAgent:
             tool = self.tool_registry.get(action.action)
             if not tool:
                 metrics.failed_tool_calls += 1
+                metrics.unknown_tool_calls += 1
                 state.observations.append(f"Error: Unknown tool '{action.action}' requested")
                 continue
 
@@ -98,6 +99,7 @@ class InvestigationAgent:
             is_valid, validation_err = self.tool_registry.validate_action(action.action, action.arguments)
             if not is_valid:
                 metrics.failed_tool_calls += 1
+                metrics.invalid_argument_calls += 1
                 state.observations.append(f"Error: Invalid arguments for '{action.action}': {validation_err}")
                 continue
 
@@ -121,6 +123,7 @@ class InvestigationAgent:
                 result: ToolResult = tool.execute(action.arguments, self.lineage_repo)
             except Exception as exc:
                 metrics.failed_tool_calls += 1
+                metrics.tool_errors += 1
                 logger.exception("Infrastructure failure during tool execution '%s': %s", action.action, exc)
                 raise AgentToolExecutionError(f"Tool '{action.action}' failed: {exc}") from exc
 
@@ -132,6 +135,7 @@ class InvestigationAgent:
                 self._update_state_from_result(state, action.action, result)
             else:
                 metrics.failed_tool_calls += 1
+                metrics.tool_errors += 1
                 state.observations.append(f"Tool '{action.action}' returned error: {result.error}")
                 if "not found" in (result.error or "").lower():
                     state.missing_evidence.append(result.error or action.action)
@@ -160,6 +164,7 @@ class InvestigationAgent:
         metrics.llm_failures = getattr(self.model, "llm_failures", 0)
         metrics.llm_retries = getattr(self.model, "llm_retries", 0)
         metrics.malformed_actions = getattr(self.model, "malformed_actions", 0)
+        metrics.llm_timeouts = getattr(self.model, "llm_timeouts", 0)
         metrics.prompt_tokens = getattr(self.model, "prompt_tokens", None)
         metrics.completion_tokens = getattr(self.model, "completion_tokens", None)
         metrics.total_tokens = getattr(self.model, "total_tokens", None)
@@ -168,7 +173,8 @@ class InvestigationAgent:
         if not state.investigation_complete and state.steps >= self.max_steps:
             metrics.termination_reason = "AGENT_STEP_LIMIT_EXCEEDED"
             raise AgentStepLimitExceededError(
-                f"Agent exceeded maximum allowable steps ({self.max_steps}) without concluding"
+                f"Agent exceeded maximum allowable steps ({self.max_steps}) without concluding",
+                metrics=metrics,
             )
 
         metrics.termination_reason = "VALIDATION_REQUESTED"

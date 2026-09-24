@@ -2,68 +2,69 @@
 
 ## Current Stage
 
-**Stage 17.5** — Real LLM Decision Layer COMPLETE.
+**Stage 18** — Quantitative Evaluation & Proof Surface COMPLETE.
 
 ## What Works
 
-- FastAPI backend with `GET /health` and full investigations API endpoints:
+- **Reproducible Evaluation Harness (`evaluation/`)**:
+  - Main CLI entry point: `evaluation/runner.py` executable via `python evaluation/runner.py`.
+  - Machine-readable JSON output: `evaluation/reports/latest.json`.
+  - Human-readable Markdown output: `evaluation/reports/latest.md`.
+  - Structured Pydantic schemas (`evaluation/schemas.py`):
+    - `CaseResult`: per-case metrics, actual vs expected status, evidence recall, tool execution counts, failure counters, tokens.
+    - `AggregateMetrics`: accuracy, mean/overall evidence recall, tool usage rollups, termination breakdown, error breakdown, duration, tokens.
+    - `EvaluationRun`: complete baseline run results with sanitized configuration (no secrets).
+    - `EvaluationSuiteReport`: multi-baseline comparative report.
+  - Transparent metric calculations (`evaluation/metrics.py`):
+    - Outcome accuracy: $\text{Correct} / \text{Total}$.
+    - Evidence recall: $\frac{|\text{Retrieved} \cap \text{Required}|}{|\text{Required}|}$ ($1.0$ if $|\text{Required}| = 0$).
+    - Fine-grained tool and failure metrics without misleading composite weights.
+  - Evaluated Baselines (`evaluation/adapters/`):
+    - **Baseline A (`deterministic_baseline`)**: Direct `ValidationEngine` execution across simulated lineages (**100.0% accuracy, 100.0% evidence recall**).
+    - **Baseline B (`heuristic_baseline`)**: `InvestigationService` + `HeuristicAgentModel` (**100.0% accuracy, 100.0% evidence recall, 6.38 mean steps, 51 tool calls**).
+    - **System Under Evaluation (`llm_decision_model`)**: Evaluates `LLMDecisionModel`. Operates in live mode when `--with-llm` and API keys are provided, or controlled deterministic mock mode via `--mock-llm` (**62.5% accuracy in mock mode**). Explicitly skipped/unevaluated when unconfigured to avoid external API dependency.
+  - Controlled dataset loader (`evaluation/dataset.py`) for the 8 benchmark cases (`CASE-001` through `CASE-008`) and extended edge cases (`CASE-009`, `CASE-010`).
+- **Ground-Truth Isolation Law**:
+  - Automated AST import validation (`tests/test_ground_truth_isolation.py`) rigorously confirms zero imports of `ground_truth`, `tests`, or benchmark datasets in:
+    - `app/agent/`
+    - `app/graph/`
+    - `app/investigations/`
+    - `app/api/`
+    - `app/validation/`
+    - `app/models/`
+  - Zero hardcoded `CASE-` identifiers in production request-serving code.
+- **Controlled Failure-Mode Tests (`tests/test_failure_modes.py`)**:
+  - 11 dedicated tests covering all critical failure modes:
+    1. Unknown tool
+    2. Missing argument
+    3. Invalid argument type
+    4. Malformed LLM output
+    5. LLM timeout
+    6. Bounded retry exhaustion
+    7. Tool infrastructure failure
+    8. Missing evidence $\rightarrow$ `INSUFFICIENT_EVIDENCE` (never `NOT_VERIFIED`)
+    9. Conflicting amendments $\rightarrow$ `NEEDS_REVIEW` (never `VERIFIED`)
+    10. Expired authority $\rightarrow$ `NOT_VERIFIED`
+    11. Step-limit exhaustion $\rightarrow$ `FAILED` with `AGENT_STEP_LIMIT_EXCEEDED`
+- **FastAPI backend with `GET /health` and full investigations API endpoints**:
   - `POST /api/investigations`: End-to-end investigation execution through agentic tool selection, deterministic validation, and state machine transition.
   - `GET /api/investigations/{id}`: Retrieval of investigation state, findings, validation results, cited evidence, and agent execution metrics.
   - `GET /api/investigations/{id}/events`: Retrieval of immutable chronological audit event timeline (with optional `include_agent_events=True` parameter).
-- Real LLM Decision Layer & Controlled Agentic Loop (`app.agent`):
-  - Strict architectural authority boundary: *"AI handles ambiguity. Code handles authority"*
-  - Real LLM decision adapter (`LLMDecisionModel` in `app.agent.llm_model.py`) connecting to any OpenAI-compatible provider/proxy:
-    - Structured JSON output enforcement (`AgentAction`: `action`, `arguments`, `reason`)
-    - Dynamic machine-readable tool schemas (`ToolRegistry.get_tool_definitions()`) passed in system prompt
-    - Compact, leak-free state formatting (`_format_state`)
-    - Upfront tool argument validation (`ToolRegistry.validate_action`) checking existence, argument names, types, and rejecting unexpected arguments
-    - Single bounded retry for malformed JSON or invalid schema
-    - Strict technical failure semantics (timeouts, HTTP 401/403/429/500 raise `AgentToolExecutionError` $\rightarrow$ `FAILED`)
-  - Pluggable Agent Models via `app.agent.factory`:
-    - `HeuristicAgentModel`: Preserved as the default baseline (`AGENT_MODEL=heuristic`)
-    - `ScriptedAgentModel`: Deterministic mock sequences for testing
-    - `LLMDecisionModel`: Configured via `AGENT_MODEL=llm`, `AGENT_LLM_PROVIDER`, `AGENT_LLM_MODEL`, `AGENT_LLM_API_KEY`, `AGENT_LLM_BASE_URL`
-  - Explicit typed tool abstraction (`app.agent.tools.base.BaseTool`, `ToolRegistry`)
-  - 7 deterministic tools interfacing with `LineageRepository`:
-    1. `get_invoice`
-    2. `find_contract`
-    3. `get_contract_amendments`
-    4. `get_sows`
-    5. `find_approvals`
-    6. `get_related_evidence`
-    7. `validate_investigation`
-  - Explicit Agent State (`AgentState`) tracking observations, gathered entities, tool call history, and missing evidence
-  - Bounded agent loop (`InvestigationAgent`) with configurable `MAX_AGENT_STEPS` (default: 10)
-  - Loop exhaustion error handling (`AgentStepLimitExceededError` $\rightarrow$ `FAILED` with `AGENT_STEP_LIMIT_EXCEEDED`)
-  - Agent-specific operational and LLM metrics (`AgentMetrics`: `total_agent_steps`, `tool_calls`, `successful_tool_calls`, `failed_tool_calls`, `investigation_duration_ms`, `evidence_items_collected`, `duplicate_tool_calls`, `termination_reason`, `llm_calls`, `llm_failures`, `llm_retries`, `malformed_actions`, `prompt_tokens`, `completion_tokens`, `total_tokens`)
-  - Comprehensive audit logging recording every `AGENT_DECISION` (including model name/provider) and `TOOL_CALL` event
-  - Benchmark comparison suite (`test_agent_benchmark_comparison.py`) capturing steps, tool calls, evidence, duration, and status across all 8 cases
-  - Live LLM integration test (`test_llm_integration.py`) gated behind `RUN_LLM_AGENT_TESTS=true`
-- Next.js frontend with system status page (production build verified clean)
-- Backend test suite with 237 passing unit/integration tests and 2 conditional live tests (pytest)
-- Core domain models and contracts in `app.models`:
-  - `Customer`
-  - `Contract`, `Amendment`, `SOW`
-  - `Exception` (aliased as `TransactionException`), `Approval`
-  - `Invoice` (exact Decimal money representation)
-  - `Evidence` (source tracking, locator, confidence bounded $[0.0, 1.0]$, effective date ranges)
-  - `Investigation` (lifecycle statuses, `investigation_id`, `current_state`, `created_at`, `updated_at`, `validation_results`, `cited_evidence_ids`, `agent_metrics`)
-  - `InvestigationEvent` (immutable audit trail, `from_state`, `to_state`, `reason`, `timestamp`, `event_type`, `metadata`)
-  - `ValidationResult` (tri-state: `PASS`, `FAIL`, `UNKNOWN`)
-- Controlled simulated dataset (`data/seed/`)
-- 8 controlled investigation cases (`data/cases/cases.json`)
-- Explicit machine-verifiable ground truth determinations (`data/ground_truth/ground_truth.json`)
-- Neo4j Graph Integration (`app.graph`)
-- Deterministic Validation Engine (`app.validation`)
-- Controlled Investigation State Machine (`app.investigations`)
-- End-to-End Vertical Slice with Agent Loop (`app/investigations/router.py`, `app/investigations/service.py`)
+- **Controlled Agentic Loop (`app.agent`)**:
+  - Strict architectural authority boundary: *"AI handles ambiguity. Code handles authority"*.
+  - Real LLM decision adapter (`LLMDecisionModel` in `app.agent.llm_model.py`) connecting to any OpenAI-compatible provider/proxy.
+  - Pluggable Agent Models (`HeuristicAgentModel`, `ScriptedAgentModel`, `LLMDecisionModel`).
+  - 7 deterministic tools interfacing with `LineageRepository`.
+  - Comprehensive audit logging recording every `AGENT_DECISION` and `TOOL_CALL` event.
+- **Backend test suite with 257 passing tests and 2 conditional live tests (pytest)**.
+- **Next.js frontend with system status page**.
 
 ## Current Limitations
 
 - **In-Memory Persistence Only**: The current `InMemoryInvestigationRepository` holds lifecycle state in volatile application memory. Durable persistence (PostgreSQL/Neo4j) will be introduced in future persistence milestones.
 - **Simulated Seed Dataset**: All evidence, contracts, invoices, and approvals are synthetic simulated records created for testing and evaluation. No live enterprise connections exist.
 - **Heuristic Baseline Default**: `AGENT_MODEL=heuristic` is active by default so CI and tests remain 100% deterministic and offline. External LLM requires explicit configuration or test flags.
-- **Neo4j Offline by Default in CI/Local**: Tests utilize `InMemoryLineageRepository` or mocks so Neo4j is not strictly required for local development or automated verification.
+- **Live LLM Unevaluated in Default Runner**: Default `python evaluation/runner.py` evaluates Baseline A and Baseline B, explicitly marking live LLM as unevaluated to avoid fabricated claims or uncredited external API calls.
 
 ## What Does Not Exist Yet (Intentionally)
 
@@ -77,6 +78,4 @@
 
 ## Next Steps
 
-**Stage 18**: Persistence Layer & Multi-Source Ingestion — durable database storage for investigations/events and external evidence connectors.
-
-
+**Stage 19**: Persistence Layer & Multi-Source Ingestion — durable database storage for investigations/events and external evidence connectors.

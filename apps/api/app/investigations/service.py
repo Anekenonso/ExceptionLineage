@@ -275,6 +275,9 @@ class InvestigationService:
                 self.repository.update(inv)
             except AgentStepLimitExceededError as exc:
                 logger.warning("Agent step limit exceeded for investigation '%s': %s", inv.id, exc)
+                if getattr(exc, "metrics", None) is not None:
+                    inv.agent_metrics = exc.metrics.model_dump()
+                    self.repository.update(inv)
                 self.fail_investigation(
                     inv.id,
                     reason="AGENT_STEP_LIMIT_EXCEEDED",
