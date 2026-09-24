@@ -71,4 +71,6 @@ python -m pytest tests/ -v
 
 ## Current Status
 
-**Stage 14** — Deterministic Validation Engine COMPLETE.
+**Stage 15** — Controlled Investigation State Machine COMPLETE.
+
+The deterministic investigation lifecycle state machine (`app.investigations`) establishes the authority boundary (*AI handles ambiguity. Code handles authority*) governing progression through `QUEUED`, `INVESTIGATING`, `VALIDATING`, and terminal outcome determinations with immutable audit trails. Autonomous investigation agent integration will follow in subsequent stages.

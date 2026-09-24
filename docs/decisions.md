@@ -110,3 +110,25 @@
 4. **No Ground Truth as Runtime Input**: Ground truth definitions in `data/ground_truth/` exist solely for evaluation and regression benchmarking. Production validation logic derives all determinations purely from the supplied evidentiary lineage.
 5. **Conflict-Aware Aggregation**: Contradictory amendments (competing rate schedules) and pending legal escalations automatically map to `NEEDS_REVIEW` rather than premature automated failure or false pass-through.
 
+---
+
+## ADR-010: Controlled Investigation State Machine
+
+**Date:** 2026-09-24
+
+**Decision:** Implement a deterministic, controlled investigation state machine (`app.investigations`) that governs the authoritative lifecycle of an ExceptionLineage investigation (`QUEUED` $\rightarrow$ `INVESTIGATING` $\rightarrow$ `VALIDATING` $\rightarrow$ terminal outcome). Prohibit autonomous agents, LLMs, and external callers from directly mutating authoritative investigation status. Enforce explicit valid transitions, immutable audit events, explicit rejection of illegal transitions, and strict separation between business outcomes and technical failures. Use an in-memory repository for Stage 15 lifecycle testing.
+
+**Rationale:**
+1. **Code Handles Authority**: In high-stakes enterprise compliance investigations, an AI agent must never be the authority that declares an invoice "VERIFIED" or mutates investigation lifecycle states directly. AI handles ambiguity (locating evidence, interpreting natural language clauses, querying graph paths), but deterministic code handles authority (state transitions, validation rules, compliance gates).
+2. **Explicit Transition Map**: State progression follows a controlled progression:
+   - `QUEUED` $\rightarrow$ `INVESTIGATING`
+   - `INVESTIGATING` $\rightarrow$ `VALIDATING` or `FAILED`
+   - `VALIDATING` $\rightarrow$ `VERIFIED`, `NOT_VERIFIED`, `INSUFFICIENT_EVIDENCE`, `NEEDS_REVIEW`, or `FAILED`
+   Any attempt to transition to an unauthorized state (e.g. `QUEUED` $\rightarrow$ `VERIFIED`, `INVESTIGATING` $\rightarrow$ `VERIFIED`, or `VALIDATING` $\rightarrow$ `INVESTIGATING`) is explicitly rejected with `InvalidStateTransitionError` identifying the investigation ID, current state, and requested state.
+3. **Terminal State Inviolability**: Terminal states (`VERIFIED`, `NOT_VERIFIED`, `INSUFFICIENT_EVIDENCE`, `NEEDS_REVIEW`, `FAILED`) have an empty transition set. Once an investigation reaches a terminal outcome, it cannot transition further.
+4. **Immutable Audit Event Timeline**: Every state transition generates exactly one immutable `InvestigationEvent` recording `from_state`, `to_state`, `reason`, `timestamp`, and relevant metadata. Event history cannot be mutated retrospectively.
+5. **Strict Failure Semantics**: There is a critical architectural distinction between business evidence outcomes and infrastructure failures:
+   - Absence of evidence (e.g. missing approval or unlinked contract) evaluates via the validation engine to `INSUFFICIENT_EVIDENCE` or `NOT_VERIFIED`.
+   - Infrastructure or technical errors (e.g. Neo4j connectivity drop, database timeout, out-of-memory crash) transition the investigation to `FAILED`. Infrastructure failure is never confused with lack of evidence.
+6. **Intentionally Minimal Persistence for Stage 15**: Introducing an external relational database (e.g., PostgreSQL + migrations + ORM) at this stage would violate the incremental design principles (ADR-006, Trap T-002). The `InMemoryInvestigationRepository` satisfies all Stage 15 lifecycle, event audit, and unit/benchmark testing requirements while establishing the repository interface boundary for future database integration.
+

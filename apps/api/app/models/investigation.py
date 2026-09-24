@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.common import ensure_timezone_aware, utc_now, validate_non_empty
 from app.models.enums import InvestigationEventType, InvestigationStatus
@@ -9,8 +9,8 @@ from app.models.enums import InvestigationEventType, InvestigationStatus
 class Investigation(BaseModel):
     """Represents an ExceptionLineage investigation.
 
-    The model only defines the contract and vocabulary; state-transition logic
-    belongs to the future investigation pipeline.
+    The model defines the contract and vocabulary for an investigation lifecycle.
+    Authoritative state transitions are governed by the InvestigationStateMachine.
     """
 
     id: str = Field(..., description="Unique investigation identifier")
@@ -40,6 +40,30 @@ class Investigation(BaseModel):
         default=None, description="Timestamp of latest investigation update (UTC)"
     )
 
+    @property
+    def investigation_id(self) -> str:
+        """Alias for id conforming to investigation domain naming conventions."""
+        return self.id
+
+    @property
+    def current_state(self) -> InvestigationStatus:
+        """Alias for status representing the current lifecycle state."""
+        return self.status
+
+    @current_state.setter
+    def current_state(self, new_state: InvestigationStatus) -> None:
+        self.status = new_state
+
+    @model_validator(mode="before")
+    @classmethod
+    def _remap_alias_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "investigation_id" in data and "id" not in data:
+                data["id"] = data["investigation_id"]
+            if "current_state" in data and "status" not in data:
+                data["status"] = data["current_state"]
+        return data
+
     @field_validator("id", "invoice_id", mode="before")
     @classmethod
     def check_non_empty(cls, value: str, info) -> str:
@@ -54,18 +78,35 @@ class Investigation(BaseModel):
 class InvestigationEvent(BaseModel):
     """Represents an auditable event in the timeline of an investigation.
 
-    Supports the structured audit trail (e.g. INPUT -> EVIDENCE_FOUND ->
-    AGENT_DECISION -> TOOL_CALL -> VALIDATION -> ACTION_RESULT).
+    Captures state transitions and operational actions in an immutable audit trail.
     """
+
+    model_config = ConfigDict(frozen=True)
 
     id: str = Field(..., description="Unique audit event identifier")
     investigation_id: str = Field(
         ..., description="ID of the investigation this event belongs to"
     )
-    event_type: InvestigationEventType | str = Field(
-        ..., description="Standardized event category or descriptive event key"
+    from_state: InvestigationStatus | None = Field(
+        default=None,
+        description="Previous lifecycle state before transition",
     )
-    message: str = Field(..., description="Human-readable description of what transpired")
+    to_state: InvestigationStatus | None = Field(
+        default=None,
+        description="New lifecycle state after transition",
+    )
+    reason: str | None = Field(
+        default=None,
+        description="Rationale or trigger for the transition",
+    )
+    event_type: InvestigationEventType | str = Field(
+        default=InvestigationEventType.STATE_TRANSITION,
+        description="Standardized event category or descriptive event key",
+    )
+    message: str = Field(
+        default="",
+        description="Human-readable description of what transpired",
+    )
     timestamp: datetime = Field(
         default_factory=utc_now,
         description="Timestamp when the event occurred (UTC)",
@@ -74,6 +115,32 @@ class InvestigationEvent(BaseModel):
         default_factory=dict,
         description="Arbitrary structured context (e.g. tool inputs/outputs, model outputs, raw diffs)",
     )
+
+    @property
+    def event_id(self) -> str:
+        """Alias for id conforming to event domain naming conventions."""
+        return self.id
+
+    @model_validator(mode="before")
+    @classmethod
+    def _remap_event_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "event_id" in data and "id" not in data:
+                data["id"] = data["event_id"]
+            if not data.get("message"):
+                from_s = data.get("from_state")
+                to_s = data.get("to_state")
+                reason = data.get("reason")
+                if from_s is not None and to_s is not None:
+                    msg = f"Transitioned from {from_s} to {to_s}"
+                    if reason:
+                        msg += f": {reason}"
+                    data["message"] = msg
+                elif reason:
+                    data["message"] = str(reason)
+                else:
+                    data["message"] = "Investigation event"
+        return data
 
     @field_validator("id", "investigation_id", "message", mode="before")
     @classmethod
@@ -86,3 +153,4 @@ class InvestigationEvent(BaseModel):
         res = ensure_timezone_aware(value)
         assert res is not None
         return res
+
