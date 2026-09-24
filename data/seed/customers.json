@@ -1,0 +1,23 @@
+[
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CUSTOMER DATA",
+    "id": "CUS-001",
+    "name": "Acme Global Enterprise Inc.",
+    "external_id": "EXT-CRM-001",
+    "created_at": "2026-01-01T00:00:00Z"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CUSTOMER DATA",
+    "id": "CUS-002",
+    "name": "Omega Technologies Solutions LLC",
+    "external_id": "EXT-CRM-002",
+    "created_at": "2026-01-01T00:00:00Z"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CUSTOMER DATA",
+    "id": "CUS-003",
+    "name": "Vertex Freight Logistics Corp.",
+    "external_id": "EXT-CRM-003",
+    "created_at": "2026-01-01T00:00:00Z"
+  }
+]

@@ -1,0 +1,86 @@
+[
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL AMENDMENT DATA",
+    "id": "AMD-001",
+    "contract_id": "CTR-001",
+    "amendment_number": "AMD-2026-01",
+    "title": "Tier-1 Cloud Support Volume Discount Amendment",
+    "description": "Adjusts standard monthly service fee from $12,000.00 to $10,200.00 for Tier-1 support during Q1-Q3 2026.",
+    "effective_from": "2026-01-15T00:00:00Z",
+    "effective_until": "2026-09-30T23:59:59Z",
+    "created_at": "2026-01-15T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL AMENDMENT DATA",
+    "id": "AMD-002",
+    "contract_id": "CTR-001",
+    "amendment_number": "AMD-2026-02",
+    "title": "Performance Monitoring Service Rate Adjustment",
+    "description": "Adjusts base monitoring fee from $12,000.00 to $10,500.00 contingent on executive approval.",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "effective_until": "2026-12-31T23:59:59Z",
+    "created_at": "2026-01-10T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL AMENDMENT DATA",
+    "id": "AMD-003",
+    "contract_id": "CTR-001",
+    "amendment_number": "AMD-2025-04",
+    "title": "Legacy Pilot Rate Discount Amendment (CY2025)",
+    "description": "Applies promotional discount rate of $9,500.00 exclusively during calendar year 2025.",
+    "effective_from": "2025-01-01T00:00:00Z",
+    "effective_until": "2025-12-31T23:59:59Z",
+    "created_at": "2024-12-15T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL AMENDMENT DATA",
+    "id": "AMD-004",
+    "contract_id": "CTR-001",
+    "amendment_number": "AMD-2026-03",
+    "title": "Dedicated Cybersecurity Scope Pricing Amendment",
+    "description": "Authorizes special discounted rate of $8,000.00 strictly applicable to PROD-SEC security workloads.",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "effective_until": "2026-12-31T23:59:59Z",
+    "created_at": "2026-01-05T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL AMENDMENT DATA",
+    "id": "AMD-005",
+    "contract_id": "CTR-001",
+    "amendment_number": "AMD-2026-05A",
+    "title": "Regional Infrastructure Rate Revision Schedule A",
+    "description": "Revises regional hosting rate to $11,000.00 for data center infrastructure.",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "effective_until": "2026-12-31T23:59:59Z",
+    "created_at": "2026-02-01T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL AMENDMENT DATA",
+    "id": "AMD-006",
+    "contract_id": "CTR-001",
+    "amendment_number": "AMD-2026-05B",
+    "title": "Regional Infrastructure Rate Revision Schedule B",
+    "description": "Contradictory revision specifying regional hosting rate of $11,500.00 for the same period and infrastructure.",
+    "effective_from": "2026-01-01T00:00:00Z",
+    "effective_until": "2026-12-31T23:59:59Z",
+    "created_at": "2026-02-01T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL AMENDMENT DATA",
+    "id": "AMD-007",
+    "contract_id": "CTR-002",
+    "amendment_number": "AMD-2026-07",
+    "title": "AI Pipeline Implementation SOW Rate Authorization",
+    "description": "Authorizes milestone monthly billing rate of $18,000.00 for SOW-002 deliverables under CTR-002.",
+    "effective_from": "2026-02-01T00:00:00Z",
+    "effective_until": "2026-12-31T23:59:59Z",
+    "created_at": "2026-01-28T00:00:00Z",
+    "updated_at": null
+  }
+]

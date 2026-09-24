@@ -1,0 +1,82 @@
+[
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CASE DATA",
+    "case_id": "CASE-001",
+    "title": "Verified Tier-1 Cloud Support Volume Discount",
+    "invoice_id": "INV-1001",
+    "customer_id": "CUS-001",
+    "description": "Governing contract CTR-001 establishes standard monthly fee of $12,000.00. Executed amendment AMD-001 authorizes a discounted rate of $10,200.00 for Q1-Q3 2026. Invoice INV-1001 is issued on 2026-03-15 for PROD-CLOUD-SUP within the effective window. Formal executive approval APR-001 is on file.",
+    "core_question": "Why does invoice INV-1001 ($10,200.00) differ from the amount established by governing contract CTR-001 ($12,000.00)?",
+    "scenario_type": "VERIFIED_AMENDMENT_WITH_APPROVAL"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CASE DATA",
+    "case_id": "CASE-002",
+    "title": "Missing Executive Approval for Rate Revision",
+    "invoice_id": "INV-1002",
+    "customer_id": "CUS-001",
+    "description": "Contract CTR-001 establishes $12,000.00. Amendment AMD-002 outlines terms for a $10,500.00 rate revision for monitoring services, explicitly conditional upon executive signoff. No valid approval record was granted in the approval system.",
+    "core_question": "Why does invoice INV-1002 ($10,500.00) differ from governing contract CTR-001 ($12,000.00), and is the required authorization complete?",
+    "scenario_type": "MISSING_REQUIRED_APPROVAL"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CASE DATA",
+    "case_id": "CASE-003",
+    "title": "Invoice Billed Under Expired Pilot Rate Period",
+    "invoice_id": "INV-1003",
+    "customer_id": "CUS-001",
+    "description": "Invoice INV-1003 was issued on 2026-04-15 with billed amount $9,500.00 citing pilot discount amendment AMD-003. However, AMD-003 was legally effective strictly from 2025-01-01 to 2025-12-31, rendering it inapplicable to calendar year 2026 invoices.",
+    "core_question": "Is amendment AMD-003 applicable to invoice INV-1003 given their respective effective and issuance dates?",
+    "scenario_type": "EXPIRED_EFFECTIVE_PERIOD"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CASE DATA",
+    "case_id": "CASE-004",
+    "title": "Security Scope Amendment Applied to Infrastructure",
+    "invoice_id": "INV-1004",
+    "customer_id": "CUS-001",
+    "description": "Invoice INV-1004 bills $8,000.00 for product PROD-INFRA (general infrastructure). Amendment AMD-004 established an $8,000.00 rate, but contractual scope clause EV-006 strictly limits this rate to PROD-SEC (cybersecurity assessment workloads).",
+    "core_question": "Does amendment AMD-004 authorize the $8,000.00 rate for product PROD-INFRA billed on invoice INV-1004?",
+    "scenario_type": "PRODUCT_SCOPE_MISMATCH"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CASE DATA",
+    "case_id": "CASE-005",
+    "title": "Contradictory Overlapping Regional Rate Amendments",
+    "invoice_id": "INV-1005",
+    "customer_id": "CUS-001",
+    "description": "Invoice INV-1005 is billed at $11,000.00 for regional infrastructure. Two concurrent amendments exist for the same period: AMD-005 specifies $11,000.00 (Schedule A), while AMD-006 specifies $11,500.00 (Schedule B) with competing precedence language. Approval APR-005 is in PENDING status pending legal review.",
+    "core_question": "Can the $11,000.00 amount on invoice INV-1005 be definitively verified when two executed amendments contain contradictory schedules?",
+    "scenario_type": "CONFLICTING_AMENDMENTS_UNRESOLVED"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CASE DATA",
+    "case_id": "CASE-006",
+    "title": "Unauthorized Overage Above Contractual Standard",
+    "invoice_id": "INV-1006",
+    "customer_id": "CUS-001",
+    "description": "Invoice INV-1006 bills $15,000.00 for standard cloud support under CTR-001 (which establishes $12,000.00). No amendment, SOW, exception waiver, or approval exists anywhere in the repository authorizing an increase above the contract baseline.",
+    "core_question": "Is there evidentiary authority for invoice INV-1006 billing $15,000.00 against the $12,000.00 contract standard?",
+    "scenario_type": "NO_APPLICABLE_AMENDMENT_OR_AUTHORIZATION"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CASE DATA",
+    "case_id": "CASE-007",
+    "title": "Missing Governing Master Agreement",
+    "invoice_id": "INV-1007",
+    "customer_id": "CUS-003",
+    "description": "Invoice INV-1007 is issued to customer Vertex Logistics (CUS-003) for $8,000.00. However, no governing contract record exists in the repository for CUS-003, preventing establishment of baseline contractual terms.",
+    "core_question": "Can contractual variance be determined for invoice INV-1007 when no governing contract can be established?",
+    "scenario_type": "MISSING_GOVERNING_CONTRACT"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL CASE DATA",
+    "case_id": "CASE-008",
+    "title": "Verified SOW-Linked Milestone Rate Authorization",
+    "invoice_id": "INV-1008",
+    "customer_id": "CUS-002",
+    "description": "Contract CTR-002 establishes standard retainer fee of $20,000.00 for Omega Technologies. Executed SOW-002 specifies AI pipeline deliverables, and amendment AMD-007 authorizes a $18,000.00 monthly milestone rate. Formal procurement approval APR-008 is documented. Invoice INV-1008 reflects $18,000.00 within the active delivery window.",
+    "core_question": "Why does invoice INV-1008 ($18,000.00) differ from the base platform retainer established by CTR-002 ($20,000.00)?",
+    "scenario_type": "VERIFIED_SOW_AMENDMENT_WITH_APPROVAL"
+  }
+]

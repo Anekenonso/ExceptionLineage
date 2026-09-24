@@ -1,0 +1,93 @@
+[
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL EXCEPTION DATA",
+    "id": "EX-001",
+    "contract_id": "CTR-001",
+    "invoice_id": "INV-1001",
+    "exception_type": "RATE_VARIANCE",
+    "description": "Invoice amount $10,200.00 differs from base contract fee $12,000.00 for cloud support services.",
+    "expected_amount": "12000.00",
+    "actual_amount": "10200.00",
+    "currency": "USD",
+    "created_at": "2026-03-15T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL EXCEPTION DATA",
+    "id": "EX-002",
+    "contract_id": "CTR-001",
+    "invoice_id": "INV-1002",
+    "exception_type": "RATE_VARIANCE",
+    "description": "Invoice amount $10,500.00 differs from base contract fee $12,000.00 for monitoring services.",
+    "expected_amount": "12000.00",
+    "actual_amount": "10500.00",
+    "currency": "USD",
+    "created_at": "2026-03-20T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL EXCEPTION DATA",
+    "id": "EX-003",
+    "contract_id": "CTR-001",
+    "invoice_id": "INV-1003",
+    "exception_type": "RATE_VARIANCE",
+    "description": "Invoice amount $9,500.00 billed under expired 2025 pilot rate rather than active contract rate $12,000.00.",
+    "expected_amount": "12000.00",
+    "actual_amount": "9500.00",
+    "currency": "USD",
+    "created_at": "2026-04-15T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL EXCEPTION DATA",
+    "id": "EX-004",
+    "contract_id": "CTR-001",
+    "invoice_id": "INV-1004",
+    "exception_type": "RATE_VARIANCE",
+    "description": "Invoice amount $8,000.00 reflects discount applicable only to security products, billed against infrastructure.",
+    "expected_amount": "12000.00",
+    "actual_amount": "8000.00",
+    "currency": "USD",
+    "created_at": "2026-04-10T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL EXCEPTION DATA",
+    "id": "EX-005",
+    "contract_id": "CTR-001",
+    "invoice_id": "INV-1005",
+    "exception_type": "CONTRADICTORY_TERMS",
+    "description": "Invoice amount $11,000.00 subject to two conflicting regional amendments AMD-005 ($11,000) and AMD-006 ($11,500).",
+    "expected_amount": "12000.00",
+    "actual_amount": "11000.00",
+    "currency": "USD",
+    "created_at": "2026-05-01T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL EXCEPTION DATA",
+    "id": "EX-006",
+    "contract_id": "CTR-001",
+    "invoice_id": "INV-1006",
+    "exception_type": "UNAUTHORIZED_OVERAGE",
+    "description": "Invoice amount $15,000.00 exceeds base agreement fee $12,000.00 with no authorizing amendment or documentation.",
+    "expected_amount": "12000.00",
+    "actual_amount": "15000.00",
+    "currency": "USD",
+    "created_at": "2026-05-15T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL EXCEPTION DATA",
+    "id": "EX-008",
+    "contract_id": "CTR-002",
+    "invoice_id": "INV-1008",
+    "exception_type": "SOW_RATE_ADJUSTMENT",
+    "description": "Invoice amount $18,000.00 differs from master platform rate $20,000.00 per authorized SOW-002 terms in AMD-007.",
+    "expected_amount": "20000.00",
+    "actual_amount": "18000.00",
+    "currency": "USD",
+    "created_at": "2026-06-15T00:00:00Z",
+    "updated_at": null
+  }
+]

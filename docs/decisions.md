@@ -63,3 +63,18 @@
 4. **Explicit Status Enums**: Open-ended strings invite typographical inconsistencies. `ValidationStatus` (`PASS`, `FAIL`, `UNKNOWN`) and `InvestigationStatus` (3 active + 5 terminal states) constrain states to known legal vocabularies.
 5. **Legitimate UNKNOWN State**: Missing or inconclusive evidence is an authentic condition in investigation workflows. `UNKNOWN` must never be coerced into `PASS` or `FAIL`.
 6. **No Premature Complexity**: No database engine, ORM, LLM SDK, or agent loop was introduced. The models serve as the foundational contract for subsequent stages.
+
+---
+
+## ADR-007: Controlled Synthetic Dataset and Ground Truth
+
+**Date:** 2026-09-24
+
+**Decision:** Create a compact, controlled, relationally dense synthetic dataset (8 investigation cases) with machine-verifiable ground truth determinations across `VERIFIED`, `NOT_VERIFIED`, `INSUFFICIENT_EVIDENCE`, and `NEEDS_REVIEW`. Mark all data clearly as `SIMULATED` and enforce automated data consistency via pytest.
+
+**Rationale:**
+1. **Objective Evaluation over Subjective Assessment**: AI-driven and graph-driven investigation engines cannot be reliably evaluated without definitive ground truth. Having structured ground-truth records ensures that future pipeline accuracy can be computed objectively and deterministically.
+2. **Controlled Adversarial Scenarios**: Real-world exceptions fail for diverse reasons (missing approvals, expired effective dates, scope/product mismatches, conflicting amendments, missing contracts). Creating intentionally flawed cases guarantees the system will not default to superficial pass-through verification.
+3. **Relationally Dense, Small Footprint**: Rather than generating hundreds of disconnected rows, 8 well-crafted cases sharing 3 customers and 2 master agreements test deep multi-hop evidence traversal ($\text{Invoice} \rightarrow \text{Customer} \rightarrow \text{Contract} \rightarrow \text{Amendment} \rightarrow \text{SOW} \rightarrow \text{Exception} \rightarrow \text{Approval}$) without unmanageable dataset bloat.
+4. **Automated Schema & Consistency Checking**: All seed data is asserted against Stage 11 Pydantic models in the test suite. Foreign keys, date logic, Decimal values, and ground truth references are validated continuously to prevent drift.
+5. **No Production Data or Fake Citations**: All records are explicitly identified as simulated data to avoid compliance risks or confusion with real-world enterprise contracts.

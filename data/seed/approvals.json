@@ -1,0 +1,43 @@
+[
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL APPROVAL DATA",
+    "id": "APR-001",
+    "exception_id": "EX-001",
+    "approver": "sarah.chen@acmeglobal.com",
+    "status": "APPROVED",
+    "approved_at": "2026-02-01T14:30:00Z",
+    "context": {
+      "role": "VP Commercial Finance",
+      "authorization_ref": "AUTH-2026-01",
+      "comments": "Approved volume discount adjustment per executed AMD-2026-01"
+    },
+    "created_at": "2026-01-20T09:00:00Z"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL APPROVAL DATA",
+    "id": "APR-005",
+    "exception_id": "EX-005",
+    "approver": "marcus.vance@acmeglobal.com",
+    "status": "PENDING",
+    "approved_at": null,
+    "context": {
+      "role": "Procurement Operations Lead",
+      "comments": "Escalated for legal review due to conflicting schedules in AMD-005 and AMD-006"
+    },
+    "created_at": "2026-05-02T10:00:00Z"
+  },
+  {
+    "_simulation_notice": "SIMULATED DATA FOR EVALUATION ONLY - NOT REAL APPROVAL DATA",
+    "id": "APR-008",
+    "exception_id": "EX-008",
+    "approver": "elena.rostova@omegatech.com",
+    "status": "APPROVED",
+    "approved_at": "2026-03-01T11:00:00Z",
+    "context": {
+      "role": "Director of Enterprise Procurement",
+      "sow_ref": "SOW-2026-02",
+      "comments": "Milestone delivery rate approved under SOW-002 and AMD-007"
+    },
+    "created_at": "2026-02-15T08:30:00Z"
+  }
+]
