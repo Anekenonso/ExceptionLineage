@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
+from app.agent.models import AgentMetrics
 from app.models.enums import InvestigationStatus
 from app.models.investigation import Investigation, InvestigationEvent
 from app.models.validation import ValidationResult
@@ -58,9 +59,17 @@ class InvestigationResponse(BaseModel):
         default_factory=list,
         description="Evidentiary citations supporting the validation outcome",
     )
+    agent_metrics: AgentMetrics | None = Field(
+        default=None,
+        description="Execution metrics from the investigation agent loop",
+    )
     events: list[InvestigationEvent] | None = Field(
         default=None,
         description="Immutable chronological lifecycle audit events",
+    )
+    agent_events: list[InvestigationEvent] | None = Field(
+        default=None,
+        description="Detailed agent action and tool execution audit events",
     )
 
     @classmethod
@@ -68,8 +77,16 @@ class InvestigationResponse(BaseModel):
         cls,
         inv: Investigation,
         events: list[InvestigationEvent] | None = None,
+        agent_events: list[InvestigationEvent] | None = None,
     ) -> InvestigationResponse:
         """Construct an InvestigationResponse from domain Investigation and events."""
+        raw_metrics = inv.agent_metrics
+        parsed_metrics = None
+        if isinstance(raw_metrics, AgentMetrics):
+            parsed_metrics = raw_metrics
+        elif isinstance(raw_metrics, dict):
+            parsed_metrics = AgentMetrics(**raw_metrics)
+
         return cls(
             investigation_id=inv.id,
             invoice_id=inv.invoice_id,
@@ -81,5 +98,7 @@ class InvestigationResponse(BaseModel):
             updated_at=inv.updated_at,
             validation_results=inv.validation_results,
             cited_evidence_ids=inv.cited_evidence_ids or [],
+            agent_metrics=parsed_metrics,
             events=events,
+            agent_events=agent_events,
         )

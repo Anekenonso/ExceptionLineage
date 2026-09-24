@@ -147,4 +147,27 @@
 4. **Strict Infrastructure Failure Semantics**: Infrastructure outages (e.g. Neo4j connection refused or query timeout) must transition the investigation from `INVESTIGATING` to `FAILED` with an explicit failure reason and exactly two audit events (`QUEUED` $\rightarrow$ `INVESTIGATING` $\rightarrow$ `FAILED`). Infrastructure failure must never be coerced into `INSUFFICIENT_EVIDENCE` or disguised as a successful HTTP 200 response with a misleading verified outcome.
 5. **API-First over Premature UI Dashboard**: Following Trap T-005 (*Building UI Before the API*), building elaborate frontend dashboards before API contracts stabilize produces massive rework. Stage 16 establishes the immutable HTTP contract (`POST /api/investigations`, `GET /api/investigations/{id}`, `GET /api/investigations/{id}/events`) with explicit Pydantic response models, preserving the lightweight status frontend for subsequent UI expansion.
 
+---
+
+## ADR-012: Controlled Agentic Investigation Loop
+
+**Date:** 2026-09-24
+
+**Decision:** Introduce a controlled, bounded investigation agent (`InvestigationAgent`) into the active `INVESTIGATING` phase. The agent dynamically decides what evidence to retrieve next via an explicit, typed tool registry (`get_invoice`, `find_contract`, `get_contract_amendments`, `get_sows`, `find_approvals`, `get_related_evidence`, `validate_investigation`) to assemble an `InvestigationContext`. Authoritative validation outcomes and lifecycle state transitions remain strictly governed by the deterministic `ValidationEngine` and `InvestigationStateMachine`.
+
+**Rationale:**
+1. **Why the Agent Exists**: In contract and invoice exception investigation, the path to discovery is non-trivial and variable: different exceptions require exploring different contractual entities (amendments vs SOWs vs managerial approvals vs specific clauses). The agent provides intelligent, goal-driven discovery—planning the next evidentiary query based on observed context—without hardcoding rigid query sequences.
+2. **Constrained Tool Access**: The agent operates through explicit, typed, deterministic tools interacting with the `LineageRepository` interface. It never receives direct database, SQL, or Cypher access, arbitrary code execution privileges, or mutation authority over contracts, invoices, or graph nodes.
+3. **Deterministic Validation Remains Authoritative**: In strict compliance with *"AI handles ambiguity. Code handles authority"*, the agent is explicitly prohibited from declaring invoices valid, calculating authorized financial rates, or deciding contractual compliance. When the agent concludes evidence discovery, it transitions the investigation to `VALIDATING`, where the deterministic `ValidationEngine` evaluates rule logic over the gathered `InvestigationContext`.
+4. **Bounded Agent Loop**: The agent execution loop is strictly bounded by `MAX_AGENT_STEPS` (default: 10). If the agent exhausts allowable steps without requesting validation, the investigation transitions from `INVESTIGATING` to `FAILED` with `AGENT_STEP_LIMIT_EXCEEDED`. Infinite loops or unbounded tool chains are architecturally impossible.
+5. **Full Action Auditability**: Every step taken by the agent emits an immutable audit event (`AGENT_DECISION`, `TOOL_CALL`) with step numbers, tool arguments, success/failure status, and rationale. An independent reviewer can reconstruct the exact lineage from:
+   $$\text{INPUT} \rightarrow \text{AGENT DECISION} \rightarrow \text{TOOL CALL} \rightarrow \text{TOOL RESULT} \rightarrow \text{VALIDATION} \rightarrow \text{OUTCOME}$$
+6. **Infrastructure Failure vs. Evidence Insufficiency**:
+   - If a tool fails due to an infrastructure outage (e.g. database connection refused), the investigation transitions to `FAILED`.
+   - If a tool successfully discovers that an approval or contract is absent in the graph, that genuine evidence absence is passed to deterministic validation, resulting in `INSUFFICIENT_EVIDENCE` or `NOT_VERIFIED`. Infrastructure failure is never conflated with evidence absence.
+7. **Real vs. Simulated Boundaries**:
+   - Real: FastAPI endpoints, InvestigationService, InvestigationStateMachine, ValidationEngine, LineageRepository interface, tool registry, bounded agent loop, audit event logging, and execution metrics.
+   - Simulated / Test Doubles: `HeuristicAgentModel` and `ScriptedAgentModel` serve as deterministic models for offline and CI verification without requiring live external LLM API keys. Live LLM adapter endpoints plug into the same `AgentModel` interface in subsequent stages.
+
+
 

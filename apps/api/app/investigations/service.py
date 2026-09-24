@@ -6,6 +6,8 @@ import logging
 import uuid
 from typing import Any
 
+from app.agent.exceptions import AgentStepLimitExceededError
+from app.agent.loop import InvestigationAgent
 from app.graph.lineage import LineageRepository, Neo4jLineageRepository
 from app.investigations.exceptions import (
     InvestigationNotFoundError,
@@ -17,7 +19,7 @@ from app.investigations.repository import (
 )
 from app.investigations.state_machine import InvestigationStateMachine
 from app.models.common import utc_now
-from app.models.enums import InvestigationStatus
+from app.models.enums import InvestigationEventType, InvestigationStatus
 from app.models.investigation import Investigation, InvestigationEvent
 from app.validation.context import InvestigationContext
 from app.validation.engine import ValidationEngine
@@ -32,7 +34,7 @@ class InvestigationService:
     Lifecycle Progression:
         create investigation -> QUEUED
         start investigation  -> INVESTIGATING
-        retrieve lineage     -> graph traversal
+        agent discovery      -> tool execution loop
         move to validation   -> VALIDATING
         apply outcome        -> VERIFIED | NOT_VERIFIED | INSUFFICIENT_EVIDENCE | NEEDS_REVIEW | FAILED
 
@@ -46,6 +48,7 @@ class InvestigationService:
         state_machine: InvestigationStateMachine | None = None,
         validation_engine: ValidationEngine | None = None,
         lineage_repository: LineageRepository | None = None,
+        agent: InvestigationAgent | None = None,
     ) -> None:
         self.repository = (
             repository if repository is not None else InMemoryInvestigationRepository()
@@ -66,6 +69,11 @@ class InvestigationService:
             lineage_repository
             if lineage_repository is not None
             else Neo4jLineageRepository()
+        )
+        self.agent = (
+            agent
+            if agent is not None
+            else InvestigationAgent(lineage_repo=self.lineage_repository)
         )
 
     def create_investigation(
@@ -92,11 +100,30 @@ class InvestigationService:
             raise InvestigationNotFoundError(investigation_id)
         return inv
 
-    def get_events(self, investigation_id: str) -> list[InvestigationEvent]:
-        """Retrieve the immutable chronological audit event history for an investigation."""
+    def get_events(
+        self, investigation_id: str, include_agent_events: bool = False
+    ) -> list[InvestigationEvent]:
+        """Retrieve chronological audit event history for an investigation.
+
+        By default, returns lifecycle state transitions. Set include_agent_events=True
+        to include fine-grained agent decision and tool execution events.
+        """
         # Ensure investigation exists
         self.get_investigation(investigation_id)
-        return self.repository.get_events(investigation_id)
+        events = self.repository.get_events(investigation_id)
+        if not include_agent_events:
+            return [e for e in events if e.event_type == InvestigationEventType.STATE_TRANSITION]
+        return events
+
+    def get_agent_events(self, investigation_id: str) -> list[InvestigationEvent]:
+        """Retrieve only fine-grained agent decision and tool execution audit events."""
+        self.get_investigation(investigation_id)
+        events = self.repository.get_events(investigation_id)
+        return [e for e in events if e.event_type != InvestigationEventType.STATE_TRANSITION]
+
+    def get_all_events(self, investigation_id: str) -> list[InvestigationEvent]:
+        """Retrieve all audit events (both state transitions and agent actions)."""
+        return self.get_events(investigation_id, include_agent_events=True)
 
     def start_investigation(
         self,
@@ -190,20 +217,20 @@ class InvestigationService:
         exception_id: str | None = None,
         investigation_id: str | None = None,
     ) -> Investigation:
-        """Execute a complete, non-agent deterministic investigation lifecycle.
+        """Execute a complete investigation lifecycle.
 
         SKELETON:
             create investigation (QUEUED)
                 ↓
             start investigation (INVESTIGATING)
                 ↓
-            retrieve lineage (from lineage_repository or provided context)
+            agent discovery (tool execution loop discovering context)
                 ↓
-            if graph retrieval succeeds:
+            if agent succeeds:
                 move to validation (VALIDATING)
                 ↓
                 apply validation outcome (VERIFIED | NOT_VERIFIED | INSUFFICIENT_EVIDENCE | NEEDS_REVIEW)
-            if graph or technical failure occurs:
+            if agent, graph, or technical failure occurs:
                 fail investigation (FAILED)
         """
         inv = self.create_investigation(
@@ -215,33 +242,68 @@ class InvestigationService:
         # 1. Start investigation (QUEUED -> INVESTIGATING)
         self.start_investigation(inv.id, reason="Investigation initiated")
 
-        # 2. Retrieve invoice lineage / context
-        raw_lineage: InvestigationContext | dict[str, Any] | None = context_or_lineage
-        if raw_lineage is None:
+        # 2. Evidence Discovery via Agent (or provided context)
+        if context_or_lineage is not None:
+            ctx = context_or_lineage
+        else:
+            def record_agent_event(
+                event_type: InvestigationEventType,
+                message: str,
+                metadata: dict[str, Any] | None = None,
+            ) -> None:
+                evt = InvestigationEvent(
+                    id=f"evt-{uuid.uuid4().hex[:12]}",
+                    investigation_id=inv.id,
+                    from_state=inv.status,
+                    to_state=inv.status,
+                    reason=message,
+                    event_type=event_type,
+                    message=message,
+                    metadata=metadata or {},
+                )
+                self.repository.append_event(evt)
+
             try:
-                raw_lineage = self.lineage_repository.get_invoice_lineage(invoice_id)
-                if raw_lineage is None:
-                    self.fail_investigation(
-                        inv.id,
-                        reason=f"Graph retrieval failed: invoice '{invoice_id}' not found in knowledge graph",
-                    )
-                    return self.get_investigation(inv.id)
-            except Exception as exc:
-                logger.exception("Graph retrieval failed for invoice '%s': %s", invoice_id, exc)
+                ctx, metrics = self.agent.execute_investigation(
+                    investigation_id=inv.id,
+                    invoice_id=invoice_id,
+                    exception_id=exception_id,
+                    event_recorder=record_agent_event,
+                )
+                inv.agent_metrics = metrics.model_dump()
+                self.repository.update(inv)
+            except AgentStepLimitExceededError as exc:
+                logger.warning("Agent step limit exceeded for investigation '%s': %s", inv.id, exc)
                 self.fail_investigation(
                     inv.id,
-                    reason=f"Graph retrieval failed: {exc}",
+                    reason="AGENT_STEP_LIMIT_EXCEEDED",
+                    metadata={"error": str(exc)},
+                )
+                return self.get_investigation(inv.id)
+            except Exception as exc:
+                logger.exception("Agent execution failure for invoice '%s': %s", invoice_id, exc)
+                err_msg = str(exc)
+                if "not found in knowledge graph" in err_msg.lower():
+                    reason = f"Graph retrieval failed: invoice '{invoice_id}' not found in knowledge graph"
+                elif "failed:" in err_msg:
+                    reason = f"Graph retrieval failed: {err_msg.split('failed:', 1)[1].strip()}"
+                else:
+                    reason = f"Graph retrieval failed: {err_msg}"
+                self.fail_investigation(
+                    inv.id,
+                    reason=reason,
+                    metadata={"error": err_msg},
                 )
                 return self.get_investigation(inv.id)
 
         # 3. Move to validation (INVESTIGATING -> VALIDATING)
         self.move_to_validation(
-            inv.id, reason="Lineage context ready for deterministic validation"
+            inv.id, reason="Agent gathered required evidence; proceeding to deterministic validation"
         )
 
         # 4. Evaluate deterministic rules & apply outcome
         try:
-            outcome = self.validation_engine.validate(raw_lineage)
+            outcome = self.validation_engine.validate(ctx)
             self.apply_validation_outcome(inv.id, outcome)
         except Exception as exc:
             logger.exception("Technical failure during validation: %s", exc)

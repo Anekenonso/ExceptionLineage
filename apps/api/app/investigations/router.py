@@ -47,8 +47,11 @@ def create_investigation(
         invoice_id=payload.invoice_id,
         exception_id=payload.exception_id,
     )
-    events = service.get_events(inv.id)
-    return InvestigationResponse.from_investigation(inv, events=events)
+    events = service.get_events(inv.id, include_agent_events=False)
+    agent_events = service.get_agent_events(inv.id)
+    return InvestigationResponse.from_investigation(
+        inv, events=events, agent_events=agent_events
+    )
 
 
 @router.get(
@@ -63,19 +66,23 @@ def get_investigation(
 ) -> InvestigationResponse:
     """Retrieve an investigation by its identifier."""
     inv = service.get_investigation(investigation_id)
-    events = service.get_events(investigation_id)
-    return InvestigationResponse.from_investigation(inv, events=events)
+    events = service.get_events(investigation_id, include_agent_events=False)
+    agent_events = service.get_agent_events(investigation_id)
+    return InvestigationResponse.from_investigation(
+        inv, events=events, agent_events=agent_events
+    )
 
 
 @router.get(
     "/{investigation_id}/events",
     response_model=list[InvestigationEvent],
     summary="Get investigation event timeline",
-    description="Retrieves the complete immutable audit event timeline for an investigation.",
+    description="Retrieves the chronological audit event timeline for an investigation.",
 )
 def get_investigation_events(
     investigation_id: str,
+    include_agent_events: bool = False,
     service: InvestigationService = Depends(get_investigation_service),
 ) -> list[InvestigationEvent]:
     """Retrieve the chronological event log for an investigation."""
-    return service.get_events(investigation_id)
+    return service.get_events(investigation_id, include_agent_events=include_agent_events)

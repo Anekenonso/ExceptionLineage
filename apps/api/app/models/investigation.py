@@ -48,6 +48,10 @@ class Investigation(BaseModel):
         default_factory=list,
         description="Evidentiary citations supporting the validation outcome",
     )
+    agent_metrics: dict[str, Any] | None = Field(
+        default=None,
+        description="Optional execution metrics from the investigation agent loop",
+    )
 
     @property
     def investigation_id(self) -> str:

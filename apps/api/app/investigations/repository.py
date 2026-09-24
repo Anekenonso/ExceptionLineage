@@ -77,6 +77,8 @@ class InMemoryInvestigationRepository:
         self._events[event.investigation_id].append(event)
         return event
 
+    add_event = append_event
+
     def get_events(self, investigation_id: str) -> list[InvestigationEvent]:
         """Return a chronological shallow copy of the event history list for this investigation."""
         return list(self._events.get(investigation_id, []))
