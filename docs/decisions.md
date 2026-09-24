@@ -132,3 +132,19 @@
    - Infrastructure or technical errors (e.g. Neo4j connectivity drop, database timeout, out-of-memory crash) transition the investigation to `FAILED`. Infrastructure failure is never confused with lack of evidence.
 6. **Intentionally Minimal Persistence for Stage 15**: Introducing an external relational database (e.g., PostgreSQL + migrations + ORM) at this stage would violate the incremental design principles (ADR-006, Trap T-002). The `InMemoryInvestigationRepository` satisfies all Stage 15 lifecycle, event audit, and unit/benchmark testing requirements while establishing the repository interface boundary for future database integration.
 
+---
+
+## ADR-011: First End-to-End Investigation Vertical Slice
+
+**Date:** 2026-09-24
+
+**Decision:** Build the first real end-to-end vertical slice through the application boundary: HTTP request $\rightarrow$ FastAPI router $\rightarrow$ `InvestigationService` $\rightarrow$ `LineageRepository` (graph abstraction) $\rightarrow$ `InvestigationContext` $\rightarrow$ `ValidationEngine` $\rightarrow$ `InvestigationStateMachine` $\rightarrow$ Terminal state $\rightarrow$ Structured API response (`InvestigationResponse`). Intentionally omit LLMs, prompt chains, autonomous agent loops, and heavy UI dashboards from this slice.
+
+**Rationale:**
+1. **Vertical Pipeline Proof Before Intelligence**: Integrating an LLM into an unverified or disjointed pipeline produces unverifiable results and fragile debugging loops (Trap T-001). Proving the deterministic backbone end-to-end first—from HTTP ingress through graph traversal, validation, and state machine transition—guarantees that when agents are introduced, they operate over an authoritative, fully functional, and testable foundation.
+2. **Intentional Absence of LLM**: In accordance with the foundational architectural law (*AI handles ambiguity. Code handles authority*), business authority (determining whether an invoice is verified) is completely deterministic and code-governed. AI will later assist in natural language interpretation and graph exploration, but the vertical backbone must function autonomously and deterministically without AI.
+3. **Graph Abstraction and Test Double Strategy**: Requiring a live Neo4j daemon for everyday CI and unit tests creates environment friction and flakiness. Introducing `LineageRepository` as an explicit abstraction with `Neo4jLineageRepository` (production) and `InMemoryLineageRepository` (test double) enables fast, deterministic, non-Dockerized test execution across all benchmark cases without substituting fake logic into production.
+4. **Strict Infrastructure Failure Semantics**: Infrastructure outages (e.g. Neo4j connection refused or query timeout) must transition the investigation from `INVESTIGATING` to `FAILED` with an explicit failure reason and exactly two audit events (`QUEUED` $\rightarrow$ `INVESTIGATING` $\rightarrow$ `FAILED`). Infrastructure failure must never be coerced into `INSUFFICIENT_EVIDENCE` or disguised as a successful HTTP 200 response with a misleading verified outcome.
+5. **API-First over Premature UI Dashboard**: Following Trap T-005 (*Building UI Before the API*), building elaborate frontend dashboards before API contracts stabilize produces massive rework. Stage 16 establishes the immutable HTTP contract (`POST /api/investigations`, `GET /api/investigations/{id}`, `GET /api/investigations/{id}/events`) with explicit Pydantic response models, preserving the lightweight status frontend for subsequent UI expansion.
+
+

@@ -1,7 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import settings
+from app.investigations.exceptions import InvestigationNotFoundError
+from app.investigations.router import router as investigations_router
 
 app = FastAPI(
     title="ExceptionLineage API",
@@ -17,6 +20,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount investigations API router
+app.include_router(
+    investigations_router,
+    prefix="/api/investigations",
+    tags=["investigations"],
+)
+
+
+@app.exception_handler(InvestigationNotFoundError)
+async def investigation_not_found_handler(
+    request: Request, exc: InvestigationNotFoundError
+) -> JSONResponse:
+    """Return structured HTTP 404 response when an investigation is not found."""
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={"detail": str(exc)},
+    )
+
 
 @app.get("/health")
 async def health() -> dict:
@@ -26,3 +47,4 @@ async def health() -> dict:
         "service": settings.service_name,
         "version": settings.version,
     }
+

@@ -39,3 +39,8 @@ class InvestigationNotFoundError(InvestigationError):
     def __init__(self, investigation_id: str) -> None:
         self.investigation_id = investigation_id
         super().__init__(f"Investigation '{investigation_id}' not found.")
+
+
+class GraphRetrievalError(InvestigationError):
+    """Raised when graph lineage retrieval fails due to infrastructure or missing graph node."""
+

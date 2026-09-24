@@ -1,6 +1,11 @@
 """Neo4j graph package for ExceptionLineage."""
 
 from app.graph.client import Neo4jClient
+from app.graph.lineage import (
+    InMemoryLineageRepository,
+    LineageRepository,
+    Neo4jLineageRepository,
+)
 from app.graph.loader import SeedLoader, SeedLoadReport
 from app.graph.queries import (
     find_orphaned_invoices,
@@ -31,6 +36,10 @@ __all__ = [
     "get_schema_init_queries",
     # Client
     "Neo4jClient",
+    # Lineage Repository Abstraction
+    "LineageRepository",
+    "Neo4jLineageRepository",
+    "InMemoryLineageRepository",
     # Loader
     "SeedLoader",
     "SeedLoadReport",

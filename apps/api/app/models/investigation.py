@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from app.models.common import ensure_timezone_aware, utc_now, validate_non_empty
 from app.models.enums import InvestigationEventType, InvestigationStatus
+from app.models.validation import ValidationResult
 
 
 class Investigation(BaseModel):
@@ -38,6 +39,14 @@ class Investigation(BaseModel):
     )
     updated_at: datetime | None = Field(
         default=None, description="Timestamp of latest investigation update (UTC)"
+    )
+    validation_results: list[ValidationResult] | None = Field(
+        default=None,
+        description="Discrete individual rule evaluation results from deterministic validation",
+    )
+    cited_evidence_ids: list[str] = Field(
+        default_factory=list,
+        description="Evidentiary citations supporting the validation outcome",
     )
 
     @property

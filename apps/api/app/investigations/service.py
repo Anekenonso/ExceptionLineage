@@ -6,6 +6,7 @@ import logging
 import uuid
 from typing import Any
 
+from app.graph.lineage import LineageRepository, Neo4jLineageRepository
 from app.investigations.exceptions import (
     InvestigationNotFoundError,
     InvalidStateTransitionError,
@@ -31,6 +32,7 @@ class InvestigationService:
     Lifecycle Progression:
         create investigation -> QUEUED
         start investigation  -> INVESTIGATING
+        retrieve lineage     -> graph traversal
         move to validation   -> VALIDATING
         apply outcome        -> VERIFIED | NOT_VERIFIED | INSUFFICIENT_EVIDENCE | NEEDS_REVIEW | FAILED
 
@@ -43,6 +45,7 @@ class InvestigationService:
         repository: InvestigationRepository | None = None,
         state_machine: InvestigationStateMachine | None = None,
         validation_engine: ValidationEngine | None = None,
+        lineage_repository: LineageRepository | None = None,
     ) -> None:
         self.repository = (
             repository if repository is not None else InMemoryInvestigationRepository()
@@ -58,6 +61,11 @@ class InvestigationService:
 
         self.validation_engine = (
             validation_engine if validation_engine is not None else ValidationEngine()
+        )
+        self.lineage_repository = (
+            lineage_repository
+            if lineage_repository is not None
+            else Neo4jLineageRepository()
         )
 
     def create_investigation(
@@ -151,6 +159,8 @@ class InvestigationService:
 
         inv.summary = outcome.summary
         inv.failure_reason = outcome.failure_reason
+        inv.validation_results = outcome.results
+        inv.cited_evidence_ids = outcome.cited_evidence_ids
         self.repository.update(inv)
 
         return inv, event
@@ -176,7 +186,7 @@ class InvestigationService:
     def run_investigation(
         self,
         invoice_id: str,
-        context_or_lineage: InvestigationContext | dict[str, Any],
+        context_or_lineage: InvestigationContext | dict[str, Any] | None = None,
         exception_id: str | None = None,
         investigation_id: str | None = None,
     ) -> Investigation:
@@ -187,11 +197,14 @@ class InvestigationService:
                 ↓
             start investigation (INVESTIGATING)
                 ↓
-            move to validation (VALIDATING)
+            retrieve lineage (from lineage_repository or provided context)
                 ↓
-            apply validation outcome (VERIFIED | NOT_VERIFIED | INSUFFICIENT_EVIDENCE | NEEDS_REVIEW)
-
-        If a technical failure occurs during processing, the investigation is transitioned to FAILED.
+            if graph retrieval succeeds:
+                move to validation (VALIDATING)
+                ↓
+                apply validation outcome (VERIFIED | NOT_VERIFIED | INSUFFICIENT_EVIDENCE | NEEDS_REVIEW)
+            if graph or technical failure occurs:
+                fail investigation (FAILED)
         """
         inv = self.create_investigation(
             invoice_id=invoice_id,
@@ -202,14 +215,33 @@ class InvestigationService:
         # 1. Start investigation (QUEUED -> INVESTIGATING)
         self.start_investigation(inv.id, reason="Investigation initiated")
 
-        # 2. Move to validation (INVESTIGATING -> VALIDATING)
+        # 2. Retrieve invoice lineage / context
+        raw_lineage: InvestigationContext | dict[str, Any] | None = context_or_lineage
+        if raw_lineage is None:
+            try:
+                raw_lineage = self.lineage_repository.get_invoice_lineage(invoice_id)
+                if raw_lineage is None:
+                    self.fail_investigation(
+                        inv.id,
+                        reason=f"Graph retrieval failed: invoice '{invoice_id}' not found in knowledge graph",
+                    )
+                    return self.get_investigation(inv.id)
+            except Exception as exc:
+                logger.exception("Graph retrieval failed for invoice '%s': %s", invoice_id, exc)
+                self.fail_investigation(
+                    inv.id,
+                    reason=f"Graph retrieval failed: {exc}",
+                )
+                return self.get_investigation(inv.id)
+
+        # 3. Move to validation (INVESTIGATING -> VALIDATING)
         self.move_to_validation(
             inv.id, reason="Lineage context ready for deterministic validation"
         )
 
-        # 3. Evaluate deterministic rules & apply outcome
+        # 4. Evaluate deterministic rules & apply outcome
         try:
-            outcome = self.validation_engine.validate(context_or_lineage)
+            outcome = self.validation_engine.validate(raw_lineage)
             self.apply_validation_outcome(inv.id, outcome)
         except Exception as exc:
             logger.exception("Technical failure during validation: %s", exc)

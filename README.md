@@ -71,6 +71,12 @@ python -m pytest tests/ -v
 
 ## Current Status
 
-**Stage 15** — Controlled Investigation State Machine COMPLETE.
+**Stage 16** — First Real Vertical Slice COMPLETE.
 
-The deterministic investigation lifecycle state machine (`app.investigations`) establishes the authority boundary (*AI handles ambiguity. Code handles authority*) governing progression through `QUEUED`, `INVESTIGATING`, `VALIDATING`, and terminal outcome determinations with immutable audit trails. Autonomous investigation agent integration will follow in subsequent stages.
+ExceptionLineage executes an end-to-end investigation pipeline connecting the FastAPI boundary to graph traversal and deterministic rule validation:
+- **HTTP Ingress**: `POST /api/investigations`, `GET /api/investigations/{id}`, `GET /api/investigations/{id}/events`.
+- **Service Orchestration**: `InvestigationService` coordinates lifecycle progression (`QUEUED` $\rightarrow$ `INVESTIGATING` $\rightarrow$ `VALIDATING` $\rightarrow$ terminal outcome).
+- **Lineage Retrieval Abstraction**: Decoupled graph traversal (`LineageRepository`) with production Neo4j implementation (`Neo4jLineageRepository`) and deterministic test doubles (`InMemoryLineageRepository`).
+- **Deterministic Validation Engine**: Evaluates 8 contractual compliance rules against normalized `InvestigationContext` to yield auditable determinations (`VERIFIED`, `NOT_VERIFIED`, `INSUFFICIENT_EVIDENCE`, `NEEDS_REVIEW`).
+- **Authority Boundary**: Follows *"AI handles ambiguity. Code handles authority"*. 100% benchmark compliance verified across all 8 controlled cases (using synthetic SIMULATED datasets) without runtime ground-truth shortcuts.
+

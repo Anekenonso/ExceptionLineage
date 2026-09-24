@@ -1,0 +1,81 @@
+"""FastAPI router for investigation endpoints in ExceptionLineage."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, status
+
+from app.investigations.schemas import (
+    InvestigationCreateRequest,
+    InvestigationResponse,
+)
+from app.investigations.service import InvestigationService
+from app.models.investigation import InvestigationEvent
+
+router = APIRouter()
+
+# Module-level shared service for application lifetime in-memory persistence
+_default_service: InvestigationService | None = None
+
+
+def get_investigation_service() -> InvestigationService:
+    """Dependency provider for InvestigationService."""
+    global _default_service
+    if _default_service is None:
+        _default_service = InvestigationService()
+    return _default_service
+
+
+def reset_default_service(service: InvestigationService | None = None) -> None:
+    """Helper to reset or inject service instance for testing."""
+    global _default_service
+    _default_service = service
+
+
+@router.post(
+    "",
+    response_model=InvestigationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Create and run investigation",
+    description="Initiates an end-to-end investigation pipeline: retrieves graph lineage, evaluates deterministic rules, and applies state machine transitions.",
+)
+def create_investigation(
+    payload: InvestigationCreateRequest,
+    service: InvestigationService = Depends(get_investigation_service),
+) -> InvestigationResponse:
+    """Create and execute an investigation for a target invoice."""
+    inv = service.run_investigation(
+        invoice_id=payload.invoice_id,
+        exception_id=payload.exception_id,
+    )
+    events = service.get_events(inv.id)
+    return InvestigationResponse.from_investigation(inv, events=events)
+
+
+@router.get(
+    "/{investigation_id}",
+    response_model=InvestigationResponse,
+    summary="Get investigation state",
+    description="Retrieves the current lifecycle state and findings for an investigation.",
+)
+def get_investigation(
+    investigation_id: str,
+    service: InvestigationService = Depends(get_investigation_service),
+) -> InvestigationResponse:
+    """Retrieve an investigation by its identifier."""
+    inv = service.get_investigation(investigation_id)
+    events = service.get_events(investigation_id)
+    return InvestigationResponse.from_investigation(inv, events=events)
+
+
+@router.get(
+    "/{investigation_id}/events",
+    response_model=list[InvestigationEvent],
+    summary="Get investigation event timeline",
+    description="Retrieves the complete immutable audit event timeline for an investigation.",
+)
+def get_investigation_events(
+    investigation_id: str,
+    service: InvestigationService = Depends(get_investigation_service),
+) -> list[InvestigationEvent]:
+    """Retrieve the chronological event log for an investigation."""
+    return service.get_events(investigation_id)
