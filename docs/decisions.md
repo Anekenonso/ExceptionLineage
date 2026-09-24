@@ -78,3 +78,19 @@
 3. **Relationally Dense, Small Footprint**: Rather than generating hundreds of disconnected rows, 8 well-crafted cases sharing 3 customers and 2 master agreements test deep multi-hop evidence traversal ($\text{Invoice} \rightarrow \text{Customer} \rightarrow \text{Contract} \rightarrow \text{Amendment} \rightarrow \text{SOW} \rightarrow \text{Exception} \rightarrow \text{Approval}$) without unmanageable dataset bloat.
 4. **Automated Schema & Consistency Checking**: All seed data is asserted against Stage 11 Pydantic models in the test suite. Foreign keys, date logic, Decimal values, and ground truth references are validated continuously to prevent drift.
 5. **No Production Data or Fake Citations**: All records are explicitly identified as simulated data to avoid compliance risks or confusion with real-world enterprise contracts.
+
+---
+
+## ADR-008: Neo4j Graph Schema, Deterministic Identifiers, and Precision Representation
+
+**Date:** 2026-09-24
+
+**Decision:** Integrate Neo4j using the official Python driver (`neo4j>=5.26.0,<6.0.0`) to model domain entities as uniquely constrained nodes (`Customer`, `Contract`, `Amendment`, `SOW`, `Exception`, `Approval`, `Invoice`, `Evidence`) and explicit, typed relationships (`HAS_CONTRACT`, `HAS_AMENDMENT`, `AMENDS`, `HAS_SOW`, `UNDER_CONTRACT`, `HAS_EXCEPTION`, `HAS_APPROVAL`, `APPROVES`, `BILLED_TO`, `HAS_INVOICE`, `GOVERNED_BY`, `HAS_EVIDENCE`, `EVIDENCE_FOR`). Store exact monetary values as formatted strings (e.g. `"10200.00"`) alongside integer cents (e.g. `1020000`) to completely eliminate floating-point precision drift.
+
+**Rationale:**
+1. **Direct Official Driver without Layer Bloat**: Avoid third-party OGM layers, GraphRAG frameworks, or LLM agent wrappers. The official driver provides direct Cypher execution, low overhead, and straightforward connection lifecycle management.
+2. **Deterministic Domain Identifiers**: Avoid Neo4j internal element IDs. Every node is identified by its stable domain key (`id`, e.g. `CUS-001`, `CTR-001`, `INV-1001`) with explicit unique constraints (`REQUIRE n.id IS UNIQUE`).
+3. **Exact Monetary Precision in Graph Properties**: Neo4j does not have a native arbitrary-precision Decimal type. Converting financial decimals to 64-bit IEEE floats risks precision drift (e.g. `10200.000000000002`). By storing exact string amounts (`"10200.00"`) and integer cents (`1020000`), we preserve absolute financial precision while retaining integer range-filtering capabilities.
+4. **Bi-directional Navigation for Investigation Traversal**: Traversals must navigate top-down (`Contract -> Amendment -> SOW`) and bottom-up (`Invoice -> Governed Contract`, `Approval -> Approves Exception`, `Evidence -> Evidence For`). Dual directed relationships provide intuitive, performant paths for deterministic audit queries.
+5. **Idempotent Seed Loading**: Using Cypher `MERGE` across nodes and relationships ensures that seed data ingestion can be rerun deterministically without duplicating nodes or corrupting relationship cardinality.
+6. **Docker & Non-Docker Testability**: While a standard Neo4j 5 community container is added to `docker-compose.yml`, the codebase provides 100% testability via mocked driver sessions and transformation tests without requiring a running Docker daemon.
