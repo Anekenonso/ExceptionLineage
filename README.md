@@ -71,15 +71,18 @@ python -m pytest tests/ -v
 
 ## Current Status
 
-**Stage 17** — Controlled Agentic Investigation Loop COMPLETE.
+**Stage 17.5** — Real LLM Decision Layer COMPLETE.
 
-ExceptionLineage executes an end-to-end investigation pipeline connecting the FastAPI boundary to an agentic tool selection loop and deterministic rule validation:
+ExceptionLineage executes an end-to-end investigation pipeline connecting the FastAPI boundary to an agentic tool selection loop, a pluggable LLM decision layer, and deterministic rule validation:
 - **HTTP Ingress**: `POST /api/investigations`, `GET /api/investigations/{id}`, `GET /api/investigations/{id}/events`.
 - **Service Orchestration**: `InvestigationService` coordinates lifecycle progression (`QUEUED` $\rightarrow$ `INVESTIGATING` $\rightarrow$ `VALIDATING` $\rightarrow$ terminal outcome).
 - **Controlled Agentic Loop (`app.agent`)**: `InvestigationAgent` dynamically plans and executes tool calls (`get_invoice`, `find_contract`, `get_contract_amendments`, `get_sows`, `find_approvals`, `get_related_evidence`, `validate_investigation`) within a bounded step limit (`MAX_AGENT_STEPS = 10`).
-- **Auditability & Metrics**: Every agent decision and tool execution is recorded as an immutable event with fine-grained execution metrics (`AgentMetrics`).
+- **Real LLM Decision Layer (`LLMDecisionModel`)**: Connects to OpenAI-compatible endpoints with dynamic machine-readable tool schemas, JSON structured output parsing, upfront parameter validation, bounded error retries, and strict technical failure isolation.
+- **Deterministic Heuristic Baseline (`HeuristicAgentModel`)**: Retained as the default model (`AGENT_MODEL=heuristic`) so the entire test suite and 8 benchmark cases remain 100% runnable offline without API keys.
+- **Auditability & Metrics**: Every agent decision (including model name/provider) and tool execution is recorded as an immutable event with fine-grained execution and token metrics (`AgentMetrics`).
 - **Lineage Retrieval Abstraction**: Decoupled graph traversal (`LineageRepository`) with production Neo4j implementation (`Neo4jLineageRepository`) and deterministic test doubles (`InMemoryLineageRepository`).
 - **Deterministic Validation Engine**: Evaluates 8 contractual compliance rules against normalized `InvestigationContext` to yield auditable determinations (`VERIFIED`, `NOT_VERIFIED`, `INSUFFICIENT_EVIDENCE`, `NEEDS_REVIEW`).
 - **Authority Boundary**: Follows *"AI handles ambiguity. Code handles authority"*. 100% benchmark compliance verified across all 8 controlled cases (using synthetic SIMULATED datasets) without runtime ground-truth shortcuts.
+
 
 

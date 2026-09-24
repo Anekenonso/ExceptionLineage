@@ -14,15 +14,21 @@ class GetRelatedEvidenceTool(BaseTool):
 
     name = "get_related_evidence"
     description = "Retrieve evidentiary citations, clauses, and document excerpts for a list of source_ids."
+    parameters = {
+        "source_ids": {
+            "type": "array",
+            "items_type": "string",
+            "description": "List of entity identifiers (contract, amendment, SOW, approval, exception) to fetch supporting evidence clauses for",
+            "required": True,
+        }
+    }
 
     def execute(self, arguments: dict[str, Any], lineage_repo: LineageRepository) -> ToolResult:
+        is_valid, err = self.validate_arguments(arguments)
+        if not is_valid:
+            return ToolResult(tool_name=self.name, success=False, error=err)
+
         source_ids = arguments.get("source_ids")
-        if not source_ids:
-            return ToolResult(
-                tool_name=self.name,
-                success=False,
-                error="Argument 'source_ids' list is required",
-            )
 
         if isinstance(source_ids, str):
             source_ids = [source_ids]

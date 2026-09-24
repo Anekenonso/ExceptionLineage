@@ -82,6 +82,8 @@ class InvestigationAgent:
                         "action": action.action,
                         "arguments": action.arguments,
                         "reason": action.reason,
+                        "model_name": getattr(self.model, "model_name", self.model.__class__.__name__),
+                        "model_provider": getattr(self.model, "provider", "heuristic"),
                     },
                 )
 
@@ -90,6 +92,13 @@ class InvestigationAgent:
             if not tool:
                 metrics.failed_tool_calls += 1
                 state.observations.append(f"Error: Unknown tool '{action.action}' requested")
+                continue
+
+            # Validate tool arguments against schema
+            is_valid, validation_err = self.tool_registry.validate_action(action.action, action.arguments)
+            if not is_valid:
+                metrics.failed_tool_calls += 1
+                state.observations.append(f"Error: Invalid arguments for '{action.action}': {validation_err}")
                 continue
 
             # 3. Handle validation completion
@@ -145,6 +154,15 @@ class InvestigationAgent:
         duration_ms = (time.perf_counter() - start_time) * 1000
         metrics.investigation_duration_ms = round(duration_ms, 2)
         metrics.evidence_items_collected = len(state.evidence)
+
+        # Sync operational LLM metrics if model tracks them
+        metrics.llm_calls = getattr(self.model, "llm_calls", 0)
+        metrics.llm_failures = getattr(self.model, "llm_failures", 0)
+        metrics.llm_retries = getattr(self.model, "llm_retries", 0)
+        metrics.malformed_actions = getattr(self.model, "malformed_actions", 0)
+        metrics.prompt_tokens = getattr(self.model, "prompt_tokens", None)
+        metrics.completion_tokens = getattr(self.model, "completion_tokens", None)
+        metrics.total_tokens = getattr(self.model, "total_tokens", None)
 
         # Loop exhaustion check
         if not state.investigation_complete and state.steps >= self.max_steps:

@@ -5,6 +5,8 @@ from app.agent.exceptions import (
     AgentStepLimitExceededError,
     AgentToolExecutionError,
 )
+from app.agent.factory import create_investigation_agent, get_configured_agent_model
+from app.agent.llm_model import LLMDecisionModel
 from app.agent.loop import InvestigationAgent
 from app.agent.models import AgentAction, AgentMetrics, AgentState, ToolResult
 from app.agent.tools import ToolRegistry, get_default_tool_registry
@@ -18,8 +20,11 @@ __all__ = [
     "AgentToolExecutionError",
     "HeuristicAgentModel",
     "InvestigationAgent",
+    "LLMDecisionModel",
     "ScriptedAgentModel",
     "ToolRegistry",
     "ToolResult",
+    "create_investigation_agent",
+    "get_configured_agent_model",
     "get_default_tool_registry",
 ]

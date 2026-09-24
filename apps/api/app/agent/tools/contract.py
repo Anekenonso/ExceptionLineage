@@ -14,15 +14,20 @@ class FindContractTool(BaseTool):
 
     name = "find_contract"
     description = "Retrieve contract terms, validity period, and customer link given contract_id."
+    parameters = {
+        "contract_id": {
+            "type": "string",
+            "description": "Unique identifier of the governing contract to retrieve",
+            "required": True,
+        }
+    }
 
     def execute(self, arguments: dict[str, Any], lineage_repo: LineageRepository) -> ToolResult:
+        is_valid, err = self.validate_arguments(arguments)
+        if not is_valid:
+            return ToolResult(tool_name=self.name, success=False, error=err)
+
         contract_id = arguments.get("contract_id")
-        if not contract_id:
-            return ToolResult(
-                tool_name=self.name,
-                success=False,
-                error="Argument 'contract_id' is required",
-            )
 
         data = lineage_repo.get_contract(contract_id)
         if not data or not data.get("contract"):

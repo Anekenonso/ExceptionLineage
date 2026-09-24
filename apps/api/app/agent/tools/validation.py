@@ -14,8 +14,13 @@ class ValidateInvestigationTool(BaseTool):
 
     name = "validate_investigation"
     description = "Conclude evidence gathering and proceed to authoritative deterministic validation."
+    parameters = {}
 
     def execute(self, arguments: dict[str, Any], lineage_repo: LineageRepository) -> ToolResult:
+        is_valid, err = self.validate_arguments(arguments)
+        if not is_valid:
+            return ToolResult(tool_name=self.name, success=False, error=err)
+
         return ToolResult(
             tool_name=self.name,
             success=True,

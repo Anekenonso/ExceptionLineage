@@ -14,15 +14,20 @@ class GetInvoiceTool(BaseTool):
 
     name = "get_invoice"
     description = "Retrieve invoice details, billed customer, and exception link given invoice_id."
+    parameters = {
+        "invoice_id": {
+            "type": "string",
+            "description": "Unique identifier of the target invoice to look up",
+            "required": True,
+        }
+    }
 
     def execute(self, arguments: dict[str, Any], lineage_repo: LineageRepository) -> ToolResult:
+        is_valid, err = self.validate_arguments(arguments)
+        if not is_valid:
+            return ToolResult(tool_name=self.name, success=False, error=err)
+
         invoice_id = arguments.get("invoice_id")
-        if not invoice_id:
-            return ToolResult(
-                tool_name=self.name,
-                success=False,
-                error="Argument 'invoice_id' is required",
-            )
 
         data = lineage_repo.get_invoice(invoice_id)
         if not data or not data.get("invoice"):

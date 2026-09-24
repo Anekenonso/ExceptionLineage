@@ -54,6 +54,15 @@ class AgentMetrics(BaseModel):
     duplicate_tool_calls: int = Field(default=0, description="Repeated identical tool calls")
     termination_reason: str | None = Field(default=None, description="Reason why the agent loop ended")
 
+    # LLM operational metrics
+    llm_calls: int = Field(default=0, description="Total calls made to the LLM model adapter")
+    llm_failures: int = Field(default=0, description="Total network, timeout, or auth failures with LLM")
+    llm_retries: int = Field(default=0, description="Retries performed due to malformed structured output")
+    malformed_actions: int = Field(default=0, description="Total malformed actions returned by the model")
+    prompt_tokens: int | None = Field(default=None, description="Reported prompt tokens if available")
+    completion_tokens: int | None = Field(default=None, description="Reported completion tokens if available")
+    total_tokens: int | None = Field(default=None, description="Total tokens used if available")
+
 
 class AgentState(BaseModel):
     """State of an ongoing investigation agent session."""

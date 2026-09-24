@@ -14,15 +14,20 @@ class FindApprovalsTool(BaseTool):
 
     name = "find_approvals"
     description = "Retrieve executive or managerial approval records given exception_id."
+    parameters = {
+        "exception_id": {
+            "type": "string",
+            "description": "Operational transaction exception identifier to check approvals for",
+            "required": True,
+        }
+    }
 
     def execute(self, arguments: dict[str, Any], lineage_repo: LineageRepository) -> ToolResult:
+        is_valid, err = self.validate_arguments(arguments)
+        if not is_valid:
+            return ToolResult(tool_name=self.name, success=False, error=err)
+
         exception_id = arguments.get("exception_id")
-        if not exception_id:
-            return ToolResult(
-                tool_name=self.name,
-                success=False,
-                error="Argument 'exception_id' is required",
-            )
 
         approvals = lineage_repo.get_approvals(exception_id)
         return ToolResult(

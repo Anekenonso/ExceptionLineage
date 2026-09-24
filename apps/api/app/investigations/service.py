@@ -7,6 +7,7 @@ import uuid
 from typing import Any
 
 from app.agent.exceptions import AgentStepLimitExceededError
+from app.agent.factory import create_investigation_agent
 from app.agent.loop import InvestigationAgent
 from app.graph.lineage import LineageRepository, Neo4jLineageRepository
 from app.investigations.exceptions import (
@@ -73,7 +74,7 @@ class InvestigationService:
         self.agent = (
             agent
             if agent is not None
-            else InvestigationAgent(lineage_repo=self.lineage_repository)
+            else create_investigation_agent(lineage_repo=self.lineage_repository)
         )
 
     def create_investigation(

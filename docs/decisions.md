@@ -169,5 +169,36 @@
    - Real: FastAPI endpoints, InvestigationService, InvestigationStateMachine, ValidationEngine, LineageRepository interface, tool registry, bounded agent loop, audit event logging, and execution metrics.
    - Simulated / Test Doubles: `HeuristicAgentModel` and `ScriptedAgentModel` serve as deterministic models for offline and CI verification without requiring live external LLM API keys. Live LLM adapter endpoints plug into the same `AgentModel` interface in subsequent stages.
 
+---
+
+## ADR-013: Real LLM Decision Layer & Boundary Isolation
+
+**Date:** 2026-09-24
+
+**Decision:** Introduce an LLM-backed decision model (`LLMDecisionModel`) conforming to the existing `AgentModel` interface. The model dynamically inspects `AgentState` and machine-readable tool schemas to return structured `AgentAction` decisions via OpenAI-compatible endpoints. The deterministic `HeuristicAgentModel` remains the default baseline. Live LLM execution is strictly optional and test-gated (`RUN_LLM_AGENT_TESTS=true`).
+
+**Rationale:**
+1. **Isolation Behind AgentModel**: To prevent vendor lock-in and leaky abstractions, all LLM communication (HTTP transport, prompts, payload serialization, output parsing, retry logic) is contained entirely inside `app/agent/llm_model.py`. The `InvestigationAgent`, `InvestigationService`, and `ValidationEngine` only interact with the polymorphic `AgentModel` contract.
+2. **Strict Authority Boundary ("AI handles ambiguity. Code handles authority")**:
+   - The LLM is responsible only for choosing which evidence-gathering tool to invoke next and determining when sufficient evidence has been collected to request validation.
+   - The LLM is strictly prohibited from declaring an invoice `VERIFIED` or `NOT_VERIFIED`, calculating authoritative dollar amounts, or overriding validation rules.
+   - Authoritative business outcomes are generated exclusively by the deterministic `ValidationEngine` and `InvestigationStateMachine`.
+3. **No Direct Cypher, SQL, or Database Access**: The LLM never communicates directly with Neo4j or executes arbitrary queries. All evidentiary interactions are mediated through typed tools executing against the `LineageRepository` abstraction.
+4. **Structured Action Output & Machine-Readable Tool Schemas**:
+   - The model must respond with valid JSON adhering to the `AgentAction` schema (`action`, `arguments`, `reason`). Free-form text responses are rejected.
+   - Tool descriptions and parameter requirements provided in the system prompt are derived dynamically from `ToolRegistry.get_tool_definitions()`, ensuring the prompt and tool implementations never drift.
+5. **Upfront Tool Argument Validation**:
+   - Before any tool is invoked, `ToolRegistry.validate_action` validates tool existence, required arguments, argument types, and rejects unknown arguments.
+   - A single bounded retry is granted for malformed JSON or invalid schema before terminating with an explicit agent failure.
+6. **Strict Distinction Between Technical Failure and Evidence Absence**:
+   - Network timeouts, authentication errors (HTTP 401/403), or rate limits (HTTP 429) raise `AgentToolExecutionError`, transitioning the investigation to `FAILED`.
+   - Technical failures are never misclassified as `INSUFFICIENT_EVIDENCE`.
+7. **Offline Safety and Baseline Benchmark Integrity**:
+   - The default configuration remains `AGENT_MODEL=heuristic`, allowing developers and CI pipelines to run 100% of unit and integration tests without external API keys or network access.
+   - All 8 benchmark cases remain runnable deterministically without credentials.
+   - Live LLM integration tests are gated behind `RUN_LLM_AGENT_TESTS=true` and skipped by default.
+8. **Anti-Leakage Enforcement**: AST checks enforce that `app/agent` has zero imports of test datasets, ground truth, or benchmark expectations, preventing prompt contamination.
+
+
 
 

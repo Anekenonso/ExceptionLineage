@@ -14,15 +14,20 @@ class GetSOWsTool(BaseTool):
 
     name = "get_sows"
     description = "Retrieve list of Statements of Work (SOWs), deliverable scope, and baseline fees for contract_id."
+    parameters = {
+        "contract_id": {
+            "type": "string",
+            "description": "Governing contract identifier whose Statements of Work to retrieve",
+            "required": True,
+        }
+    }
 
     def execute(self, arguments: dict[str, Any], lineage_repo: LineageRepository) -> ToolResult:
+        is_valid, err = self.validate_arguments(arguments)
+        if not is_valid:
+            return ToolResult(tool_name=self.name, success=False, error=err)
+
         contract_id = arguments.get("contract_id")
-        if not contract_id:
-            return ToolResult(
-                tool_name=self.name,
-                success=False,
-                error="Argument 'contract_id' is required",
-            )
 
         sows = lineage_repo.get_sows(contract_id)
         return ToolResult(
