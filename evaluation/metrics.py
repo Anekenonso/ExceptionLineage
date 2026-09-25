@@ -199,6 +199,33 @@ def compute_aggregate_metrics(case_results: list[CaseResult]) -> AggregateMetric
     duplicate_calls = sum(c.duplicate_tool_calls for c in case_results)
     validation_calls = sum(c.validation_calls for c in case_results)
 
+    total_unnecessary = sum(c.unnecessary_tool_calls for c in case_results)
+    mean_unnecessary = round(total_unnecessary / total_cases, 2)
+
+    recovery_vals = [c.recovery_success for c in case_results if c.recovery_success is not None]
+    recovery_rate = (
+        round(sum(1 for r in recovery_vals if r) / len(recovery_vals), 4)
+        if recovery_vals
+        else None
+    )
+
+    early_terms = sum(
+        1 for c in case_results
+        if c.agent_steps > 0 and c.agent_steps < 6 and c.status_match and c.actual_status in ("VERIFIED", "NOT_VERIFIED", "INSUFFICIENT_EVIDENCE", "NEEDS_REVIEW")
+    )
+
+    # Graph vs Flat metrics
+    multihop_vals = [c.multihop_completeness for c in case_results if c.multihop_completeness is not None]
+    avg_multihop = round(sum(multihop_vals) / len(multihop_vals), 4) if multihop_vals else None
+
+    total_irrelevant = sum(c.irrelevant_retrieval_count for c in case_results)
+
+    prov_vals = [c.provenance_completeness for c in case_results if c.provenance_completeness is not None]
+    avg_prov = round(sum(prov_vals) / len(prov_vals), 4) if prov_vals else None
+
+    total_retrieval_ops = sum(c.retrieval_operations for c in case_results)
+    mean_retrieval_ops = round(total_retrieval_ops / total_cases, 2)
+
     # 5. Termination counts
     term_counts: dict[str, int] = {
         "VERIFIED": 0,
@@ -272,6 +299,14 @@ def compute_aggregate_metrics(case_results: list[CaseResult]) -> AggregateMetric
         failed_tool_calls=failed_calls,
         duplicate_tool_calls=duplicate_calls,
         validation_calls=validation_calls,
+        total_unnecessary_tool_calls=total_unnecessary,
+        mean_unnecessary_tool_calls=mean_unnecessary,
+        recovery_rate=recovery_rate,
+        early_terminations=early_terms,
+        multihop_completeness=avg_multihop,
+        total_irrelevant_retrievals=total_irrelevant,
+        provenance_completeness=avg_prov,
+        mean_retrieval_operations=mean_retrieval_ops,
         termination_counts=term_counts,
         total_malformed_actions=malformed,
         total_unknown_tools=unknown_tools,

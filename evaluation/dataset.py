@@ -31,6 +31,8 @@ class BenchmarkCase:
     relevant_evidence_ids: list[str] = field(default_factory=list)
     explanation: str | None = None
     known_failure_condition: str | None = None
+    unnecessary_tool_names: list[str] = field(default_factory=list)
+    branching_type: str | None = None
 
 
 def find_project_data_dir() -> Path:
@@ -51,8 +53,12 @@ def load_benchmark_cases(dataset_name: str = "benchmark") -> list[BenchmarkCase]
     """Load benchmark cases joining cases.json and ground_truth.json.
 
     Args:
-        dataset_name: 'benchmark' for standard 8 cases, or 'extended' for edge-case scenarios.
+        dataset_name: 'benchmark' for standard 8 cases, 'extended' for edge-case scenarios,
+                      'adaptive' for branching scenarios, or 'all' for full combination.
     """
+    if dataset_name == "adaptive":
+        return _get_adaptive_scenarios()
+
     data_dir = find_project_data_dir()
     gt_file = data_dir / "ground_truth" / "ground_truth.json"
     cases_file = data_dir / "cases" / "cases.json"
@@ -90,10 +96,13 @@ def load_benchmark_cases(dataset_name: str = "benchmark") -> list[BenchmarkCase]
         )
         cases.append(case)
 
-    if dataset_name == "extended":
-        # Add controlled harder scenarios (CASE-009 through CASE-011)
+    if dataset_name in ("extended", "all"):
+        # Add controlled harder scenarios (CASE-009 through CASE-010)
         extended_cases = _get_extended_scenarios()
         cases.extend(extended_cases)
+
+    if dataset_name == "all":
+        cases.extend(_get_adaptive_scenarios())
 
     return cases
 
@@ -134,6 +143,105 @@ def _get_extended_scenarios() -> list[BenchmarkCase]:
             relevant_evidence_ids=["EV-001"],
             explanation="Amendment scope does not cover billed line items.",
             known_failure_condition="IRRELEVANT_AMENDMENT_SCOPE",
+        ),
+    ]
+
+
+def _get_adaptive_scenarios() -> list[BenchmarkCase]:
+    """Controlled branching investigation scenarios designed to evaluate adaptive vs fixed workflows (Stage 18.5)."""
+    return [
+        BenchmarkCase(
+            case_id="BRANCH-001",
+            invoice_id="INV-2001",
+            expected_status="VERIFIED",
+            scenario_type="BASE_CONTRACT_MATCH_EARLY_STOP",
+            title="Direct Base Contract Rate Match",
+            description="Invoice amount matches base contract standard rate exactly ($10,000); no exception exists.",
+            core_question="Does the agent terminate early upon discovering the invoice matches the base contract without querying unnecessary amendments or SOWs?",
+            governing_contract_id="CTR-001",
+            applicable_amendment_ids=[],
+            applicable_sow_ids=[],
+            exception_id=None,
+            approval_id=None,
+            relevant_evidence_ids=["EV-001"],
+            explanation="Billed amount matches base contract standard rate; no variance exception requires investigation.",
+            unnecessary_tool_names=["get_contract_amendments", "get_sows", "find_approvals"],
+            branching_type="EARLY_STOP_BASE_MATCH",
+        ),
+        BenchmarkCase(
+            case_id="BRANCH-002",
+            invoice_id="INV-2002",
+            expected_status="INSUFFICIENT_EVIDENCE",
+            scenario_type="SEVERED_CONTRACT_EARLY_STOP",
+            title="Severed Governing Contract Lineage",
+            description="Invoice cites contract CTR-NONEXISTENT which does not exist in graph; lineage is severed.",
+            core_question="Does the agent abort further discovery when governing contract is missing, avoiding redundant approval or evidence queries?",
+            governing_contract_id=None,
+            applicable_amendment_ids=[],
+            applicable_sow_ids=[],
+            exception_id="EX-2002",
+            approval_id=None,
+            relevant_evidence_ids=[],
+            explanation="Governing contract is absent in the graph, rendering the transaction unanchored.",
+            known_failure_condition="MISSING_CONTRACT",
+            unnecessary_tool_names=["get_contract_amendments", "get_sows", "get_related_evidence"],
+            branching_type="EARLY_STOP_MISSING_CONTRACT",
+        ),
+        BenchmarkCase(
+            case_id="BRANCH-003",
+            invoice_id="INV-2003",
+            expected_status="VERIFIED",
+            scenario_type="AMENDMENT_VARIANCE_AVOID_SOWS",
+            title="Software Support Rate Variance Disregarding SOWs",
+            description="Invoice billed under executed amendment AMD-001 with executive approval APR-001 on file. Querying SOWs is unnecessary.",
+            core_question="Does the agent recognize that an authorizing amendment and approval fully govern the variance, avoiding unnecessary SOW searches?",
+            governing_contract_id="CTR-001",
+            applicable_amendment_ids=["AMD-001"],
+            applicable_sow_ids=[],
+            exception_id="EX-001",
+            approval_id="APR-001",
+            relevant_evidence_ids=["EV-001", "EV-002", "EV-003"],
+            explanation="Tier-1 support discount authorized by AMD-001 and approved under APR-001.",
+            unnecessary_tool_names=["get_sows"],
+            branching_type="AVOID_IRRELEVANT_SOWS",
+        ),
+        BenchmarkCase(
+            case_id="BRANCH-004",
+            invoice_id="INV-2004",
+            expected_status="NOT_VERIFIED",
+            scenario_type="EXPLICIT_REJECTION_EARLY_STOP",
+            title="Explicit Executive Rejection on File",
+            description="Invoice exception EX-2004 has an approval record that is explicitly REJECTED by VP of Finance.",
+            core_question="Does the agent recognize that formal approval rejection invalidates variance and halt further amendment/SOW queries?",
+            governing_contract_id="CTR-001",
+            applicable_amendment_ids=[],
+            applicable_sow_ids=[],
+            exception_id="EX-2004",
+            approval_id="APR-2004",
+            relevant_evidence_ids=["EV-2004"],
+            explanation="Formal rejection on file directly invalidates the exception variance.",
+            known_failure_condition="REJECTED_APPROVAL",
+            unnecessary_tool_names=["get_contract_amendments", "get_sows"],
+            branching_type="EARLY_STOP_ON_REJECTION",
+        ),
+        BenchmarkCase(
+            case_id="BRANCH-005",
+            invoice_id="INV-2005",
+            expected_status="NEEDS_REVIEW",
+            scenario_type="CONFLICTING_AMENDMENTS_EARLY_VALIDATE",
+            title="Conflicting Concurrent Rate Amendments",
+            description="Contract has two concurrent active amendments (AMD-005 and AMD-006) authorizing contradictory rates.",
+            core_question="Does the agent detect irreconcilable amendment conflict and proceed directly to validation for review without querying SOWs or approvals?",
+            governing_contract_id="CTR-001",
+            applicable_amendment_ids=["AMD-005", "AMD-006"],
+            applicable_sow_ids=[],
+            exception_id="EX-005",
+            approval_id=None,
+            relevant_evidence_ids=["EV-005", "EV-006"],
+            explanation="Concurrent conflicting rate amendments require legal review.",
+            known_failure_condition="CONFLICTING_AMENDMENTS",
+            unnecessary_tool_names=["get_sows"],
+            branching_type="EARLY_ESCALATE_ON_CONFLICT",
         ),
     ]
 
@@ -219,15 +327,121 @@ def load_seed_lineages() -> dict[str, dict[str, Any]]:
         "sows": [],
         "evidence": [],
     }
-    lineages["INV-9002"] = {
-        "invoice": {"id": "INV-9002", "amount": 14000.0, "customer_id": "CUS-001", "contract_id": "CTR-001", "product_code": "PROD-CONSULTING"},
+    # Add simulated lineages for branching scenarios (BRANCH-001 through BRANCH-005)
+    lineages["INV-2001"] = {
+        "invoice": {
+            "id": "INV-2001",
+            "invoice_number": "INV-2001",
+            "amount": "12000.00",
+            "currency": "USD",
+            "customer_id": "CUS-001",
+            "contract_id": "CTR-001",
+            "product_id": "PROD-CLOUD-SUP",
+            "issued_at": "2026-03-15T00:00:00Z",
+            "due_at": "2026-04-15T00:00:00Z",
+            "exception_id": None,
+        },
         "customer": customers.get("CUS-001"),
         "contract": contracts.get("CTR-001"),
-        "exception": {"id": "EX-9002", "type": "RATE_OVERAGE"},
+        "exception": None,
+        "approval": None,
+        "amendments": [a for a in amendments.values() if a.get("contract_id") == "CTR-001"],
+        "sows": [s for s in sows.values() if s.get("contract_id") == "CTR-001"],
+        "evidence": [ev for ev in evidence.values() if ev.get("source_id") == "CTR-001"],
+    }
+    lineages["INV-2002"] = {
+        "invoice": {
+            "id": "INV-2002",
+            "invoice_number": "INV-2002",
+            "amount": "12500.00",
+            "currency": "USD",
+            "customer_id": "CUS-002",
+            "contract_id": "CTR-NONEXISTENT",
+            "product_id": "PROD-CLOUD-SUP",
+            "issued_at": "2026-03-15T00:00:00Z",
+            "due_at": "2026-04-15T00:00:00Z",
+            "exception_id": "EX-2002",
+        },
+        "customer": customers.get("CUS-002"),
+        "contract": None,
+        "exception": {"id": "EX-2002", "invoice_id": "INV-2002", "type": "MISSING_CONTRACT", "description": "Unanchored transaction"},
         "approval": None,
         "amendments": [],
         "sows": [],
-        "evidence": [ev for ev in evidence.values() if ev.get("source_id") == "CTR-001"],
+        "evidence": [],
+    }
+    lineages["INV-2003"] = {
+        "invoice": {
+            "id": "INV-2003",
+            "invoice_number": "INV-2003",
+            "amount": "10200.00",
+            "currency": "USD",
+            "customer_id": "CUS-001",
+            "contract_id": "CTR-001",
+            "product_id": "PROD-CLOUD-SUP",
+            "issued_at": "2026-03-15T00:00:00Z",
+            "due_at": "2026-04-15T00:00:00Z",
+            "exception_id": "EX-001",
+        },
+        "customer": customers.get("CUS-001"),
+        "contract": contracts.get("CTR-001"),
+        "exception": exceptions.get("EX-001"),
+        "approval": approvals.get("APR-001"),
+        "amendments": [a for a in amendments.values() if a.get("id") == "AMD-001" or a.get("contract_id") == "CTR-001"],
+        "sows": [s for s in sows.values() if s.get("contract_id") == "CTR-001"],
+        "evidence": [ev for ev in evidence.values() if ev.get("source_id") in ("CTR-001", "AMD-001", "APR-001")],
+    }
+    lineages["INV-2004"] = {
+        "invoice": {
+            "id": "INV-2004",
+            "invoice_number": "INV-2004",
+            "amount": "14000.00",
+            "currency": "USD",
+            "customer_id": "CUS-001",
+            "contract_id": "CTR-001",
+            "product_id": "PROD-CLOUD-SUP",
+            "issued_at": "2026-03-15T00:00:00Z",
+            "due_at": "2026-04-15T00:00:00Z",
+            "exception_id": "EX-2004",
+        },
+        "customer": customers.get("CUS-001"),
+        "contract": contracts.get("CTR-001"),
+        "exception": {"id": "EX-2004", "invoice_id": "INV-2004", "type": "RATE_OVERAGE", "description": "Overtime rate revision rejected"},
+        "approval": {
+            "id": "APR-2004",
+            "exception_id": "EX-2004",
+            "status": "REJECTED",
+            "approver_role": "VP_FINANCE",
+            "approver_name": "Executive Rejection",
+            "notes": "Budget freeze rejection",
+        },
+        "amendments": [a for a in amendments.values() if a.get("contract_id") == "CTR-001"],
+        "sows": [],
+        "evidence": [{"id": "EV-2004", "source_id": "APR-2004", "type": "REJECTION_MEMO", "text": "Formal executive rejection of variance."}],
+    }
+    lineages["INV-2005"] = {
+        "invoice": {
+            "id": "INV-2005",
+            "invoice_number": "INV-2005",
+            "amount": "11250.00",
+            "currency": "USD",
+            "customer_id": "CUS-001",
+            "contract_id": "CTR-001",
+            "product_id": "PROD-CLOUD-SUP",
+            "issued_at": "2026-03-15T00:00:00Z",
+            "due_at": "2026-04-15T00:00:00Z",
+            "exception_id": "EX-005",
+        },
+        "customer": customers.get("CUS-001"),
+        "contract": contracts.get("CTR-001"),
+        "exception": exceptions.get("EX-005"),
+        "approval": None,
+        "amendments": [
+            a for a in amendments.values()
+            if a.get("id") in ("AMD-005", "AMD-006") or a.get("contract_id") == "CTR-001"
+        ],
+        "sows": [s for s in sows.values() if s.get("contract_id") == "CTR-001"],
+        "evidence": [ev for ev in evidence.values() if ev.get("source_id") in ("AMD-005", "AMD-006")],
     }
 
     return lineages

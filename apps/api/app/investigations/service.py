@@ -19,6 +19,7 @@ from app.investigations.repository import (
     InvestigationRepository,
 )
 from app.investigations.state_machine import InvestigationStateMachine
+from app.investigations.trace import InvestigationEvidenceTrace, build_evidence_trace
 from app.models.common import utc_now
 from app.models.enums import InvestigationEventType, InvestigationStatus
 from app.models.investigation import Investigation, InvestigationEvent
@@ -243,6 +244,24 @@ class InvestigationService:
         # 1. Start investigation (QUEUED -> INVESTIGATING)
         self.start_investigation(inv.id, reason="Investigation initiated")
 
+        # Record explicit INPUT event
+        self.repository.append_event(
+            InvestigationEvent(
+                id=f"evt-{uuid.uuid4().hex[:12]}",
+                investigation_id=inv.id,
+                from_state=InvestigationStatus.INVESTIGATING,
+                to_state=InvestigationStatus.INVESTIGATING,
+                reason="Investigation input registered",
+                event_type=InvestigationEventType.INPUT,
+                message=f"Investigation initiated for invoice '{invoice_id}'",
+                metadata={
+                    "invoice_id": invoice_id,
+                    "exception_id": exception_id,
+                    "data_mode": "SIMULATED",
+                },
+            )
+        )
+
         # 2. Evidence Discovery via Agent (or provided context)
         if context_or_lineage is not None:
             ctx = context_or_lineage
@@ -308,6 +327,28 @@ class InvestigationService:
         # 4. Evaluate deterministic rules & apply outcome
         try:
             outcome = self.validation_engine.validate(ctx)
+
+            # Record fine-grained deterministic validation check events
+            for res in outcome.results:
+                self.repository.append_event(
+                    InvestigationEvent(
+                        id=f"evt-{uuid.uuid4().hex[:12]}",
+                        investigation_id=inv.id,
+                        from_state=InvestigationStatus.VALIDATING,
+                        to_state=InvestigationStatus.VALIDATING,
+                        reason=f"Rule '{res.check_name}' evaluated: {res.status.value}",
+                        event_type=InvestigationEventType.VALIDATION,
+                        message=res.message,
+                        metadata={
+                            "check": res.check_name,
+                            "status": res.status.value,
+                            "is_required": res.is_required,
+                            "evidence_ids": res.evidence_ids,
+                            "message": res.message,
+                        },
+                    )
+                )
+
             self.apply_validation_outcome(inv.id, outcome)
         except Exception as exc:
             logger.exception("Technical failure during validation: %s", exc)
@@ -316,3 +357,9 @@ class InvestigationService:
             )
 
         return self.get_investigation(inv.id)
+
+    def get_evidence_trace(self, investigation_id: str) -> InvestigationEvidenceTrace:
+        """Construct a complete, machine-readable evidence trace for an investigation."""
+        inv = self.get_investigation(investigation_id)
+        events = self.get_all_events(investigation_id)
+        return build_evidence_trace(inv, events)

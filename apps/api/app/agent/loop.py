@@ -154,6 +154,31 @@ class InvestigationAgent:
                         "evidence_count": len(result.evidence),
                     },
                 )
+                if result.success:
+                    rel_map = {
+                        "get_invoice": ["[:BILLED_TO]", "[:HAS_EXCEPTION]"],
+                        "find_contract": ["[:GOVERNED_BY]"],
+                        "get_contract_amendments": ["[:HAS_AMENDMENT]"],
+                        "get_sows": ["[:HAS_SOW]"],
+                        "find_approvals": ["[:HAS_APPROVAL]"],
+                        "get_related_evidence": ["[:HAS_EVIDENCE]"],
+                    }
+                    ev_ids = [
+                        e["id"] for e in (result.evidence or [])
+                        if isinstance(e, dict) and "id" in e
+                    ]
+                    event_recorder(
+                        InvestigationEventType.EVIDENCE_FOUND,
+                        f"Graph retrieval for '{action.action}' completed: {len(ev_ids)} evidence item(s)",
+                        {
+                            "step": state.steps,
+                            "tool": action.action,
+                            "source": "knowledge_graph",
+                            "relationships": rel_map.get(action.action, []),
+                            "evidence_ids": ev_ids,
+                            "record_keys": list(result.data.keys()) if isinstance(result.data, dict) else [],
+                        },
+                    )
 
         duration_ms = (time.perf_counter() - start_time) * 1000
         metrics.investigation_duration_ms = round(duration_ms, 2)

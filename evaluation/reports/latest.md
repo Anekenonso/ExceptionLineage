@@ -1,8 +1,8 @@
 # Stage 18 Evaluation Report
 
-- **Suite ID:** `suite-060e25571bee`
-- **Timestamp:** `2026-09-25T16:07:39.295552+00:00`
-- **Git Commit:** `36f53860ff16e8537a6697d6cfd45b2fedae2d23`
+- **Suite ID:** `suite-98c22aae2326`
+- **Timestamp:** `2026-09-25T21:05:40.100794+00:00`
+- **Git Commit:** `d162474675479e3a845bec92e3f846e47f2ab0b1`
 - **Dataset Version:** `benchmark-v1`
 
 ---
@@ -27,8 +27,8 @@ Crucially, the evaluation confirmed that the system **fails closed safely**: whe
 
 | Baseline | Model Provider | Model Name | Status | Accuracy | Mean Evidence Recall | Total Tool Calls | Tool Errors | Mean Duration (ms) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **deterministic_baseline** | deterministic | ValidationEngine | `COMPLETED` | 100.0% (8/8) | 100.0% | 0 | 0 | 0.39 ms |
-| **heuristic_baseline** | heuristic | HeuristicAgentModel | `COMPLETED` | 100.0% (8/8) | 100.0% | 51 | 0 | 0.68 ms |
+| **deterministic_baseline** | deterministic | ValidationEngine | `COMPLETED` | 100.0% (8/8) | 100.0% | 0 | 0 | 0.37 ms |
+| **heuristic_baseline** | heuristic | HeuristicAgentModel | `COMPLETED` | 100.0% (8/8) | 100.0% | 51 | 0 | 0.47 ms |
 
 ---
 
@@ -38,7 +38,7 @@ Crucially, the evaluation confirmed that the system **fails closed safely**: whe
 
 - **Model Provider:** `gemini`
 - **Model Name:** `gemini-3.8-flash`
-- **Suite ID:** `suite-060e25571bee`
+- **Suite ID:** `suite-98c22aae2326`
 - **Cases Attempted:** 8
 - **Cases Reaching Model Completion:** 0
 - **Provider Failures:** 8
@@ -73,24 +73,18 @@ The table below details raw case-level outcomes. These represent **provider infr
 
 | Case ID | Invoice ID | Expected Status | Actual Status | Classification | Evidence Recall | Steps | Tool Calls | Duration (ms) | Diagnostic Reason |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `CASE-001` | `INV-1001` | `VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 4561.76 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
+| `CASE-001` | `INV-1001` | `VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 11140.97 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
   "error": {
  ... |
-| `CASE-002` | `INV-1002` | `INSUFFICIENT_EVIDENCE` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 1938.62 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
+| `CASE-002` | `INV-1002` | `INSUFFICIENT_EVIDENCE` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 12843.21 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
   "error": {
  ... |
-| `CASE-003` | `INV-1003` | `NOT_VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 1673.19 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
-  "error": {
- ... |
-| `CASE-004` | `INV-1004` | `NOT_VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 1855.61 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
-  "error": {
- ... |
-| `CASE-005` | `INV-1005` | `NEEDS_REVIEW` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 634.23 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
-| `CASE-006` | `INV-1006` | `NOT_VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 4137.02 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
-  "error": {
- ... |
-| `CASE-007` | `INV-1007` | `INSUFFICIENT_EVIDENCE` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 641.85 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
-| `CASE-008` | `INV-1008` | `VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 739.97 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
+| `CASE-003` | `INV-1003` | `NOT_VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 841.28 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
+| `CASE-004` | `INV-1004` | `NOT_VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 931.14 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
+| `CASE-005` | `INV-1005` | `NEEDS_REVIEW` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 808.72 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
+| `CASE-006` | `INV-1006` | `NOT_VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 1197.07 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
+| `CASE-007` | `INV-1007` | `INSUFFICIENT_EVIDENCE` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 756.59 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
+| `CASE-008` | `INV-1008` | `VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 1259.07 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
 
 ---
 

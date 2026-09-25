@@ -81,6 +81,32 @@ class CaseResult(BaseModel):
     failed_tool_calls: int = Field(default=0, description="Tool calls that failed")
     duplicate_tool_calls: int = Field(default=0, description="Repeated identical tool calls")
     validation_calls: int = Field(default=0, description="Invocations of validation tool/engine")
+    unnecessary_tool_calls: int = Field(
+        default=0,
+        description="Tool calls that were not required for this investigation",
+    )
+    recovery_success: bool | None = Field(
+        default=None,
+        description="Whether agent successfully recovered from branching/missing/conflicting paths",
+    )
+
+    # Graph vs Flat Retrieval metrics
+    multihop_completeness: float | None = Field(
+        default=None,
+        description="Fraction of multi-hop relationship paths recovered (0.0 to 1.0)",
+    )
+    irrelevant_retrieval_count: int = Field(
+        default=0,
+        description="Count of extraneous/unrelated records retrieved",
+    )
+    provenance_completeness: float | None = Field(
+        default=None,
+        description="Fraction of evidence items with verified graph edge provenance",
+    )
+    retrieval_operations: int = Field(
+        default=0,
+        description="Total retrieval queries/operations executed",
+    )
 
     # Failure metrics
     malformed_actions: int = Field(default=0, description="Malformed agent actions")
@@ -157,6 +183,32 @@ class AggregateMetrics(BaseModel):
     failed_tool_calls: int = Field(default=0, description="Sum of failed tool calls")
     duplicate_tool_calls: int = Field(default=0, description="Sum of duplicate tool calls")
     validation_calls: int = Field(default=0, description="Sum of validation invocations")
+    total_unnecessary_tool_calls: int = Field(
+        default=0, description="Sum of unnecessary tool calls across cases"
+    )
+    mean_unnecessary_tool_calls: float = Field(
+        default=0.0, description="Average unnecessary tool calls per case"
+    )
+    recovery_rate: float | None = Field(
+        default=None, description="Fraction of branching cases successfully recovered (0.0 to 1.0)"
+    )
+    early_terminations: int = Field(
+        default=0, description="Count of cases terminating appropriately before fixed sequence"
+    )
+
+    # Graph vs Flat Retrieval aggregates
+    multihop_completeness: float | None = Field(
+        default=None, description="Average multi-hop relationship path completeness across cases"
+    )
+    total_irrelevant_retrievals: int = Field(
+        default=0, description="Sum of extraneous records returned across cases"
+    )
+    provenance_completeness: float | None = Field(
+        default=None, description="Average evidence provenance completeness across cases"
+    )
+    mean_retrieval_operations: float = Field(
+        default=0.0, description="Average retrieval operations per case"
+    )
 
     # Termination counts
     termination_counts: dict[str, int] = Field(

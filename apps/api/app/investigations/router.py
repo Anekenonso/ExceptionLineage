@@ -9,6 +9,7 @@ from app.investigations.schemas import (
     InvestigationResponse,
 )
 from app.investigations.service import InvestigationService
+from app.investigations.trace import InvestigationEvidenceTrace
 from app.models.investigation import InvestigationEvent
 
 router = APIRouter()
@@ -86,3 +87,18 @@ def get_investigation_events(
 ) -> list[InvestigationEvent]:
     """Retrieve the chronological event log for an investigation."""
     return service.get_events(investigation_id, include_agent_events=include_agent_events)
+
+
+@router.get(
+    "/{investigation_id}/trace",
+    response_model=InvestigationEvidenceTrace,
+    summary="Get auditable machine-readable evidence trace",
+    description="Retrieves the complete end-to-end evidence trace connecting input, agent decisions, tool calls, graph retrieval, validation checks, and final outcome.",
+)
+def get_investigation_evidence_trace(
+    investigation_id: str,
+    service: InvestigationService = Depends(get_investigation_service),
+) -> InvestigationEvidenceTrace:
+    """Retrieve the machine-readable evidence chain trace for an investigation."""
+    return service.get_evidence_trace(investigation_id)
+

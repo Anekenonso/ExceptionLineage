@@ -67,12 +67,15 @@ cd apps/api
 python -m pytest tests/ -v
 ```
 
-### Running the Evaluation Harness (Stage 18)
+### Running the Evaluation Harness (Stage 18 & 18.5)
 
-Execute reproducible evaluation across the controlled benchmark cases:
+Execute reproducible evaluation across the controlled benchmark and branching cases:
 
 ```bash
-# Default: Runs Baseline A (ValidationEngine) and Baseline B (HeuristicAgentModel)
+# Stage 18.5 Architectural Proof (Claims A, B, and C):
+python evaluation/runner.py --stage-18-5
+
+# Stage 18 Default: Runs Baseline A (ValidationEngine) and Baseline B (HeuristicAgentModel)
 python evaluation/runner.py
 
 # Offline Mock LLM Evaluation:
@@ -88,11 +91,14 @@ python evaluation/runner.py --baseline heuristic
 ```
 
 Generated reports are saved to:
-- `evaluation/reports/latest.json`
-- `evaluation/reports/latest.md`
+- `evaluation/reports/stage-18-5-latest.json` (Stage 18.5 Proof Report)
+- `evaluation/reports/stage-18-5-latest.md` (Stage 18.5 Proof Markdown)
+- `evaluation/reports/latest.json` (Stage 18 Suite Report)
+- `evaluation/reports/latest.md` (Stage 18 Markdown)
 
 ## Documentation
 
+- [Architecture & Proof](docs/architecture.md)
 - [Project State](docs/project-state.md)
 - [Decisions](docs/decisions.md)
 - [Traps](docs/traps.md)
@@ -101,16 +107,13 @@ Generated reports are saved to:
 
 ## Current Status
 
-**Stage 18** — ENGINEERING COMPLETE — LIVE LLM PERFORMANCE PENDING ACTIVE PROVIDER RUN
+**Stage 18.5** — ARCHITECTURAL PROOF COMPLETE — Agent Necessity + Neo4j Necessity + End-to-End Evidence Chain Proven
 
-ExceptionLineage features an end-to-end reproducible evaluation harness quantitatively testing whether the investigation architecture correctly investigates contract/invoice exceptions, retrieves required evidence, terminates safely, and uses agent tools efficiently:
-- **Status Taxonomy**: Rigorously categorizes evaluation runs (`COMPLETED`, `BLOCKED_PROVIDER`, `PARTIAL`, `FAILED_SYSTEM`, `SKIPPED`) to avoid conflating external provider quota/network errors with model reasoning ability.
-- **Baseline A (Deterministic Validation Engine)**: Direct rule evaluation achieving **100.0% accuracy** and **100.0% evidence recall** across all 8 controlled benchmark cases.
-- **Baseline B (Heuristic Agent Model)**: Deterministic, rational agent loop achieving **100.0% accuracy**, **100.0% evidence recall**, 6.38 mean steps, and 51 total tool calls.
-- **System Under Evaluation (LLM Decision Model)**: Autonomous planning layer using OpenAI-compatible APIs or deterministic mock execution (**62.5% accuracy in mock mode**; explicitly skipped in default runs to prevent external API dependencies).
-- **Live LLM Evaluation (gpt-4o-mini)**: Status `BLOCKED_PROVIDER`. Initial run was rejected on 8/8 cases due to provider quota exhaustion (HTTP 429 `credit_balance_exhausted`), correctly classified as **UNMEASURABLE** (accuracy and recall set to null). Confirmed safe fail-closed architecture: 0 tool executions, 0 hallucinations, and all cases safely terminated as `FAILED`.
-- **Metric Rigor**: Evaluates outcome accuracy, evidence recall, fine-grained tool usage, termination breakdowns, failure counters, and token tracking without fabricated composite scores.
-- **Ground-Truth Isolation Law**: Verified by automated AST tests ensuring production modules (`app/agent`, `app/graph`, `app/investigations`, `app/api`, `app/validation`, `app/models`) contain zero imports or dependencies on ground truth.
-- **Controlled Failure Modes**: 11 dedicated failure-mode tests confirming safe handling of unknown tools, missing/invalid arguments, malformed outputs, timeouts, retry exhaustion, missing evidence (`INSUFFICIENT_EVIDENCE`), conflicting amendments (`NEEDS_REVIEW`), and step limits.
-- **Test Suite**: 265 passing unit and integration tests (2 skipped conditional live tests).
+ExceptionLineage provides empirical proof for its core architectural components:
+- **Claim A (Agent Necessity) — PROVEN**: On non-linear branching workflows (`adaptive-v1`), the adaptive agent achieves **100.0% accuracy** (vs 80.0% fixed heuristic), reduces tool calls by **25.0%** (24 vs 32 calls), eliminates **all 7 unnecessary tool calls**, and executes **3 dynamic early stops**.
+- **Claim B (Neo4j Load-Bearing Role) — PROVEN**: Removing graph relationship traversal and using flat relational lookups drops validation accuracy to **87.5%** (false amendment conflicts), returns **37 irrelevant records**, reduces provenance completeness to **20.0%**, and multiplies queries to **8.25 operations/case**. Directional graph traversal is load-bearing to prevent customer-wide context pollution.
+- **Claim C (End-to-End Evidence Chain) — PROVEN**: Produces complete, machine-readable 30-event audit traces (`GET /api/investigations/{id}/trace`) linking `INPUT -> AGENT_DECISION -> TOOL_CALL -> GRAPH_RETRIEVAL -> VALIDATION -> OUTCOME`, with complete secret sanitization and tri-state check semantics.
+- **Authority Invariant**: *"AI handles ambiguity. Code handles authority."*
+- **Test Suite**: 277 passing unit and integration tests (2 skipped conditional live tests).
+
 

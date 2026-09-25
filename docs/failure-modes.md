@@ -73,3 +73,22 @@ Under this invariant, the system must fail safely under corrupted, missing, adve
 - **Scenario:** An agent model enters an exploratory or repetitive loop without ever calling `validate_investigation`.
 - **Behavior:** The agent loop is strictly capped at `MAX_AGENT_STEPS` (default: 10). When the step count reaches the limit, `AgentStepLimitExceededError` is raised, partial metrics are preserved, and the investigation transitions to `FAILED` with `AGENT_STEP_LIMIT_EXCEEDED`.
 - **Tested by:** `tests/test_failure_modes.py::test_failure_mode_11_step_limit_exhaustion_bounds_execution`
+
+### FM-012: Context Contamination from Flat Relational Lookups
+- **Scenario:** Querying contractual amendments or SOWs using flat customer-level foreign keys without relationship graph traversal boundaries.
+- **Risk:** Amendments belonging to different contracts for the same customer are pulled into the validation context, triggering false rate conflicts and incorrect `NEEDS_REVIEW` or `NOT_VERIFIED` outcomes (accuracy drops to 87.5% in Flat mock).
+- **Defense:** Strict directional graph edge traversal (`Contract -[:AMENDED_BY]-> Amendment`) isolates the exact contract lineage, preventing cross-contract context pollution.
+- **Tested by:** `apps/api/tests/test_neo4j_removal_experiment.py::test_neo4j_removal_accuracy_impact` and `test_neo4j_removal_irrelevant_retrieval_contamination`
+
+### FM-013: Redundant Tool Loops and Blind Query Execution
+- **Scenario:** A fixed deterministic workflow executes a static sequence of tool calls regardless of intermediate discovery (e.g., continuing to query amendments and SOWs for a contract that was already found to be terminated, or failing to backtrack from dead-end SOWs).
+- **Risk:** Wasted database operations, latency, and failure to recover when alternative valid evidence paths exist.
+- **Defense:** An adaptive agent loop evaluates intermediate evidence after each tool step, terminating early when conclusive proof or early rejection is identified, and backtracking when a path proves to be a dead end.
+- **Tested by:** `apps/api/tests/test_agent_necessity_experiment.py::test_agent_necessity_tool_efficiency` and `test_agent_necessity_dead_end_recovery`
+
+### FM-014: Credential and Secret Leakage in Evidence Audit Traces
+- **Scenario:** Tool parameters, database connection metadata, or external API keys leak into public or auditable investigation traces.
+- **Risk:** Sensitive enterprise credentials exposed in compliance reports or trace logs.
+- **Defense:** Automated recursive sanitization (`_sanitize_secrets`) inspects all dictionary arguments, nested lists, and string payloads in `InvestigationEvidenceTrace`, redacting sensitive keys and known credential signatures to `[REDACTED]`.
+- **Tested by:** `apps/api/tests/test_evidence_chain_trace.py::test_trace_secret_redaction`
+

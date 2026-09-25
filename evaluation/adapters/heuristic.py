@@ -123,6 +123,20 @@ class HeuristicAgentAdapter(BaseEvaluationAdapter):
                 or "VALIDATION_COMPLETED"
             )
 
+            executed_tool_names = [
+                e.metadata.get("tool") or e.metadata.get("action")
+                for e in all_events
+                if e.event_type == InvestigationEventType.TOOL_CALL and e.metadata
+            ]
+            unnecessary_called = sum(
+                1 for t in executed_tool_names
+                if t in getattr(case, "unnecessary_tool_names", [])
+            )
+            is_branching = getattr(case, "branching_type", None) is not None
+            recovery_success = None
+            if is_branching:
+                recovery_success = status_match and (unnecessary_called == 0) and (metrics.get("total_agent_steps", 0) <= 5)
+
             return CaseResult(
                 case_id=case.case_id,
                 invoice_id=case.invoice_id,
@@ -145,6 +159,8 @@ class HeuristicAgentAdapter(BaseEvaluationAdapter):
                 failed_tool_calls=metrics.get("failed_tool_calls", 0),
                 duplicate_tool_calls=metrics.get("duplicate_tool_calls", 0),
                 validation_calls=validation_calls,
+                unnecessary_tool_calls=unnecessary_called,
+                recovery_success=recovery_success,
                 malformed_actions=metrics.get("malformed_actions", 0),
                 unknown_tools=metrics.get("unknown_tool_calls", 0),
                 invalid_arguments=metrics.get("invalid_argument_calls", 0),
