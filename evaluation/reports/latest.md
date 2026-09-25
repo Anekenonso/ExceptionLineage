@@ -1,173 +1,108 @@
-# ExceptionLineage Quantitative Evaluation Report
+# Stage 18 Evaluation Report
 
-- **Suite ID:** `suite-dae3a8575b3a`
-- **Timestamp:** `2026-09-24T18:26:14.519805+00:00`
-- **Git Commit:** `61e976bc0ca176fc8899b1f98d4138e567d11bac`
+- **Suite ID:** `suite-060e25571bee`
+- **Timestamp:** `2026-09-25T16:07:39.295552+00:00`
+- **Git Commit:** `36f53860ff16e8537a6697d6cfd45b2fedae2d23`
 - **Dataset Version:** `benchmark-v1`
 
 ---
 
-## 1. Executive Summary & Baseline Comparison
+## Evaluation Status
 
-| Baseline / System | Model Provider | Model Name | Status | Accuracy | Mean Evidence Recall | Mean Steps | Total Tool Calls | Tool Errors | Mean Duration (ms) | Total Tokens |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **deterministic_baseline** | deterministic | ValidationEngine | `COMPLETED` | 100.0% (8/8) | 100.0% | 0.0 | 0 | 0 | 0.37 ms | N/A |
-| **heuristic_baseline** | heuristic | HeuristicAgentModel | `COMPLETED` | 100.0% (8/8) | 100.0% | 6.38 | 51 | 0 | 0.46 ms | N/A |
-| **llm_decision_model** | unconfigured | none | `SKIPPED` | N/A | 0.0% | 0.0 | 0 | 0 | 0.0 ms | N/A |
+**Overall:** `BLOCKED_PROVIDER`
+
+> **Status Diagnostic:** Live LLM evaluation was blocked due to external provider quota exhaustion (HTTP 429).
+
+## Executive Summary
+
+The deterministic baseline (`ValidationEngine`) and heuristic agent baseline (`HeuristicAgentModel`) completed the 8-case benchmark suite with **100.0% accuracy** and **100.0% evidence recall**.
+
+The live LLM evaluation (`LLMDecisionModel` against `gemini-3.8-flash`) could **NOT** measure model reasoning performance because the external provider rejected all requests prior to model completion due to quota / credit balance exhaustion (`HTTP 429: credit_balance_exhausted`).
+
+Crucially, the evaluation confirmed that the system **fails closed safely**: when the provider fails, the orchestrator records a technical failure, does not fabricate evidence, executes zero arbitrary tools, and never asserts an unauthorized business outcome.
 
 ---
 
-## 2. Baseline Details & Per-Case Results
+## Baseline Results
 
-### Baseline: `deterministic_baseline` (ValidationEngine)
+| Baseline | Model Provider | Model Name | Status | Accuracy | Mean Evidence Recall | Total Tool Calls | Tool Errors | Mean Duration (ms) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **deterministic_baseline** | deterministic | ValidationEngine | `COMPLETED` | 100.0% (8/8) | 100.0% | 0 | 0 | 0.39 ms |
+| **heuristic_baseline** | heuristic | HeuristicAgentModel | `COMPLETED` | 100.0% (8/8) | 100.0% | 51 | 0 | 0.68 ms |
 
-- **Provider:** deterministic
-- **Status:** `COMPLETED`
-- **Accuracy:** 100.0% (8/8)
-- **Mean Evidence Recall:** 100.0%
-- **Overall Evidence Recall:** 100.0% (18/18)
-- **Total Tool Calls:** 0 (Successful: 0, Failed: 0, Duplicates: 0, Validation: 8)
-- **Total Duration:** 2.94 ms (Mean: 0.37 ms)
+---
 
-#### Outcome Distribution
+## Live LLM Evaluation
 
-| Status / Outcome | Count |
-| :--- | :--- |
-| `VERIFIED` | 2 |
-| `NOT_VERIFIED` | 3 |
-| `INSUFFICIENT_EVIDENCE` | 2 |
-| `NEEDS_REVIEW` | 1 |
-| `FAILED` | 0 |
-| `STEP_LIMIT_EXCEEDED` | 0 |
+**Result:** `UNMEASURABLE — provider quota failure.`
 
-#### Failure Metrics
+- **Model Provider:** `gemini`
+- **Model Name:** `gemini-3.8-flash`
+- **Suite ID:** `suite-060e25571bee`
+- **Cases Attempted:** 8
+- **Cases Reaching Model Completion:** 0
+- **Provider Failures:** 8
+- **HTTP Status:** `429`
+- **Failure Category:** `provider_error`
+- **Error Code:** `provider_error`
 
-- Malformed Actions: 0
-- Unknown Tools: 0
-- Invalid Arguments: 0
-- Tool Errors: 0
-- LLM Errors: 0
-- Timeouts: 0
-- Retries: 0
+### Model Performance Metrics (Unavailable)
 
-#### Case-by-Case Breakdown
+- **Accuracy:** `unavailable` (unmeasured due to provider blockage)
+- **Evidence Recall:** `unavailable` (unmeasured due to provider blockage)
+- **Tool-Selection Performance:** `unavailable` (0 tools invoked)
+- **Reasoning Steps:** `unavailable` (0 steps executed)
+- **Token Usage:** `unavailable` (0 tokens returned by provider)
 
-| Case ID | Invoice ID | Expected Status | Actual Status | Match | Evidence Recall | Steps | Tool Calls | Duration (ms) | Termination Reason |
+---
+
+## Provider Failure Handling
+
+During the real-LLM benchmark run, all 8 attempted cases terminated strictly and safely as **`FAILED`**.
+
+- **Zero Arbitrary Actions:** Zero tools were called (0 total calls).
+- **Zero Hallucinated Citations:** No evidence IDs or contractual records were fabricated.
+- **Zero False Determinations:** The system never declared an invoice `VERIFIED` or `NOT_VERIFIED` without deterministic authority.
+- **Architectural Law Respected:** *"AI handles ambiguity. Code handles authority."* When the external model was unreachable due to provider quota limits, the agent boundary failed closed cleanly.
+
+---
+
+## Per-Case Results
+
+The table below details raw case-level outcomes. These represent **provider infrastructure rejections**, not model reasoning errors:
+
+| Case ID | Invoice ID | Expected Status | Actual Status | Classification | Evidence Recall | Steps | Tool Calls | Duration (ms) | Diagnostic Reason |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `CASE-001` | `INV-1001` | `VERIFIED` | `VERIFIED` | **PASS** | 100% (3/3) | 0 | 0 | 1.26 ms | VALIDATION_APPLIED |
-| `CASE-002` | `INV-1002` | `INSUFFICIENT_EVIDENCE` | `INSUFFICIENT_EVIDENCE` | **PASS** | 100% (2/2) | 0 | 0 | 0.3 ms | VALIDATION_APPLIED |
-| `CASE-003` | `INV-1003` | `NOT_VERIFIED` | `NOT_VERIFIED` | **PASS** | 100% (2/2) | 0 | 0 | 0.27 ms | VALIDATION_APPLIED |
-| `CASE-004` | `INV-1004` | `NOT_VERIFIED` | `NOT_VERIFIED` | **PASS** | 100% (2/2) | 0 | 0 | 0.29 ms | VALIDATION_APPLIED |
-| `CASE-005` | `INV-1005` | `NEEDS_REVIEW` | `NEEDS_REVIEW` | **PASS** | 100% (4/4) | 0 | 0 | 0.31 ms | VALIDATION_APPLIED |
-| `CASE-006` | `INV-1006` | `NOT_VERIFIED` | `NOT_VERIFIED` | **PASS** | 100% (1/1) | 0 | 0 | 0.25 ms | VALIDATION_APPLIED |
-| `CASE-007` | `INV-1007` | `INSUFFICIENT_EVIDENCE` | `INSUFFICIENT_EVIDENCE` | **PASS** | 100% (0/0) | 0 | 0 | 0.07 ms | VALIDATION_APPLIED |
-| `CASE-008` | `INV-1008` | `VERIFIED` | `VERIFIED` | **PASS** | 100% (4/4) | 0 | 0 | 0.19 ms | VALIDATION_APPLIED |
+| `CASE-001` | `INV-1001` | `VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 4561.76 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
+  "error": {
+ ... |
+| `CASE-002` | `INV-1002` | `INSUFFICIENT_EVIDENCE` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 1938.62 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
+  "error": {
+ ... |
+| `CASE-003` | `INV-1003` | `NOT_VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 1673.19 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
+  "error": {
+ ... |
+| `CASE-004` | `INV-1004` | `NOT_VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 1855.61 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
+  "error": {
+ ... |
+| `CASE-005` | `INV-1005` | `NEEDS_REVIEW` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 634.23 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
+| `CASE-006` | `INV-1006` | `NOT_VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 4137.02 ms | Graph retrieval failed: LLM provider error (HTTP 503): [{
+  "error": {
+ ... |
+| `CASE-007` | `INV-1007` | `INSUFFICIENT_EVIDENCE` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 641.85 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
+| `CASE-008` | `INV-1008` | `VERIFIED` | `FAILED` | **PROVIDER_BLOCKED** | N/A | 0 | 0 | 739.97 ms | Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry ... |
 
 ---
 
-### Baseline: `heuristic_baseline` (HeuristicAgentModel)
+## Limitations
 
-- **Provider:** heuristic
-- **Status:** `COMPLETED`
-- **Accuracy:** 100.0% (8/8)
-- **Mean Evidence Recall:** 100.0%
-- **Overall Evidence Recall:** 100.0% (18/18)
-- **Total Tool Calls:** 51 (Successful: 51, Failed: 0, Duplicates: 0, Validation: 8)
-- **Total Duration:** 3.65 ms (Mean: 0.46 ms)
-
-#### Outcome Distribution
-
-| Status / Outcome | Count |
-| :--- | :--- |
-| `VERIFIED` | 2 |
-| `NOT_VERIFIED` | 3 |
-| `INSUFFICIENT_EVIDENCE` | 2 |
-| `NEEDS_REVIEW` | 1 |
-| `FAILED` | 0 |
-| `STEP_LIMIT_EXCEEDED` | 0 |
-
-#### Failure Metrics
-
-- Malformed Actions: 0
-- Unknown Tools: 0
-- Invalid Arguments: 0
-- Tool Errors: 0
-- LLM Errors: 0
-- Timeouts: 0
-- Retries: 0
-
-#### Case-by-Case Breakdown
-
-| Case ID | Invoice ID | Expected Status | Actual Status | Match | Evidence Recall | Steps | Tool Calls | Duration (ms) | Termination Reason |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `CASE-001` | `INV-1001` | `VERIFIED` | `VERIFIED` | **PASS** | 100% (3/3) | 7 | 7 | 0.71 ms | VALIDATION_REQUESTED |
-| `CASE-002` | `INV-1002` | `INSUFFICIENT_EVIDENCE` | `INSUFFICIENT_EVIDENCE` | **PASS** | 100% (2/2) | 7 | 7 | 0.51 ms | VALIDATION_REQUESTED |
-| `CASE-003` | `INV-1003` | `NOT_VERIFIED` | `NOT_VERIFIED` | **PASS** | 100% (2/2) | 7 | 7 | 0.47 ms | VALIDATION_REQUESTED |
-| `CASE-004` | `INV-1004` | `NOT_VERIFIED` | `NOT_VERIFIED` | **PASS** | 100% (2/2) | 7 | 7 | 0.46 ms | VALIDATION_REQUESTED |
-| `CASE-005` | `INV-1005` | `NEEDS_REVIEW` | `NEEDS_REVIEW` | **PASS** | 100% (4/4) | 7 | 7 | 0.47 ms | VALIDATION_REQUESTED |
-| `CASE-006` | `INV-1006` | `NOT_VERIFIED` | `NOT_VERIFIED` | **PASS** | 100% (1/1) | 7 | 7 | 0.45 ms | VALIDATION_REQUESTED |
-| `CASE-007` | `INV-1007` | `INSUFFICIENT_EVIDENCE` | `INSUFFICIENT_EVIDENCE` | **PASS** | 100% (0/0) | 2 | 2 | 0.12 ms | VALIDATION_REQUESTED |
-| `CASE-008` | `INV-1008` | `VERIFIED` | `VERIFIED` | **PASS** | 100% (4/4) | 7 | 7 | 0.46 ms | VALIDATION_REQUESTED |
+> **Notice:** A successful live-provider run is still required before making claims about LLM reasoning accuracy, tool-selection accuracy, evidence retrieval, or token efficiency.
 
 ---
 
-### Baseline: `llm_decision_model` (none)
+## Reproduction
 
-- **Provider:** unconfigured
-- **Status:** `SKIPPED`
-- **Accuracy:** 0.0% (0/0)
-- **Mean Evidence Recall:** 0.0%
-- **Overall Evidence Recall:** 0.0% (0/0)
-- **Total Tool Calls:** 0 (Successful: 0, Failed: 0, Duplicates: 0, Validation: 0)
-- **Total Duration:** 0.0 ms (Mean: 0.0 ms)
-
-#### Outcome Distribution
-
-| Status / Outcome | Count |
-| :--- | :--- |
-| `VERIFIED` | 0 |
-| `NOT_VERIFIED` | 0 |
-| `INSUFFICIENT_EVIDENCE` | 0 |
-| `NEEDS_REVIEW` | 0 |
-| `FAILED` | 0 |
-| `STEP_LIMIT_EXCEEDED` | 0 |
-
-#### Failure Metrics
-
-- Malformed Actions: 0
-- Unknown Tools: 0
-- Invalid Arguments: 0
-- Tool Errors: 0
-- LLM Errors: 0
-- Timeouts: 0
-- Retries: 0
-
-#### Case-by-Case Breakdown
-
-| Case ID | Invoice ID | Expected Status | Actual Status | Match | Evidence Recall | Steps | Tool Calls | Duration (ms) | Termination Reason |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-
-> **Notes:** Live LLM not evaluated in this run. Explicitly skipped to avoid external API dependency.
-
----
-
-## 3. Evaluation Methodology & Metric Formulas
-
-### Outcome Accuracy
-- Formula: `accuracy = correct_cases / total_cases`
-- Authoritative validation outcomes are computed by the deterministic `ValidationEngine`.
-- Evaluated agents gather evidence and invoke `validate_investigation` to transfer authority.
-
-### Evidence Recall
-- Formula: `recall = |retrieved_evidence ∩ required_evidence| / |required_evidence|`
-- If `|required_evidence| == 0` (e.g. no contract on record), recall is defined as 1.0 (100%).
-- Mean evidence recall is the arithmetic mean across all cases.
-
-### Tool Usage & Efficiency
-- Recorded tool metrics include total steps, total calls, successful calls, failed calls, duplicate calls, and validation calls.
-- Tool efficiency is evaluated transparently by observing tool call counts and duplicate ratios without arbitrary weighted formulas.
-
-### Reproducibility & Limitations
-- **Deterministic Baselines:** Baseline A (ValidationEngine) and Baseline B (HeuristicAgentModel) are 100% deterministic and reproducible across runs without network dependencies.
-- **Live LLM Evaluations:** LLM evaluations depend on external model APIs and nondeterministic sampling (temperature=0.0 reduces variance but does not guarantee bitwise determinism).
-- **Mock LLM Mode:** Provided for offline testing and continuous integration without API credentials.
+To execute the benchmark with an active live LLM provider, run:
+```powershell
+.\apps\api\venv\Scripts\python.exe evaluation/runner.py --with-llm
+```

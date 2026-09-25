@@ -1,4 +1,4 @@
-# Quantitative Evaluation Framework (Stage 18)
+# Quantitative Evaluation Framework (Stage 18 — ENGINEERING COMPLETE — LIVE LLM PERFORMANCE PENDING ACTIVE PROVIDER RUN)
 
 Comprehensive evaluation and benchmarking system for ExceptionLineage.
 
@@ -106,6 +106,14 @@ Measures robust error isolation:
 - `llm_calls`: Total chat completion API calls.
 - `prompt_tokens`, `completion_tokens`, `total_tokens`: Actual tokens consumed as reported by the provider (reported as `null` when unavailable; never fabricated).
 
+### Evaluation Status Semantics
+The evaluation framework distinguishes external execution and infrastructure realities from model reasoning results using an explicit status taxonomy:
+- `COMPLETED`: All cases attempted and reached model completion / deterministic termination. Metrics are fully measurable.
+- `BLOCKED_PROVIDER`: Evaluation halted or all cases failed due to external provider constraints (HTTP 429 quota exhaustion, rate limits, HTTP 401 authentication errors, network connection drops). Model performance metrics (`accuracy`, `evidence_recall`) are classified as **UNMEASURABLE** (reported as `null`).
+- `PARTIAL`: Some cases completed successfully while others encountered provider, infrastructure, or timeout errors. Metrics are computed strictly across completed cases with failure counters transparently reported.
+- `FAILED_SYSTEM`: Internal software crashes, unhandled harness exceptions, or environment configuration failures occurred.
+- `SKIPPED`: The baseline was intentionally omitted (e.g. `--with-llm` flag not provided).
+
 ---
 
 ## 5. Reproducibility & Ground-Truth Isolation
@@ -166,6 +174,11 @@ Results from execution of `evaluation/runner.py`:
 | **Baseline A** (ValidationEngine) | deterministic | ValidationEngine | `COMPLETED` | **100.0%** (8/8) | 100.0% | 0.0 | 0 (8 val) | 0.30 ms |
 | **Baseline B** (HeuristicAgent) | heuristic | HeuristicAgentModel | `COMPLETED` | **100.0%** (8/8) | 100.0% | 6.38 | 51 (8 val) | 0.57 ms |
 | **LLM Decision Model (Mock)** | mock | mock-llm-planner | `COMPLETED` | **62.5%** (5/8) | 54.2% | 6.38 | 51 (8 val) | 8.90 ms |
-| **LLM Decision Model (Live)** | unconfigured | none | `SKIPPED` | *Unevaluated* | *Unevaluated* | N/A | N/A | N/A |
+| **LLM Decision Model (Live gpt-4o-mini)** | openai | gpt-4o-mini | `BLOCKED_PROVIDER` | **UNMEASURABLE** | **UNMEASURABLE** | 0.0 | 0 (0 val) | 1432 ms |
 
-*Note: Live LLM is intentionally marked unevaluated in default test runs to prevent uncredited external network dependencies.*
+### Live LLM Evaluation Findings (Suite `suite-b16fb5f27789`):
+- **Provider Status:** 8/8 cases attempted; 0/8 reached model completion due to OpenAI HTTP 429 (`insufficient_quota` / `credit_balance_exhausted`).
+- **Measurability:** Live LLM reasoning performance was **UNMEASURABLE**. Model accuracy, evidence recall, and token counts are recorded as `null` rather than 0% to prevent misrepresenting external provider quota exhaustion as reasoning failure.
+- **Fail-Closed Verification:** 100% of cases terminated safely with state `FAILED` and zero tool executions, zero hallucinations, and zero fabricated business determinations.
+- **Pending Live Run:** A live run with active provider credits is required before making claims regarding LLM reasoning accuracy, tool selection, or token efficiency.
+

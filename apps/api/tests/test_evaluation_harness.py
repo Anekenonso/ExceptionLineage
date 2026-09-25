@@ -25,10 +25,10 @@ from evaluation.adapters.deterministic import DeterministicValidationAdapter
 from evaluation.adapters.heuristic import HeuristicAgentAdapter
 from evaluation.adapters.llm import LLMDecisionAdapter, create_deterministic_mock_llm_client
 from evaluation.dataset import BenchmarkCase, load_benchmark_cases, load_seed_lineages
-from evaluation.metrics import compute_aggregate_metrics, compute_evidence_recall
+from evaluation.metrics import classify_run_status, compute_aggregate_metrics, compute_evidence_recall
 from evaluation.reporter import generate_markdown_report, save_json_report, save_markdown_report
 from evaluation.runner import run_evaluation
-from evaluation.schemas import AggregateMetrics, CaseResult, EvaluationRun, EvaluationSuiteReport
+from evaluation.schemas import AggregateMetrics, CaseResult, EvaluationRun, EvaluationStatus, EvaluationSuiteReport
 
 
 @pytest.fixture
@@ -81,7 +81,7 @@ def test_deterministic_validation_adapter(benchmark_data):
     run = adapter.run_suite(cases, lineages)
 
     assert run.baseline_name == "deterministic_baseline"
-    assert run.status == "COMPLETED"
+    assert run.status == EvaluationStatus.COMPLETED
     assert run.aggregate_metrics.total_cases == 8
     assert run.aggregate_metrics.correct_cases == 8
     assert run.aggregate_metrics.accuracy == 1.0
@@ -107,7 +107,7 @@ def test_heuristic_agent_adapter(benchmark_data):
     run = adapter.run_suite(cases, lineages)
 
     assert run.baseline_name == "heuristic_baseline"
-    assert run.status == "COMPLETED"
+    assert run.status == EvaluationStatus.COMPLETED
     assert run.aggregate_metrics.total_cases == 8
     assert run.aggregate_metrics.correct_cases == 8
     assert run.aggregate_metrics.accuracy == 1.0
@@ -127,7 +127,7 @@ def test_llm_decision_adapter_in_mock_mode(benchmark_data):
 
     run = adapter.run_suite(cases, lineages)
     assert run.baseline_name == "llm_decision_model"
-    assert run.status == "COMPLETED"
+    assert run.status == EvaluationStatus.COMPLETED
     assert run.aggregate_metrics.total_cases == 8
     assert run.aggregate_metrics.total_tokens is not None
     assert run.aggregate_metrics.total_tokens > 0
@@ -170,7 +170,7 @@ def test_report_generation(tmp_path, benchmark_data):
     md_content = generate_markdown_report(suite)
     save_markdown_report(md_content, md_path)
     assert md_path.exists()
-    assert "# ExceptionLineage Quantitative Evaluation Report" in md_content
+    assert "# Stage 18 Evaluation Report" in md_content
     assert "deterministic_baseline" in md_content
     assert "heuristic_baseline" in md_content
 
@@ -191,4 +191,197 @@ def test_evaluation_runner_end_to_end(tmp_path):
 
     assert (tmp_path / "latest.json").exists()
     assert (tmp_path / "latest.md").exists()
-    assert suite.runs["llm_decision_model"].status == "SKIPPED"
+    assert suite.runs["llm_decision_model"].status == EvaluationStatus.SKIPPED
+
+
+# ==============================================================================
+# Stage 18 Closure: Evaluation Integrity & Reporting Semantics Tests (Task 7)
+# ==============================================================================
+
+
+def test_reporting_semantics_1_successful_evaluation_completed():
+    """Requirement 1: A successful run across benchmark cases produces status COMPLETED."""
+    cases = [
+        CaseResult(
+            case_id=f"CASE-00{i}",
+            invoice_id=f"INV-100{i}",
+            expected_status="VERIFIED",
+            actual_status="VERIFIED",
+            status_match=True,
+            evidence_recall=1.0,
+            required_evidence_count=2,
+            retrieved_required_evidence_count=2,
+        )
+        for i in range(1, 9)
+    ]
+    agg = compute_aggregate_metrics(cases)
+    status, detail = classify_run_status(cases, agg)
+
+    assert status == EvaluationStatus.COMPLETED
+    assert agg.is_measurable is True
+    assert agg.accuracy == 1.0
+    assert agg.mean_evidence_recall == 1.0
+
+
+def test_reporting_semantics_2_provider_quota_failure_blocked_provider():
+    """Requirement 2: Provider quota failure (HTTP 429) across all cases produces BLOCKED_PROVIDER."""
+    cases = [
+        CaseResult(
+            case_id=f"CASE-00{i}",
+            invoice_id=f"INV-100{i}",
+            expected_status="VERIFIED",
+            actual_status="FAILED",
+            status_match=False,
+            is_provider_failure=True,
+            provider_failure_category="provider_quota",
+            provider_http_status=429,
+            failure_reason="Graph retrieval failed: LLM rate limit reached (HTTP 429): please retry after backoff",
+        )
+        for i in range(1, 9)
+    ]
+    agg = compute_aggregate_metrics(cases)
+    status, detail = classify_run_status(cases, agg)
+
+    assert status == EvaluationStatus.BLOCKED_PROVIDER
+    assert agg.is_measurable is False
+    assert agg.provider_failures == 8
+    assert agg.provider_failure_category == "provider_quota"
+    assert agg.provider_http_status == 429
+
+
+def test_reporting_semantics_3_system_exception_failed_system():
+    """Requirement 3: System crash / unhandled internal exception produces FAILED_SYSTEM."""
+    cases = [
+        CaseResult(
+            case_id=f"CASE-00{i}",
+            invoice_id=f"INV-100{i}",
+            expected_status="VERIFIED",
+            actual_status="FAILED",
+            status_match=False,
+            is_provider_failure=False,
+            error="ConnectionRefusedError: Neo4j database unreachable at bolt://localhost:7687",
+        )
+        for i in range(1, 9)
+    ]
+    agg = compute_aggregate_metrics(cases)
+    status, detail = classify_run_status(cases, agg)
+
+    assert status == EvaluationStatus.FAILED_SYSTEM
+    assert "system exceptions" in str(detail).lower()
+
+
+def test_reporting_semantics_4_partial_evaluation_partial():
+    """Requirement 4: Partial completion (some cases succeed, some hit provider errors) produces PARTIAL."""
+    cases = [
+        CaseResult(
+            case_id="CASE-001",
+            invoice_id="INV-1001",
+            expected_status="VERIFIED",
+            actual_status="VERIFIED",
+            status_match=True,
+            evidence_recall=1.0,
+        ),
+        CaseResult(
+            case_id="CASE-002",
+            invoice_id="INV-1002",
+            expected_status="INSUFFICIENT_EVIDENCE",
+            actual_status="FAILED",
+            status_match=False,
+            is_provider_failure=True,
+            provider_failure_category="provider_quota",
+            provider_http_status=429,
+            failure_reason="LLM rate limit reached (HTTP 429)",
+        ),
+    ]
+    agg = compute_aggregate_metrics(cases)
+    status, detail = classify_run_status(cases, agg)
+
+    assert status == EvaluationStatus.PARTIAL
+    assert agg.is_measurable is False
+    assert agg.provider_failures == 1
+    assert agg.cases_completed == 1
+
+
+def test_reporting_semantics_5_provider_blocked_does_not_calculate_accuracy():
+    """Requirement 5: A provider-blocked run does NOT calculate model accuracy as 0.0, but sets it to None."""
+    cases = [
+        CaseResult(
+            case_id=f"CASE-00{i}",
+            invoice_id=f"INV-100{i}",
+            expected_status="VERIFIED",
+            actual_status="FAILED",
+            status_match=False,
+            failure_reason="LLM rate limit reached (HTTP 429): please retry after backoff or check provider limits",
+        )
+        for i in range(1, 9)
+    ]
+    agg = compute_aggregate_metrics(cases)
+
+    # Must be None, NEVER 0.0 or 0%
+    assert agg.accuracy is None
+    assert agg.is_measurable is False
+    assert "UNMEASURABLE" in (agg.unmeasurable_reason or "")
+
+
+def test_reporting_semantics_6_provider_blocked_does_not_calculate_evidence_recall():
+    """Requirement 6: A provider-blocked run does NOT calculate evidence recall, avoiding CASE-007 skew."""
+    cases = [
+        CaseResult(
+            case_id="CASE-001",
+            invoice_id="INV-1001",
+            expected_status="VERIFIED",
+            actual_status="FAILED",
+            status_match=False,
+            required_evidence_count=3,
+            retrieved_required_evidence_count=0,
+            failure_reason="LLM rate limit reached (HTTP 429)",
+        ),
+        # CASE-007 normally has 0 required items which yields 1.0 when executed;
+        # on provider blockage it must NOT skew aggregate recall
+        CaseResult(
+            case_id="CASE-007",
+            invoice_id="INV-1007",
+            expected_status="INSUFFICIENT_EVIDENCE",
+            actual_status="FAILED",
+            status_match=False,
+            required_evidence_count=0,
+            retrieved_required_evidence_count=0,
+            failure_reason="LLM rate limit reached (HTTP 429)",
+        ),
+    ]
+    agg = compute_aggregate_metrics(cases)
+
+    # Evidence recall must be None rather than 0.5 or 0.125
+    assert agg.mean_evidence_recall is None
+    assert agg.overall_evidence_recall is None
+    assert cases[1].evidence_recall is None
+
+
+def test_reporting_semantics_7_baseline_metrics_remain_measurable(benchmark_data):
+    """Requirement 7: Deterministic and heuristic baseline metrics remain 100% measurable."""
+    cases, lineages = benchmark_data
+
+    det_adapter = DeterministicValidationAdapter()
+    det_run = det_adapter.run_suite(cases, lineages)
+    assert det_run.status == EvaluationStatus.COMPLETED
+    assert det_run.aggregate_metrics.is_measurable is True
+    assert det_run.aggregate_metrics.accuracy == 1.0
+    assert det_run.aggregate_metrics.mean_evidence_recall == 1.0
+
+    heu_adapter = HeuristicAgentAdapter(max_steps=10)
+    heu_run = heu_adapter.run_suite(cases, lineages)
+    assert heu_run.status == EvaluationStatus.COMPLETED
+    assert heu_run.aggregate_metrics.is_measurable is True
+    assert heu_run.aggregate_metrics.accuracy == 1.0
+    assert heu_run.aggregate_metrics.mean_evidence_recall == 1.0
+    assert heu_run.aggregate_metrics.total_tool_calls == 51
+
+
+def test_reporting_semantics_8_ground_truth_isolated():
+    """Requirement 8: Ground truth datasets and evaluation reporting remain isolated from production code."""
+    from tests.test_ground_truth_isolation import (
+        test_production_code_ast_imports_isolated,
+        test_production_code_contains_no_hardcoded_benchmark_references,
+    )
+    test_production_code_ast_imports_isolated()
+    test_production_code_contains_no_hardcoded_benchmark_references()

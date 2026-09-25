@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from evaluation.dataset import BenchmarkCase
-from evaluation.metrics import compute_aggregate_metrics, compute_evidence_recall
+from evaluation.metrics import classify_run_status, compute_aggregate_metrics, compute_evidence_recall
 from evaluation.schemas import CaseResult, EvaluationRun
 
 
@@ -54,6 +54,7 @@ class BaseEvaluationAdapter(ABC):
             case_results.append(res)
 
         aggregate = compute_aggregate_metrics(case_results)
+        run_status, status_detail = classify_run_status(case_results, aggregate)
 
         return EvaluationRun(
             run_id=run_id,
@@ -64,7 +65,8 @@ class BaseEvaluationAdapter(ABC):
             model_provider=self.model_provider,
             model_name=self.model_name,
             configuration=self.configuration,
-            status="COMPLETED",
+            status=run_status,
+            status_detail=status_detail,
             case_results=case_results,
             aggregate_metrics=aggregate,
         )

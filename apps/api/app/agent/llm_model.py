@@ -79,22 +79,45 @@ class LLMDecisionModel(AgentModel):
         http_client: httpx.Client | None = None,
     ) -> None:
         self.tool_registry = tool_registry
-        self.provider = (
-            provider
-            or os.getenv("AGENT_LLM_PROVIDER")
-            or "openai"
-        ).lower()
+        if provider:
+            self.provider = provider.lower()
+        elif model_name and (model_name.startswith("gpt") or "openai" in model_name):
+            self.provider = "openai"
+        elif model_name and "gemini" in model_name:
+            self.provider = "gemini"
+        elif os.getenv("AGENT_LLM_PROVIDER"):
+            self.provider = os.getenv("AGENT_LLM_PROVIDER").lower()
+        else:
+            self.provider = "gemini"
+        if self.provider in ("gemini", "google"):
+            default_model = "gemini-2.5-flash"
+        elif self.provider in ("openai", "openai-compatible"):
+            default_model = "gpt-4o-mini"
+        else:
+            default_model = "gemini-2.5-flash"
+
         self.model_name = (
             model_name
             or os.getenv("AGENT_LLM_MODEL")
-            or ("gpt-4o-mini" if self.provider in ("openai", "openai-compatible") else "gemini-1.5-flash")
+            or default_model
         )
-        self.api_key = api_key or os.getenv("AGENT_LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
-        self.base_url = (
-            base_url
-            or os.getenv("AGENT_LLM_BASE_URL")
-            or ("https://api.openai.com/v1" if self.provider == "openai" else "http://localhost:11434/v1")
-        ).rstrip("/")
+        self.api_key = (
+            api_key
+            or os.getenv("AGENT_LLM_API_KEY")
+            or os.getenv("GEMINI_API_KEY")
+            or os.getenv("GOOGLE_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+        )
+        if base_url:
+            self.base_url = base_url.rstrip("/")
+        elif os.getenv("AGENT_LLM_BASE_URL"):
+            self.base_url = os.getenv("AGENT_LLM_BASE_URL").rstrip("/")
+        elif self.provider in ("gemini", "google") or self.model_name.startswith("gemini"):
+            self.base_url = "https://generativelanguage.googleapis.com/v1beta/openai"
+        elif self.provider in ("openai", "openai-compatible"):
+            self.base_url = "https://api.openai.com/v1"
+        else:
+            self.base_url = "http://localhost:11434/v1"
         self.timeout_seconds = timeout_seconds
         self.max_retries = max_retries
         self._external_client = http_client

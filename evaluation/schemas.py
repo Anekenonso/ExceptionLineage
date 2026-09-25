@@ -9,8 +9,19 @@ Provides typed schemas for:
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Any
 from pydantic import BaseModel, Field
+
+
+class EvaluationStatus(str, Enum):
+    """Explicit lifecycle and outcome status for evaluation runs and suites."""
+
+    COMPLETED = "COMPLETED"
+    BLOCKED_PROVIDER = "BLOCKED_PROVIDER"
+    PARTIAL = "PARTIAL"
+    FAILED_SYSTEM = "FAILED_SYSTEM"
+    SKIPPED = "SKIPPED"
 
 
 class CaseResult(BaseModel):
@@ -25,6 +36,20 @@ class CaseResult(BaseModel):
     termination_reason: str | None = Field(default=None, description="Reason for termination")
     summary: str | None = Field(default=None, description="Investigation summary text")
     failure_reason: str | None = Field(default=None, description="Explanation of failure or rejection")
+
+    # Provider and infrastructure failure tracking
+    is_provider_failure: bool = Field(
+        default=False,
+        description="Whether this case failed due to external LLM provider/infrastructure error",
+    )
+    provider_failure_category: str | None = Field(
+        default=None,
+        description="Category of provider failure: provider_quota, provider_auth, provider_network, etc.",
+    )
+    provider_http_status: int | None = Field(
+        default=None,
+        description="HTTP status returned by provider if applicable",
+    )
 
     # Evidence retrieval metrics
     required_evidence_ids: list[str] = Field(
@@ -44,9 +69,9 @@ class CaseResult(BaseModel):
         default=0,
         description="Ground truth evidence items actually retrieved",
     )
-    evidence_recall: float = Field(
-        default=1.0,
-        description="Recall fraction: retrieved_required / required (1.0 if required==0)",
+    evidence_recall: float | None = Field(
+        default=None,
+        description="Recall fraction: retrieved_required / required (null if unmeasurable due to provider failure)",
     )
 
     # Tool and agent metrics
@@ -81,21 +106,46 @@ class AggregateMetrics(BaseModel):
 
     total_cases: int = Field(default=0, description="Total benchmark cases evaluated")
     correct_cases: int = Field(default=0, description="Cases matching expected outcome")
-    accuracy: float = Field(default=0.0, description="correct_cases / total_cases (0.0 to 1.0)")
+    accuracy: float | None = Field(
+        default=0.0,
+        description="correct_cases / total_cases (0.0 to 1.0, null if unmeasurable)",
+    )
+
+    # Model measurability & Provider breakdown
+    is_measurable: bool = Field(
+        default=True,
+        description="Whether model reasoning was measurable (False if blocked by provider)",
+    )
+    unmeasurable_reason: str | None = Field(
+        default=None,
+        description="Explanation if model reasoning was unmeasurable",
+    )
+    cases_attempted: int = Field(default=0, description="Total benchmark cases attempted in this run")
+    cases_completed: int = Field(default=0, description="Cases reaching model reasoning completion")
+    provider_failures: int = Field(default=0, description="Count of cases failing due to provider errors")
+    provider_failure_category: str | None = Field(
+        default=None,
+        description="Category of provider failure: provider_quota, provider_auth, etc.",
+    )
+    provider_http_status: int | None = Field(default=None, description="Provider HTTP status code")
+    provider_error_code: str | None = Field(
+        default=None,
+        description="Provider error code e.g. credit_balance_exhausted / insufficient_quota",
+    )
 
     # Evidence retrieval metrics
-    mean_evidence_recall: float = Field(
+    mean_evidence_recall: float | None = Field(
         default=0.0,
-        description="Mean of per-case evidence recall fractions",
+        description="Mean of per-case evidence recall fractions (null if unmeasurable)",
     )
     total_required_evidence: int = Field(default=0, description="Sum of required evidence across cases")
     total_retrieved_required_evidence: int = Field(
         default=0,
         description="Sum of retrieved required evidence across cases",
     )
-    overall_evidence_recall: float = Field(
+    overall_evidence_recall: float | None = Field(
         default=0.0,
-        description="total_retrieved_required / total_required (1.0 if total_required==0)",
+        description="total_retrieved_required / total_required (null if unmeasurable)",
     )
 
     # Tool usage aggregates
@@ -153,7 +203,11 @@ class EvaluationRun(BaseModel):
         default_factory=dict,
         description="Sanitized configuration settings (never secrets)",
     )
-    status: str = Field(default="COMPLETED", description="Run status: COMPLETED, SKIPPED, or FAILED")
+    status: EvaluationStatus = Field(
+        default=EvaluationStatus.COMPLETED,
+        description="Run status: COMPLETED, BLOCKED_PROVIDER, PARTIAL, FAILED_SYSTEM, or SKIPPED",
+    )
+    status_detail: str | None = Field(default=None, description="Explanation or diagnostics for run status")
     case_results: list[CaseResult] = Field(default_factory=list, description="Per-case evaluation results")
     aggregate_metrics: AggregateMetrics = Field(
         default_factory=AggregateMetrics,
@@ -169,6 +223,11 @@ class EvaluationSuiteReport(BaseModel):
     timestamp: str = Field(..., description="ISO 8601 UTC timestamp")
     git_commit: str | None = Field(default=None, description="Git commit hash if available")
     dataset_version: str = Field(..., description="Dataset version evaluated")
+    status: EvaluationStatus = Field(
+        default=EvaluationStatus.COMPLETED,
+        description="Overall suite evaluation status: COMPLETED, BLOCKED_PROVIDER, PARTIAL, FAILED_SYSTEM, or SKIPPED",
+    )
+    status_detail: str | None = Field(default=None, description="Overall suite status explanation")
     runs: dict[str, EvaluationRun] = Field(
         default_factory=dict,
         description="Evaluation runs indexed by baseline key",
@@ -177,3 +236,4 @@ class EvaluationSuiteReport(BaseModel):
         default_factory=dict,
         description="High-level comparative metrics across baselines",
     )
+

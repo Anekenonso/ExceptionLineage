@@ -101,13 +101,16 @@ Generated reports are saved to:
 
 ## Current Status
 
-**Stage 18** — Quantitative Evaluation & Proof Surface COMPLETE.
+**Stage 18** — ENGINEERING COMPLETE — LIVE LLM PERFORMANCE PENDING ACTIVE PROVIDER RUN
 
 ExceptionLineage features an end-to-end reproducible evaluation harness quantitatively testing whether the investigation architecture correctly investigates contract/invoice exceptions, retrieves required evidence, terminates safely, and uses agent tools efficiently:
+- **Status Taxonomy**: Rigorously categorizes evaluation runs (`COMPLETED`, `BLOCKED_PROVIDER`, `PARTIAL`, `FAILED_SYSTEM`, `SKIPPED`) to avoid conflating external provider quota/network errors with model reasoning ability.
 - **Baseline A (Deterministic Validation Engine)**: Direct rule evaluation achieving **100.0% accuracy** and **100.0% evidence recall** across all 8 controlled benchmark cases.
 - **Baseline B (Heuristic Agent Model)**: Deterministic, rational agent loop achieving **100.0% accuracy**, **100.0% evidence recall**, 6.38 mean steps, and 51 total tool calls.
 - **System Under Evaluation (LLM Decision Model)**: Autonomous planning layer using OpenAI-compatible APIs or deterministic mock execution (**62.5% accuracy in mock mode**; explicitly skipped in default runs to prevent external API dependencies).
+- **Live LLM Evaluation (gpt-4o-mini)**: Status `BLOCKED_PROVIDER`. Initial run was rejected on 8/8 cases due to provider quota exhaustion (HTTP 429 `credit_balance_exhausted`), correctly classified as **UNMEASURABLE** (accuracy and recall set to null). Confirmed safe fail-closed architecture: 0 tool executions, 0 hallucinations, and all cases safely terminated as `FAILED`.
 - **Metric Rigor**: Evaluates outcome accuracy, evidence recall, fine-grained tool usage, termination breakdowns, failure counters, and token tracking without fabricated composite scores.
 - **Ground-Truth Isolation Law**: Verified by automated AST tests ensuring production modules (`app/agent`, `app/graph`, `app/investigations`, `app/api`, `app/validation`, `app/models`) contain zero imports or dependencies on ground truth.
 - **Controlled Failure Modes**: 11 dedicated failure-mode tests confirming safe handling of unknown tools, missing/invalid arguments, malformed outputs, timeouts, retry exhaustion, missing evidence (`INSUFFICIENT_EVIDENCE`), conflicting amendments (`NEEDS_REVIEW`), and step limits.
-- **Test Suite**: 257 passing unit and integration tests (2 skipped conditional live tests).
+- **Test Suite**: 265 passing unit and integration tests (2 skipped conditional live tests).
+

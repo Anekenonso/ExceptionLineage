@@ -140,9 +140,21 @@ class LLMDecisionAdapter(BaseEvaluationAdapter):
         mock_client: httpx.Client | None = None,
         is_mock: bool = False,
     ) -> None:
-        eff_provider = provider or os.getenv("AGENT_LLM_PROVIDER") or ("mock" if is_mock else "openai")
-        eff_model = model_name or os.getenv("AGENT_LLM_MODEL") or ("mock-llm-planner" if is_mock else "gpt-4o-mini")
-        eff_key = api_key or os.getenv("AGENT_LLM_API_KEY") or os.getenv("OPENAI_API_KEY")
+        eff_provider = provider or os.getenv("AGENT_LLM_PROVIDER") or ("mock" if is_mock else "gemini")
+        if is_mock:
+            default_model = "mock-llm-planner"
+        elif eff_provider in ("gemini", "google"):
+            default_model = "gemini-2.5-flash"
+        else:
+            default_model = "gpt-4o-mini"
+        eff_model = model_name or os.getenv("AGENT_LLM_MODEL") or default_model
+        eff_key = (
+            api_key
+            or os.getenv("AGENT_LLM_API_KEY")
+            or os.getenv("GEMINI_API_KEY")
+            or os.getenv("GOOGLE_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+        )
 
         super().__init__(
             baseline_name="llm_decision_model",
@@ -262,6 +274,22 @@ class LLMDecisionAdapter(BaseEvaluationAdapter):
                 or "VALIDATION_COMPLETED"
             )
 
+            # Check if this case was blocked by an external provider error
+            is_prov = False
+            prov_cat = None
+            prov_http = None
+            fail_text = str(inv.failure_reason or "").lower()
+            if "429" in fail_text or "rate limit" in fail_text or "quota" in fail_text or "credit" in fail_text:
+                is_prov = True
+                prov_cat = "provider_quota"
+                prov_http = 429
+            elif "401" in fail_text or "403" in fail_text or "authentication failed" in fail_text:
+                is_prov = True
+                prov_cat = "provider_auth"
+                prov_http = 401 if "401" in fail_text else 403
+
+            eff_recall = None if is_prov else recall
+
             return CaseResult(
                 case_id=case.case_id,
                 invoice_id=case.invoice_id,
@@ -272,12 +300,15 @@ class LLMDecisionAdapter(BaseEvaluationAdapter):
                 termination_reason=termination_reason,
                 summary=inv.summary,
                 failure_reason=inv.failure_reason,
+                is_provider_failure=is_prov,
+                provider_failure_category=prov_cat,
+                provider_http_status=prov_http,
                 required_evidence_ids=case.relevant_evidence_ids,
                 retrieved_evidence_ids=retrieved_ids,
                 cited_evidence_ids=cited_ids,
                 required_evidence_count=req_count,
                 retrieved_required_evidence_count=ret_count,
-                evidence_recall=recall,
+                evidence_recall=eff_recall,
                 agent_steps=metrics.get("total_agent_steps", 0),
                 tool_calls=metrics.get("tool_calls", 0),
                 successful_tool_calls=metrics.get("successful_tool_calls", 0),
@@ -299,6 +330,19 @@ class LLMDecisionAdapter(BaseEvaluationAdapter):
             )
         except Exception as exc:
             duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
+            exc_str = str(exc).lower()
+            is_prov = False
+            prov_cat = None
+            prov_http = None
+            if "429" in exc_str or "rate limit" in exc_str or "quota" in exc_str or "credit" in exc_str:
+                is_prov = True
+                prov_cat = "provider_quota"
+                prov_http = 429
+            elif "401" in exc_str or "403" in exc_str or "auth" in exc_str:
+                is_prov = True
+                prov_cat = "provider_auth"
+                prov_http = 401 if "401" in exc_str else 403
+
             return CaseResult(
                 case_id=case.case_id,
                 invoice_id=case.invoice_id,
@@ -306,6 +350,10 @@ class LLMDecisionAdapter(BaseEvaluationAdapter):
                 expected_status=case.expected_status,
                 actual_status="FAILED",
                 status_match=False,
+                is_provider_failure=is_prov,
+                provider_failure_category=prov_cat,
+                provider_http_status=prov_http,
+                evidence_recall=None if is_prov else 0.0,
                 error=f"LLMDecisionAdapter execution failed: {exc}",
                 duration_ms=duration_ms,
             )

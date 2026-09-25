@@ -31,12 +31,21 @@ if str(repo_root) not in sys.path:
 if str(api_dir) not in sys.path:
     sys.path.insert(0, str(api_dir))
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv(repo_root / ".env.eval")
+    load_dotenv(repo_root / ".env")
+    load_dotenv(api_dir / ".env")
+    load_dotenv()
+except ImportError:
+    pass
+
 from evaluation.adapters.deterministic import DeterministicValidationAdapter
 from evaluation.adapters.heuristic import HeuristicAgentAdapter
 from evaluation.adapters.llm import LLMDecisionAdapter
 from evaluation.dataset import load_benchmark_cases, load_seed_lineages
 from evaluation.reporter import generate_markdown_report, save_json_report, save_markdown_report
-from evaluation.schemas import AggregateMetrics, EvaluationRun, EvaluationSuiteReport
+from evaluation.schemas import AggregateMetrics, EvaluationRun, EvaluationStatus, EvaluationSuiteReport
 
 
 def get_git_commit() -> str | None:
@@ -117,7 +126,12 @@ def run_evaluation(
 
     # 3. System Under Evaluation: LLMDecisionModel
     if baseline in ("all", "llm"):
-        has_api_key = bool(os.getenv("AGENT_LLM_API_KEY") or os.getenv("OPENAI_API_KEY"))
+        has_api_key = bool(
+            os.getenv("AGENT_LLM_API_KEY")
+            or os.getenv("GEMINI_API_KEY")
+            or os.getenv("GOOGLE_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+        )
         should_run_live = with_llm and has_api_key
         should_run_mock = mock_llm or (baseline == "llm" and not has_api_key and not with_llm)
 
@@ -135,9 +149,15 @@ def run_evaluation(
                 git_commit=git_commit,
             )
             runs["llm_decision_model"] = llm_run
-            acc = llm_run.aggregate_metrics.accuracy * 100
-            rec = llm_run.aggregate_metrics.mean_evidence_recall * 100
-            print(f"    Completed LLM Evaluation: Accuracy {acc:.1f}%, Mean Recall {rec:.1f}%\n")
+            if llm_run.aggregate_metrics.accuracy is not None:
+                acc_str = f"{llm_run.aggregate_metrics.accuracy * 100:.1f}%"
+            else:
+                acc_str = "UNMEASURABLE"
+            if llm_run.aggregate_metrics.mean_evidence_recall is not None:
+                rec_str = f"{llm_run.aggregate_metrics.mean_evidence_recall * 100:.1f}%"
+            else:
+                rec_str = "UNMEASURABLE"
+            print(f"    Completed LLM Evaluation: Accuracy {acc_str}, Mean Recall {rec_str}\n")
         else:
             # Explicitly mark live LLM as skipped/unevaluated as required by specification
             print("--> System Under Evaluation: LLMDecisionModel [SKIPPED]")
@@ -156,15 +176,32 @@ def run_evaluation(
                 aggregate_metrics=AggregateMetrics(),
             )
 
+    # Determine overall suite status
+    suite_status = EvaluationStatus.COMPLETED
+    status_detail = None
+    if any(r.status == EvaluationStatus.BLOCKED_PROVIDER for r in runs.values()):
+        suite_status = EvaluationStatus.BLOCKED_PROVIDER
+        status_detail = "Live LLM evaluation was blocked due to external provider quota exhaustion (HTTP 429)."
+    elif any(r.status == EvaluationStatus.FAILED_SYSTEM for r in runs.values()):
+        suite_status = EvaluationStatus.FAILED_SYSTEM
+        status_detail = "Evaluation failed due to system/infrastructure exception."
+    elif any(r.status == EvaluationStatus.PARTIAL for r in runs.values()):
+        suite_status = EvaluationStatus.PARTIAL
+        status_detail = "Partial benchmark evaluation completed."
+
     suite = EvaluationSuiteReport(
         suite_id=suite_id,
         timestamp=now_iso,
         git_commit=git_commit,
         dataset_version=dataset_version,
+        status=suite_status,
+        status_detail=status_detail,
         runs=runs,
         summary={
             "total_baselines": len(runs),
-            "completed_baselines": sum(1 for r in runs.values() if r.status == "COMPLETED"),
+            "completed_baselines": sum(1 for r in runs.values() if r.status == EvaluationStatus.COMPLETED),
+            "blocked_baselines": sum(1 for r in runs.values() if r.status == EvaluationStatus.BLOCKED_PROVIDER),
+            "overall_status": suite_status.value if hasattr(suite_status, "value") else str(suite_status),
         },
     )
 
