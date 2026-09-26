@@ -59,6 +59,10 @@ export default function InvestigationsDashboard() {
         { invoice: "INV-1002", exception: "EX-002" },
         { invoice: "INV-1003", exception: "EX-003" },
         { invoice: "INV-1004", exception: "EX-004" },
+        { invoice: "INV-1005", exception: "EX-005" },
+        { invoice: "INV-1006", exception: "EX-006" },
+        { invoice: "INV-1007", exception: "EX-007" },
+        { invoice: "INV-1008", exception: "EX-008" },
       ];
 
       for (const sc of scenarios) {

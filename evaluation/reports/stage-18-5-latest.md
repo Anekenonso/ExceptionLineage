@@ -2,9 +2,9 @@
 
 ## Agent Necessity + Neo4j Necessity + End-to-End Evidence Chain
 
-- **Suite ID:** `proof-18-5-4230494cae25`
-- **Timestamp:** `2026-09-26T01:58:30.322458+00:00`
-- **Git Commit:** `cc8528e5e425e5be6be2fb569b7277d183ad2720`
+- **Suite ID:** `proof-18-5-dc1c7f95d97c`
+- **Timestamp:** `2026-09-26T02:28:44.560493+00:00`
+- **Git Commit:** `6d2f3da94c3f72b04ce01acd4167dc0e8628e961`
 - **Dataset:** `adaptive-v1` (Branching) + `benchmark-v1` (Canonical)
 - **Architectural Boundary:** *"AI handles ambiguity. Code handles authority."*
 
