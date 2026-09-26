@@ -245,7 +245,7 @@ export default function Home() {
               Deterministic Verification
             </h3>
             <p className="text-xs text-[#4a564f] leading-relaxed">
-              Rule evaluations fail closed when critical evidence is absent. Trust determinations backed by immutable proof.
+              Rule evaluations fail closed when critical evidence is absent. Trust determinations backed by immutable audit traces.
             </p>
           </div>
         </div>
@@ -296,10 +296,6 @@ export default function Home() {
           )}
         </div>
       </main>
-
-      <footer className="border-t border-[#e6dccb] bg-[#fffdf9] py-6 text-center text-xs text-[#7d877f]">
-        ExceptionLineage — Evidence-backed transaction investigation.
-      </footer>
 
       {/* New Investigation Modal */}
       <NewInvestigationModal

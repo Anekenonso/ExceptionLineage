@@ -7,7 +7,7 @@ This script provides a concise, step-by-step walkthrough for presenting Exceptio
 ## 1. Introduction (30 seconds)
 
 - **Problem**: When enterprise billing systems flag an invoice exception (e.g. rate variance or surcharge), human analysts spend hours hunting across contracts, amendments, SOWs, and emails to verify if the variance was authorized.
-- **Solution**: ExceptionLineage executes autonomous evidence discovery across enterprise graph lineage, and enforces deterministic contractual validation.
+- **Solution**: ExceptionLineage executes adaptive evidence discovery across enterprise graph lineage, and enforces deterministic contractual validation.
 - **Core Principle**: *"AI investigates. Deterministic logic verifies."*
 
 ---

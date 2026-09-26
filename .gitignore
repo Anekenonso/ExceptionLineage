@@ -37,6 +37,11 @@ apps/web/out/
 .pytest_cache/
 .coverage
 htmlcov/
+scratch/
 
 # Logs
 *.log
+
+# Generated Evaluation Runs (transient suite runs)
+evaluation/reports/stage-18-5-proof-*.json
+

@@ -130,7 +130,7 @@ The architecture is governed by an inviolable foundational law:
   ```
 - **Quantitative Trace Attributes:**
   - 30 total chronological events
-  - 7 agent decisions, 7 tool calls, 6 graph retrievals, 8 validation checks, 8 cited evidence items
+  - 7 agent decisions, 7 tool calls, 6 graph retrievals, 8 validation checks, 3 cited evidence items
   - `secrets_redacted = true` (automated recursive sanitization of API keys, passwords, and tokens)
   - `authority_boundary_preserved = true` (*"AI investigates. Deterministic logic verifies."*)
 
