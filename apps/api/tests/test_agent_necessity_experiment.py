@@ -1,9 +1,9 @@
-"""Automated tests for Stage 18.5 Claim A: Agent Necessity Experiment.
+"""Automated tests for Stage 18.5 / Stage 21 Claim A: Adaptive Investigation Value Experiment.
 
-Proves that an adaptive agent layer provides meaningful operational advantages
-over a fixed deterministic/heuristic sequence:
-1. Dynamic early stopping when conclusive proof or early rejection is identified.
-2. Backtracking and recovery from dead ends.
+Demonstrates that an adaptive, state-dependent investigation layer provides meaningful operational advantages
+over a fixed heuristic sequence in controlled branching scenarios:
+1. Dynamic early stopping when conclusive base match or early rejection is identified.
+2. Backtracking and navigating branching paths within bounded steps.
 3. Avoiding unnecessary tool calls and context contamination.
 4. Higher accuracy and resource efficiency on branching workflows.
 """

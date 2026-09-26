@@ -1,10 +1,13 @@
-"""Automated tests for Stage 18.5 Claim B: Neo4j Removal Experiment.
+"""Automated tests for Stage 18.5 / Stage 21 Claim B: Relationship-Aware Retrieval Experiment.
 
-Proves that Neo4j / Knowledge Graph traversal is load-bearing for ExceptionLineage:
+Demonstrates that explicit relationship-aware graph traversal provides measurable benefits for the tested workload:
 1. Multi-hop lineage completeness.
-2. Avoiding context contamination from irrelevant/conflicting records.
+2. Avoiding context contamination from irrelevant/conflicting records across customer contracts.
 3. Maintaining provenance chains across invoice -> contract -> amendment.
 4. Reducing retrieval operation overhead compared to unindexed flat scans.
+
+Limitation: Demonstrates the value of explicit relationship-aware traversal for the tested workload;
+does not establish that Neo4j is universally superior to a well-designed relational implementation.
 """
 
 from __future__ import annotations

@@ -184,39 +184,43 @@ Results from execution of `evaluation/runner.py`:
 
 ---
 
-## 8. Stage 18.5 — Architectural Proof
+## 8. Architectural Proof (Stage 18.5 & Stage 21)
 
-Stage 18.5 establishes empirical, quantitative proof for the three foundational architectural hypotheses:
+> **Scope of evidence:** These results are controlled experiments on synthetic investigation data. They demonstrate properties of this implementation and evaluation setup; they are not universal benchmarks of all agents, databases, or enterprise systems.
 
-### 8.1 Claim A: Agent Necessity Experiment
+### 8.1 Claim A: Adaptive Investigation Value Experiment — DEMONSTRATED
 
-**Hypothesis:** An adaptive agent loop dynamically stops, backtracks, and selects tools based on intermediate evidence, whereas a fixed deterministic sequence wastes operations and fails on non-linear lineage branches.
+**Core Finding:** In controlled branching scenarios, adaptive, state-dependent investigation improved investigation efficiency and recovery compared with the fixed heuristic baseline.
 
 **Dataset (`adaptive-v1`):** 5 controlled branching scenarios (`BRANCH-001` through `BRANCH-005`):
 - `BRANCH-001`: Matching base contract terms allow immediate early termination without querying amendments or SOWs.
-- `BRANCH-002`: Outdated contract version returns dead end; agent dynamically discovers and switches to amended contract version.
-- `BRANCH-003`: Immediate contract termination clause triggers early rejection, bypassing all downstream tool calls.
-- `BRANCH-004`: Dead-end SOW branch lacks deliverable signoff; agent backtracks and pursues alternative valid amendment path.
-- `BRANCH-005`: Absence of required executive approval halts investigation early, eliminating redundant clause searches.
+- `BRANCH-002`: Missing governing contract halts discovery immediately, avoiding redundant approval or evidence queries.
+- `BRANCH-003`: Executed amendment and approved variance satisfy exception; agent skips irrelevant SOW queries.
+- `BRANCH-004`: Explicit executive rejection on file invalidates exception; agent halts before redundant amendment/SOW lookups.
+- `BRANCH-005`: Conflicting concurrent amendments detected; agent escalates directly to validation for review without querying SOWs.
 
 **Results Table:**
 | Metric | Heuristic Baseline (Fixed Sequence) | Adaptive Agent | Operational Advantage |
 | :--- | :--- | :--- | :--- |
 | **Accuracy** | 80.0% (4/5) | **100.0%** (5/5) | +20.0% on branching workflows |
 | **Total Tool Calls** | 32 | **24** | **8 fewer calls** (25.0% reduction) |
-| **Unnecessary Tool Calls** | 7 | **0** | **100% reduction in wasted queries** |
+| **Unnecessary Tool Calls** | 7 | **0** | **Zero wasted queries** |
 | **Dynamic Early Stops** | 0 | **3** | Stops immediately when conclusive proof found |
-| **Dead-End Recovery Rate** | 0.0% | **60.0%** | Successfully backtracks from dead-end branches |
+| **Branching Path Recovery Rate** | 0.0% | **60.0%** | Reaches expected outcome in $\le$ 5 steps without wasted calls (3/5 cases) |
 
-### 8.2 Claim B: Neo4j Removal Experiment
+*Recovery Definition:* In the evaluation harness, "recovery" measures whether the agent successfully navigated a branching path to the correct validation outcome within 5 steps while avoiding all unnecessary tool calls (achieved in 3 of 5 cases, or 60.0%, with the remaining 2 cases completing correctly in 6 steps).
 
-**Hypothesis:** Removing Neo4j graph relationships and falling back to flat table/relational lookups leads to context contamination, false conflicts from unlinked amendments, and degraded evidence provenance.
+*Scope Note:* The experiment demonstrates behavior on the tested scenarios and does not establish a universal requirement for agentic AI or LLMs. Live LLM evaluation was blocked by external provider quota/availability; this experiment evaluates adaptive state-dependent tool selection logic.
+
+### 8.2 Claim B: Relationship-Aware Retrieval Experiment — DEMONSTRATED
+
+**Core Finding:** The controlled retrieval experiment showed measurable benefits from explicit relationship-aware traversal for this workload, including accuracy, relevance, and provenance differences.
 
 **Harness (`FlatRetrievalAdapter` vs `DeterministicValidationAdapter` on `benchmark-v1`):**
 A flat relational repository was created that stores the exact same nodes as tables and resolves queries using foreign key lookups without graph edge constraints.
 
 **Results Table:**
-| Metric | Knowledge Graph (Neo4j) | Flat Relational Mock | Impact of Graph Removal |
+| Metric | Knowledge Graph Traversal | Flat Relational Mock | Impact of Graph Removal |
 | :--- | :--- | :--- | :--- |
 | **Validation Accuracy** | **100.0%** (8/8) | 87.5% (7/8) | False amendment conflicts cause incorrect rejections |
 | **Irrelevant Records Retrieved** | **0** | **37** | Extreme context pollution across customer records |
@@ -225,9 +229,11 @@ A flat relational repository was created that stores the exact same nodes as tab
 
 **Architectural Takeaway:** Directional graph relationships (`Contract -[:AMENDED_BY]-> Amendment`) establish clear contractual boundaries. In flat lookups, querying amendments by customer ID retrieves amendments from unrelated contracts, triggering false rate conflicts in validation.
 
-### 8.3 Claim C: End-to-End Evidence Chain Verification
+> **Limitation:** *This controlled experiment demonstrates the value of explicit relationship-aware retrieval for the tested workload. It does not establish that Neo4j is universally superior to a well-designed relational implementation.*
 
-**Hypothesis:** ExceptionLineage produces a verifiable, auditable machine-readable evidence trace connecting user input to authoritative validation outcome.
+### 8.3 Claim C: End-to-End Evidence Chain Verification — VERIFIED
+
+**Core Finding:** The demonstrated investigation trace reconstructs the path from investigation input through agent decisions, tool execution, evidence retrieval, deterministic validation, and final outcome while preserving the authority boundary and redacting secrets.
 
 **Verification Results:**
 - **Endpoint:** `GET /api/investigations/{id}/trace` $\rightarrow$ `InvestigationEvidenceTrace`
@@ -240,11 +246,12 @@ A flat relational repository was created that stores the exact same nodes as tab
 
 ### 8.4 Reproduction Commands
 ```powershell
-# Run the complete Stage 18.5 proof harness
+# Run the architectural proof harness
 .\apps\api\venv\Scripts\python.exe evaluation/runner.py --stage-18-5
 
 # Run the automated test suite for Claims A, B, and C
 .\apps\api\venv\Scripts\python.exe -m pytest apps/api/tests/test_agent_necessity_experiment.py apps/api/tests/test_neo4j_removal_experiment.py apps/api/tests/test_evidence_chain_trace.py -v
 ```
+
 
 

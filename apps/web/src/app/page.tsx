@@ -33,14 +33,25 @@ export default function Home() {
     load();
   }, []);
 
-  // Compute operational overview
-  const totalCount = investigations.length;
-  const verifiedCount = investigations.filter((i) => i.status === "VERIFIED").length;
-  const needsAttentionCount = investigations.filter(
+  // Deduplicate by invoice_id so repeated development runs do not inflate counts
+  const uniqueInvoices = React.useMemo(() => {
+    const map = new Map<string, InvestigationResponse>();
+    for (const inv of investigations) {
+      if (inv.invoice_id && !map.has(inv.invoice_id)) {
+        map.set(inv.invoice_id, inv);
+      }
+    }
+    return Array.from(map.values());
+  }, [investigations]);
+
+  // Compute operational overview from unique canonical invoices
+  const totalCount = uniqueInvoices.length;
+  const verifiedCount = uniqueInvoices.filter((i) => i.status === "VERIFIED").length;
+  const needsAttentionCount = uniqueInvoices.filter(
     (i) => i.status === "NEEDS_REVIEW" || i.status === "INSUFFICIENT_EVIDENCE" || i.status === "NOT_VERIFIED"
   ).length;
 
-  const recentItems = investigations.slice(0, 5);
+  const recentItems = uniqueInvoices.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-[#faf6ef] flex flex-col text-[#1c2621]">
@@ -50,7 +61,7 @@ export default function Home() {
         {/* Hero Section */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5b7f6a]">
-            LINEAGE VERIFICATION ENGINE · BENCHMARK v20.5
+            LINEAGE VERIFICATION ENGINE
           </p>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif text-[#1c2621] leading-tight tracking-tight">
             Understand why a charge was flagged.

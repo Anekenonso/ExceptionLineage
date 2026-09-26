@@ -87,33 +87,34 @@ The architecture is governed by an inviolable foundational law:
 
 ---
 
-## 3. Proof of Core Architectural Claims (Stage 18.5)
+## 3. Architectural Proof (Stage 18.5 & Stage 21)
 
-### 3.1 Claim A: Agent Necessity
-**Statement:** *The agentic investigation layer provides meaningful value beyond a fixed deterministic workflow.*
+### 3.1 Claim A: Adaptive Investigation Value — DEMONSTRATED
+**Statement:** *In controlled branching scenarios, adaptive, state-dependent investigation improved investigation efficiency and recovery compared with the fixed heuristic baseline.*
 
 - **Empirical Evidence:** On the controlled branching dataset (`adaptive-v1`), the adaptive agent achieved:
   - **100.0% Accuracy** (5/5 cases) vs **80.0%** for the fixed heuristic sequence.
   - **25.0% Tool Call Reduction** (24 calls vs 32 calls).
   - **Zero Unnecessary Tool Calls** (avoiding 7 wasted queries made by the fixed sequence).
-  - **3 Dynamic Early Stops** upon discovering conclusive proof or contract termination.
-  - **60% Dead-End Recovery Rate** backtracking from dead-end SOW paths to valid amendment paths.
-- **Architectural Conclusion:** On linear paths, a fixed sequence suffices. On non-linear enterprise exception paths, the agentic loop is necessary to prevent wasted API/database calls, avoid context contamination, and recover from false leads.
+  - **3 Dynamic Early Stops** upon discovering conclusive base rate matches, missing contracts, or explicit rejections.
+  - **60.0% Branching Path Recovery Rate** successfully navigating branching paths in $\le$ 5 steps without redundant queries (3 of 5 cases).
+- **Scope of Evidence:** These results demonstrate behavior on the tested scenarios and do not establish a universal requirement for agentic AI or LLMs. Live LLM evaluation was blocked by external provider quota/availability; the adaptive evaluation measures state-dependent tool selection logic.
 
-### 3.2 Claim B: Neo4j Load-Bearing Role
-**Statement:** *Neo4j provides meaningful value for multi-hop relationship traversal and prevents context contamination.*
+### 3.2 Claim B: Relationship-Aware Retrieval — DEMONSTRATED
+**Statement:** *The controlled retrieval experiment showed measurable benefits from explicit relationship-aware traversal for this workload, including accuracy, relevance, and provenance differences.*
 
-- **Empirical Evidence:** Removing graph relationship traversal and falling back to flat relational lookups (`FlatLineageRepository`) resulted in:
-  - **Accuracy dropped to 87.5%** due to false amendment conflicts.
-  - **37 Irrelevant Records Retrieved** across 8 benchmark cases.
-  - **80% Loss in Provenance Completeness** (degraded from 100% to 20%).
-  - **8.25 Retrieval Operations/Case** (vs 1.0 graph query).
-- **Architectural Conclusion:** Directional graph relationships (`Contract -[:AMENDED_BY]-> Amendment`) establish hard entity boundaries. Flat relational queries pull customer-wide records that cross contract boundaries, polluting the validation context with competing rates and invalidating audit determinations.
+- **Empirical Evidence:** Removing explicit graph relationship traversal and falling back to flat relational lookups (`FlatLineageRepository`) resulted in:
+  - **Validation Accuracy:** 100.0% graph-aware vs **87.5%** flat retrieval (unlinked amendments triggered false rate conflicts).
+  - **Irrelevant Records Retrieved:** 0 with graph traversal vs **37** across 8 benchmark cases under flat lookups.
+  - **Provenance Completeness:** 100.0% multi-hop lineage vs **20.0%** (-80% loss in end-to-end evidence lineage).
+  - **Retrieval Operations / Case:** 1.0 graph query vs **8.25 operations/case** under flat table scans.
+- **Architectural Conclusion:** Explicit relationship-aware traversal isolates the exact contract sub-graph, preventing customer-wide records from crossing contract boundaries and contaminating the validation context.
+- **Limitation:** *This controlled experiment demonstrates the value of explicit relationship-aware retrieval for the tested workload. It does not establish that Neo4j is universally superior to a well-designed relational implementation.*
 
-### 3.3 Claim C: End-to-End Evidence Chain
-**Statement:** *The system produces a complete, auditable end-to-end evidence trace connecting input to outcome.*
+### 3.3 Claim C: End-to-End Evidence Chain — VERIFIED
+**Statement:** *The demonstrated investigation trace reconstructs the path from investigation input through agent decisions, tool execution, evidence retrieval, deterministic validation, and final outcome while preserving the authority boundary and redacting secrets.*
 
-- **Empirical Evidence:** The system generates a complete, machine-readable evidence trace (`GET /api/investigations/{id}/trace`):
+- **Empirical Evidence:** The system generates a complete, auditable, machine-readable evidence trace (`GET /api/investigations/{id}/trace`):
   ```
   INPUT
     ↓
@@ -127,10 +128,13 @@ The architecture is governed by an inviolable foundational law:
     ↓
   OUTCOME          (authoritative final determination & state transition)
   ```
-- **Integrity Guarantees:**
-  - Automated secret redaction (API keys, passwords, bearer tokens).
-  - Strict preservation of UTC ISO timestamps and immutable IDs.
-  - Absolute preservation of the authority boundary.
+- **Quantitative Trace Attributes:**
+  - 30 total chronological events
+  - 7 agent decisions, 7 tool calls, 6 graph retrievals, 8 validation checks, 8 cited evidence items
+  - `secrets_redacted = true` (automated recursive sanitization of API keys, passwords, and tokens)
+  - `authority_boundary_preserved = true` (*"AI investigates. Deterministic logic verifies."*)
+
+> **Scope of evidence:** These results are controlled experiments on synthetic investigation data. They demonstrate properties of this implementation and evaluation setup; they are not universal benchmarks of all agents, databases, or enterprise systems.
 
 ---
 

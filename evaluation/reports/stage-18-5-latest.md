@@ -1,12 +1,14 @@
-# Stage 18.5 Architectural Proof Report
+# Architectural Evaluation Report (Stage 18.5 / Stage 21)
 
-## Agent Necessity + Neo4j Necessity + End-to-End Evidence Chain
+## Adaptive Investigation Value + Relationship-Aware Retrieval + End-to-End Evidence Chain
 
-- **Suite ID:** `proof-18-5-dc1c7f95d97c`
-- **Timestamp:** `2026-09-26T02:28:44.560493+00:00`
-- **Git Commit:** `6d2f3da94c3f72b04ce01acd4167dc0e8628e961`
+- **Suite ID:** `proof-18-5-b78065028f3b`
+- **Timestamp:** `2026-09-26T15:39:43.643513+00:00`
+- **Git Commit:** `1c19b1402e2368164d2b6cbe455c4bac0d219e62`
 - **Dataset:** `adaptive-v1` (Branching) + `benchmark-v1` (Canonical)
-- **Architectural Boundary:** *"AI handles ambiguity. Code handles authority."*
+- **Architectural Invariant:** *"AI handles ambiguity. Code handles authority."*
+
+> **Scope of evidence:** These results are controlled experiments on synthetic investigation data. They demonstrate properties of this implementation and evaluation setup; they are not universal benchmarks of all agents, databases, or enterprise systems.
 
 ---
 
@@ -14,15 +16,15 @@
 
 | Claim | Focus | Status | Primary Quantitative Evidence |
 | :--- | :--- | :--- | :--- |
-| **Claim A** | Agent Necessity | **PROVEN** | Adaptive Agent achieved **100.0% accuracy** (vs Heuristic 80.0%), eliminated **7 unnecessary tool calls**, and performed **3 dynamic early stops**. |
-| **Claim B** | Neo4j Necessity | **PROVEN** | Flat retrieval dropped accuracy to **87.5%** (vs Graph 100.0%), returned **37 irrelevant records**, and degraded provenance to **20%**. |
-| **Claim C** | Evidence Chain Trace | **PROVEN** | Complete, unbroken **30-event audit trace** verified from input to outcome with secret redaction and tri-state check semantics. |
+| **Claim A** | Adaptive Investigation Value | **DEMONSTRATED** | Adaptive Agent achieved **100.0% accuracy** (vs Heuristic 80.0%), eliminated **7 unnecessary tool calls**, and performed **3 dynamic early stops**. |
+| **Claim B** | Relationship-Aware Retrieval | **DEMONSTRATED** | Flat retrieval dropped accuracy to **87.5%** (vs Graph 100.0%), returned **37 irrelevant records**, and degraded provenance to **20%**. |
+| **Claim C** | End-to-End Evidence Chain | **VERIFIED** | Complete, unbroken **30-event audit trace** verified from input to outcome with secret redaction and tri-state check semantics. |
 
 ---
 
-## Claim A: Agent Necessity Experiment
+## Claim A: Adaptive Investigation Value Experiment
 
-> **Hypothesis:** An adaptive agent loop dynamically stops, backtracks, and selects tools based on intermediate evidence, whereas a fixed deterministic sequence wastes operations and fails on non-linear lineage branches.
+> In controlled branching scenarios, adaptive, state-dependent investigation improved investigation efficiency and recovery compared with the fixed heuristic baseline.
 
 ### Quantitative Comparison (Branching Dataset: 5 Cases)
 
@@ -32,36 +34,40 @@
 | **Total Tool Calls** | 32 | **24** | **8 fewer calls** (25.0% reduction) |
 | **Unnecessary Tool Calls** | 7 | **0** | **Zero wasted queries** |
 | **Dynamic Early Stops** | 0 | **3** | Stops immediately when conclusive proof found |
-| **Dead-End Recovery Rate** | 0.0% | **60%** | Recovers from dead-end SOW branches |
+| **Branching Path Recovery Rate** | 0.0% | **60%** | Successfully navigated branching paths in <= 5 steps (3/5 cases) |
+
+> **Scope Note:** In controlled branching scenarios, adaptive, state-dependent investigation improved investigation efficiency and recovery compared with the fixed heuristic baseline. These results demonstrate behavior on the tested scenarios and do not establish a universal requirement for agentic AI or LLMs. (Live LLM evaluation was blocked by provider quota/availability).
 
 ### Architectural Rationale
 - **Linear workflows** (`benchmark-v1`): A fixed heuristic achieves parity because every invoice strictly follows Invoice -> Contract -> Amendment -> SOW -> Approval.
-- **Branching workflows** (`adaptive-v1`): Fixed sequences execute unnecessary queries (e.g. querying amendments for a contract that was already terminated or querying SOWs when base rate matches). The adaptive agent terminates early or pivots paths dynamically.
+- **Branching workflows** (`adaptive-v1`): Fixed sequences execute unnecessary queries (e.g. querying amendments for an unanchored transaction or querying SOWs when base rate matches). The adaptive agent terminates early or pivots paths dynamically.
 
 ---
 
-## Claim B: Neo4j Removal Experiment
+## Claim B: Relationship-Aware Retrieval Experiment
 
-> **Hypothesis:** Removing Neo4j graph relationships and falling back to flat table/relational lookups leads to context contamination, false conflicts from unlinked amendments, and degraded evidence provenance.
+> The controlled retrieval experiment showed measurable benefits from explicit relationship-aware traversal for this workload, including accuracy, relevance, and provenance differences.
 
 ### Quantitative Comparison (Benchmark Dataset: 8 Cases)
 
-| Metric | Knowledge Graph (Neo4j) | Flat Relational Mock | Impact of Graph Removal |
+| Metric | Knowledge Graph Traversal | Flat Relational Mock | Impact of Graph Removal |
 | :--- | :--- | :--- | :--- |
 | **Validation Accuracy** | **100.0%** | 87.5% | Accuracy drops due to false amendment conflicts |
 | **Irrelevant Records Retrieved** | **0** | 37 | High context contamination (37 extraneous items) |
 | **Multi-Hop Provenance** | **100%** | 20% | -80% loss in end-to-end evidence lineage |
 | **Retrieval Operations / Case** | **1.0** | 8.25 | 8x multiplication in discrete scan operations |
 
+> **Limitation:** This controlled experiment demonstrates the value of explicit relationship-aware retrieval for the tested workload. It does not establish that Neo4j is universally superior to a well-designed relational implementation.
+
 ### Architectural Rationale
 - In a flat lookup, querying amendments for customer `CUS-001` returns amendments belonging to *other contracts* of the same customer. Without directional relationship edges (`(Contract)-[:AMENDED_BY]->(Amendment)`), the validation engine encounters conflicting rates.
-- Graph traversal isolates the exact contract sub-graph, guaranteeing zero context pollution.
+- Explicit relationship-aware traversal isolates the exact contract sub-graph, preventing cross-contract context contamination.
 
 ---
 
 ## Claim C: End-to-End Evidence Chain Verification
 
-> **Hypothesis:** ExceptionLineage produces a verifiable, auditable machine-readable evidence trace connecting user input to authoritative validation outcome.
+> The demonstrated investigation trace reconstructs the path from investigation input through agent decisions, tool execution, evidence retrieval, deterministic validation, and final outcome while preserving the authority boundary and redacting secrets.
 
 - **Chain Integrity:** `VERIFIED`
 - **Total Auditable Events:** 30
@@ -88,7 +94,7 @@ OUTCOME         (authoritative final determination & state transition)
 
 ## Reproduction Instructions
 
-To re-run the complete Stage 18.5 proof harness and regenerate this report:
+To re-run the architectural proof harness and regenerate this report:
 ```powershell
 .\apps\api\venv\Scripts\python.exe evaluation/runner.py --stage-18-5
 ```

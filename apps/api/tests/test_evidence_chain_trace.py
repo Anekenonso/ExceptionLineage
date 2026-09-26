@@ -1,6 +1,8 @@
-"""Automated tests for Stage 18.5 Claim C: End-to-End Evidence Chain Trace.
+"""Automated tests for Stage 18.5 / Stage 21 Claim C: End-to-End Evidence Chain Trace.
 
-Proves that ExceptionLineage produces a complete, auditable, machine-readable evidence trace:
+Verifies that the demonstrated investigation trace reconstructs the path from investigation input
+through agent decisions, tool execution, evidence retrieval, deterministic validation, and final outcome
+while preserving the authority boundary and redacting secrets:
 1. Complete chronological chain:
    INPUT -> AGENT_DECISION -> TOOL_CALL -> GRAPH_RETRIEVAL -> VALIDATION -> OUTCOME.
 2. Complete secret redaction across all arguments and metadata.

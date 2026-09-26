@@ -248,16 +248,16 @@ def run_stage_18_5_evaluation(output_dir: Path | None = None) -> dict:
     now_iso = datetime.now(timezone.utc).isoformat()
 
     print("================================================================================")
-    print("ExceptionLineage Stage 18.5 — Architectural Proof Harness")
-    print("Agent Necessity + Neo4j Necessity + End-to-End Evidence Chain")
+    print("ExceptionLineage Architectural Proof Harness (Stage 18.5 / Stage 21)")
+    print("Adaptive Investigation Value + Relationship-Aware Retrieval + End-to-End Evidence Chain")
     print(f"Suite ID: {suite_id}")
     print(f"Commit:   {git_commit or 'unknown'}")
     print("================================================================================\n")
 
     lineages = load_seed_lineages()
 
-    # CLAIM A: Agent Necessity Experiment
-    print("--> Executing Claim A: Agent Necessity Experiment (Branching Dataset)...")
+    # CLAIM A: Adaptive Investigation Value Experiment
+    print("--> Executing Claim A: Adaptive Investigation Value Experiment (Branching Dataset)...")
     cases_branch = load_benchmark_cases("adaptive")
     adaptive_adapter = AdaptiveAgentAdapter()
     run_adaptive = adaptive_adapter.run_suite(
@@ -279,10 +279,10 @@ def run_stage_18_5_evaluation(output_dir: Path | None = None) -> dict:
         f"Tool Calls: {run_heuristic.aggregate_metrics.total_tool_calls}, "
         f"Unnecessary Calls: {run_heuristic.aggregate_metrics.total_unnecessary_tool_calls}"
     )
-    print("    Claim A Result: PROVEN (Operational efficiency, dynamic early stopping, zero wasted queries)\n")
+    print("    Claim A Result: DEMONSTRATED (Improved efficiency and recovery on controlled branching scenarios without unnecessary calls)\n")
 
-    # CLAIM B: Neo4j Removal Experiment
-    print("--> Executing Claim B: Neo4j Removal Experiment (Benchmark Dataset)...")
+    # CLAIM B: Relationship-Aware Retrieval Experiment
+    print("--> Executing Claim B: Relationship-Aware Retrieval Experiment (Benchmark Dataset)...")
     cases_bench = load_benchmark_cases("benchmark")
     graph_adapter = DeterministicValidationAdapter()
     run_graph = graph_adapter.run_suite(
@@ -304,7 +304,7 @@ def run_stage_18_5_evaluation(output_dir: Path | None = None) -> dict:
         f"Provenance: {(run_flat.aggregate_metrics.provenance_completeness or 0.2)*100:.0f}%, "
         f"Queries/Case: {run_flat.aggregate_metrics.mean_retrieval_operations:.2f}"
     )
-    print("    Claim B Result: PROVEN (Removing graph causes false amendment conflicts and 80% loss in provenance)\n")
+    print("    Claim B Result: DEMONSTRATED (Relationship-aware traversal prevented false conflicts and maintained provenance for tested workload)\n")
 
     # CLAIM C: Evidence Chain Trace Verification
     print("--> Executing Claim C: End-to-End Evidence Chain Verification...")
@@ -316,7 +316,7 @@ def run_stage_18_5_evaluation(output_dir: Path | None = None) -> dict:
     print(f"    Chain Verified:   {trace.chain_verified}")
     print(f"    Total Events:     {len(trace.events)}")
     print(f"    Final Outcome:    {trace.final_outcome}")
-    print("    Claim C Result: PROVEN (Complete auditable trace from input to outcome with secret redaction)\n")
+    print("    Claim C Result: VERIFIED (Reconstructs path from input to outcome while preserving authority boundary and redacting secrets)\n")
 
     report_data = {
         "suite_id": suite_id,
@@ -325,9 +325,10 @@ def run_stage_18_5_evaluation(output_dir: Path | None = None) -> dict:
         "git_commit": git_commit,
         "claims": {
             "claim_a_agent_necessity": {
-                "title": "Agent Necessity Experiment",
-                "status": "PROVEN",
-                "statement": "The agentic investigation layer provides meaningful value beyond a fixed deterministic workflow for branching and recovery.",
+                "title": "Adaptive Investigation Value",
+                "status": "DEMONSTRATED",
+                "statement": "In controlled branching scenarios, adaptive, state-dependent investigation improved investigation efficiency and recovery compared with the fixed heuristic baseline.",
+                "scope_note": "Demonstrates behavior on tested branching scenarios. Does not establish universal requirement for agentic AI or LLMs.",
                 "adaptive_run": run_adaptive.model_dump(),
                 "heuristic_run": run_heuristic.model_dump(),
                 "comparison": {
@@ -342,9 +343,10 @@ def run_stage_18_5_evaluation(output_dir: Path | None = None) -> dict:
                 },
             },
             "claim_b_neo4j_necessity": {
-                "title": "Neo4j Removal Experiment",
-                "status": "PROVEN",
-                "statement": "Neo4j provides meaningful value for multi-hop relationship traversal and prevents context contamination.",
+                "title": "Relationship-Aware Retrieval",
+                "status": "DEMONSTRATED",
+                "statement": "The controlled retrieval experiment showed measurable benefits from explicit relationship-aware traversal for this workload, including accuracy, relevance and provenance differences.",
+                "limitation": "This controlled experiment demonstrates the value of explicit relationship-aware retrieval for the tested workload. It does not establish that Neo4j is universally superior to a well-designed relational implementation.",
                 "graph_run": run_graph.model_dump(),
                 "flat_run": run_flat.model_dump(),
                 "comparison": {
@@ -359,9 +361,9 @@ def run_stage_18_5_evaluation(output_dir: Path | None = None) -> dict:
                 },
             },
             "claim_c_evidence_chain": {
-                "title": "End-to-End Evidence Chain Verification",
-                "status": "PROVEN",
-                "statement": "The system produces a complete, auditable end-to-end evidence trace connecting input to outcome.",
+                "title": "End-to-End Evidence Chain",
+                "status": "VERIFIED",
+                "statement": "The demonstrated investigation trace reconstructs the path from investigation input through agent decisions, tool execution, evidence retrieval, deterministic validation, and final outcome while preserving the authority boundary and redacting secrets.",
                 "trace": trace.model_dump(),
                 "verification": {
                     "chain_verified": trace.chain_verified,
@@ -373,9 +375,10 @@ def run_stage_18_5_evaluation(output_dir: Path | None = None) -> dict:
             },
         },
         "summary": {
-            "all_claims_proven": True,
+            "all_claims_evaluated": True,
             "authority_boundary_enforced": True,
             "overall_status": "COMPLETED",
+            "scope_of_evidence": "These results are controlled experiments on synthetic investigation data. They demonstrate properties of this implementation and evaluation setup; they are not universal benchmarks of all agents, databases, or enterprise systems.",
         },
     }
 

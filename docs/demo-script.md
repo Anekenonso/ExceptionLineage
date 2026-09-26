@@ -8,7 +8,7 @@ This script provides a concise, step-by-step walkthrough for presenting Exceptio
 
 - **Problem**: When enterprise billing systems flag an invoice exception (e.g. rate variance or surcharge), human analysts spend hours hunting across contracts, amendments, SOWs, and emails to verify if the variance was authorized.
 - **Solution**: ExceptionLineage executes autonomous evidence discovery across enterprise graph lineage, and enforces deterministic contractual validation.
-- **Core Principle**: *"AI handles ambiguity. Code handles authority."*
+- **Core Principle**: *"AI investigates. Deterministic logic verifies."*
 
 ---
 
@@ -16,10 +16,10 @@ This script provides a concise, step-by-step walkthrough for presenting Exceptio
 
 1. Open `http://localhost:3000` in the browser.
 2. Note the system status indicator: API and Graph services are active and healthy.
-3. Review the three proven architectural pillars:
-   - **Agent Necessity**: Eliminates 100% of redundant queries via dynamic early-stopping.
-   - **Graph Traversal**: Prevents false contractual conflicts with 100% provenance retention.
-   - **Deterministic Authority**: Code (not LLM hallucinations) makes the legal determination.
+3. Review the three architectural pillars:
+   - **Adaptive Investigation Value**: In controlled branching scenarios, state-dependent investigation reduces redundant queries and recovers from dead ends.
+   - **Relationship-Aware Retrieval**: Preserves multi-hop provenance and isolates contract boundaries during retrieval.
+   - **Deterministic Authority & Evidence Chain**: Code (not LLM generation) holds the validation verdict, backed by an unbroken auditable trace.
 4. Click **"Launch Workspace"** or navigate to `/investigations`.
 
 ---

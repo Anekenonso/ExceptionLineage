@@ -81,19 +81,30 @@ export default function InvestigationsDashboard() {
     }
   };
 
+  // Deduplicate by invoice_id so multiple runs of the same invoice do not create repeated ledger rows
+  const canonicalInvestigations = useMemo(() => {
+    const map = new Map<string, InvestigationResponse>();
+    for (const inv of investigations) {
+      if (inv.invoice_id && !map.has(inv.invoice_id)) {
+        map.set(inv.invoice_id, inv);
+      }
+    }
+    return Array.from(map.values());
+  }, [investigations]);
+
   // Status counts
   const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = { ALL: investigations.length };
-    investigations.forEach((inv) => {
+    const counts: Record<string, number> = { ALL: canonicalInvestigations.length };
+    canonicalInvestigations.forEach((inv) => {
       const st = (inv.status || "").toUpperCase();
       counts[st] = (counts[st] || 0) + 1;
     });
     return counts;
-  }, [investigations]);
+  }, [canonicalInvestigations]);
 
   // Search and filter logic
   const filteredInvestigations = useMemo(() => {
-    return investigations.filter((inv) => {
+    return canonicalInvestigations.filter((inv) => {
       // Status filter
       if (statusFilter !== "ALL" && inv.status !== statusFilter) {
         return false;
@@ -115,7 +126,7 @@ export default function InvestigationsDashboard() {
 
       return true;
     });
-  }, [investigations, statusFilter, searchQuery]);
+  }, [canonicalInvestigations, statusFilter, searchQuery]);
 
   // Sort logic
   const sortedInvestigations = useMemo(() => {

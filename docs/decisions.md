@@ -201,23 +201,28 @@
 
 ---
 
-## ADR-014: Architectural Proof — Agent Necessity, Neo4j Load-Bearing Role, and End-to-End Evidence Chain
+## ADR-014: Architectural Evaluation — Adaptive Investigation Value, Relationship-Aware Retrieval, and End-to-End Evidence Chain
 
-**Date:** 2026-09-25
+**Date:** 2026-09-25 (Updated Stage 21)
 
-**Decision:** Formally validate and document the three core architectural claims through automated, quantitative experiments:
-1. **Claim A (Agent Necessity):** Demonstrate through controlled branching scenarios (`adaptive-v1`) that an adaptive agent layer provides decisive operational advantages (dynamic early stopping, dead-end backtracking, elimination of unnecessary queries) over a fixed deterministic sequence.
-2. **Claim B (Neo4j Load-Bearing Role):** Demonstrate through an architectural ablation study (`FlatLineageRepository`) that removing graph relationship traversal degrades validation accuracy (causing false amendment conflicts), introduces severe context contamination (37 irrelevant records retrieved across 8 benchmark cases), and reduces evidence provenance completeness to 20%.
-3. **Claim C (End-to-End Evidence Chain):** Implement a dedicated, machine-readable evidence trace generator (`InvestigationEvidenceTrace`, `GET /api/investigations/{id}/trace`) proving an unbroken, auditable link connecting `INPUT -> AGENT_DECISION -> TOOL_CALL -> GRAPH_RETRIEVAL -> VALIDATION -> OUTCOME`, strictly redacting credentials and preserving tri-state check semantics (`PASS`, `FAIL`, `UNKNOWN`).
+**Decision:** Formally evaluate and document the three core architectural claims through automated, quantitative experiments:
+1. **Claim A (Adaptive Investigation Value — DEMONSTRATED):** Demonstrate through controlled branching scenarios (`adaptive-v1`) that an adaptive, state-dependent agent layer improves investigation efficiency (dynamic early stopping, avoiding unnecessary queries) and recovery compared with a fixed heuristic sequence.
+2. **Claim B (Relationship-Aware Retrieval — DEMONSTRATED):** Demonstrate through an architectural ablation study (`FlatLineageRepository`) that removing explicit relationship-aware traversal degrades validation accuracy (causing false amendment conflicts), introduces context contamination (37 irrelevant records retrieved across 8 benchmark cases), and reduces evidence provenance completeness to 20% for the tested workload.
+3. **Claim C (End-to-End Evidence Chain — VERIFIED):** Implement a dedicated, machine-readable evidence trace generator (`InvestigationEvidenceTrace`, `GET /api/investigations/{id}/trace`) proving an unbroken, auditable link connecting `INPUT -> AGENT_DECISION -> TOOL_CALL -> GRAPH_RETRIEVAL -> VALIDATION -> OUTCOME`, strictly redacting credentials and preserving tri-state check semantics (`PASS`, `FAIL`, `UNKNOWN`).
 
 **Rationale:**
-1. **Empirical Justification over Theoretical Claims**: Software systems frequently introduce graph databases and autonomous agents without empirical proof of their necessity. Establishing quantitative benchmarks with measurable counter-factuals (e.g., comparing graph traversal directly against flat relational queries, and comparing adaptive tool selection against a fixed query sequence) proves that both components solve specific, load-bearing failure modes rather than adding decorative complexity.
+1. **Empirical Evaluation over Theoretical Assertions**: Software systems frequently introduce graph databases and autonomous agents without empirical evaluation of their actual contribution. Establishing quantitative benchmarks with measurable counter-factuals (e.g., comparing graph traversal directly against flat relational queries, and comparing adaptive tool selection against a fixed query sequence) demonstrates that both components address specific failure modes rather than adding decorative complexity.
 2. **Claim A Findings**:
-   - On simple linear paths (`benchmark-v1`), a fixed heuristic query sequence achieves 100% accuracy because the discovery graph is uniform.
-   - On non-linear or branching paths (`adaptive-v1`), fixed query sequences fail or waste significant resources: they query amendments for terminated contracts and query SOWs when base terms already match. The adaptive agent achieves **100.0% accuracy** (vs 80.0% heuristic), executes **25% fewer tool calls** (24 vs 32), makes **zero unnecessary tool calls** (avoiding 7 wasted calls), and executes **3 dynamic early stops**.
+   - On simple linear paths (`benchmark-v1`), a fixed heuristic query sequence achieves parity because the discovery graph is uniform.
+   - On non-linear or branching paths (`adaptive-v1`), fixed query sequences execute unnecessary queries: they query amendments for unanchored transactions and query SOWs when base terms already match. The adaptive agent achieves **100.0% accuracy** (vs 80.0% heuristic), executes **25.0% fewer tool calls** (24 vs 32), makes **zero unnecessary tool calls** (avoiding 7 wasted calls), executes **3 dynamic early stops**, and achieves a **60.0% branching path recovery rate** (3/5 cases in $\le$ 5 steps).
+   - *Scope Note:* In controlled branching scenarios, adaptive, state-dependent investigation improved investigation efficiency and recovery compared with the fixed heuristic baseline. These results demonstrate behavior on the tested scenarios and do not establish a universal requirement for agentic AI or LLMs. (Live LLM evaluation was blocked by external provider quota/availability).
 3. **Claim B Findings**:
-   - Neo4j graph relationships (`AMENDS`, `GOVERNED_BY`, `UNDER_CONTRACT`) establish strict contractual boundaries.
+   - Directional graph relationships (`AMENDS`, `GOVERNED_BY`, `UNDER_CONTRACT`) establish explicit contractual boundaries.
    - When graph edges are removed and flat relational lookups are performed, customer-wide amendments contaminate the contract context, triggering false rate conflicts and reducing accuracy to **87.5%**. Flat retrieval pulls **37 irrelevant entities** and requires **8.25 retrieval operations/case** (vs 1.0 graph query).
+   - *Limitation:* This controlled experiment demonstrates the value of explicit relationship-aware retrieval for the tested workload. It does not establish that Neo4j is universally superior to a well-designed relational implementation.
 4. **Claim C Findings & Authority Inviolability**:
    - The complete evidence trace exposes exactly why an outcome was reached without human guesswork.
-   - The architectural boundary (*"AI handles ambiguity. Code handles authority."*) is preserved at every trace step: the agent plans queries, but the deterministic validation engine evaluates rules and commits state machine transitions.
+   - The architectural boundary (*"AI investigates. Deterministic logic verifies."*) is preserved at every trace step: the agent plans queries, but the deterministic validation engine evaluates rules and commits state machine transitions.
+
+> **Scope of evidence:** These results are controlled experiments on synthetic investigation data. They demonstrate properties of this implementation and evaluation setup; they are not universal benchmarks of all agents, databases, or enterprise systems.
+

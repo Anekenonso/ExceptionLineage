@@ -1,17 +1,18 @@
 {
-  "suite_id": "proof-18-5-dc1c7f95d97c",
-  "timestamp": "2026-09-26T02:28:44.560493+00:00",
+  "suite_id": "proof-18-5-b78065028f3b",
+  "timestamp": "2026-09-26T15:39:43.643513+00:00",
   "stage": "18.5",
-  "git_commit": "6d2f3da94c3f72b04ce01acd4167dc0e8628e961",
+  "git_commit": "1c19b1402e2368164d2b6cbe455c4bac0d219e62",
   "claims": {
     "claim_a_agent_necessity": {
-      "title": "Agent Necessity Experiment",
-      "status": "PROVEN",
-      "statement": "The agentic investigation layer provides meaningful value beyond a fixed deterministic workflow for branching and recovery.",
+      "title": "Adaptive Investigation Value",
+      "status": "DEMONSTRATED",
+      "statement": "In controlled branching scenarios, adaptive, state-dependent investigation improved investigation efficiency and recovery compared with the fixed heuristic baseline.",
+      "scope_note": "Demonstrates behavior on tested branching scenarios. Does not establish universal requirement for agentic AI or LLMs.",
       "adaptive_run": {
-        "run_id": "eval-4bb205e9d53e",
-        "timestamp": "2026-09-26T02:28:44.697820+00:00",
-        "git_commit": "6d2f3da94c3f72b04ce01acd4167dc0e8628e961",
+        "run_id": "eval-338213c75d64",
+        "timestamp": "2026-09-26T15:39:43.646830+00:00",
+        "git_commit": "1c19b1402e2368164d2b6cbe455c4bac0d219e62",
         "dataset_version": "adaptive-v1",
         "baseline_name": "adaptive_baseline",
         "model_provider": "evaluation_adaptive",
@@ -67,7 +68,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 11.14,
+            "duration_ms": 10.36,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -112,7 +113,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.43,
+            "duration_ms": 0.35,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -138,8 +139,8 @@
               "EV-003"
             ],
             "retrieved_evidence_ids": [
-              "EV-002",
-              "EV-001"
+              "EV-001",
+              "EV-002"
             ],
             "cited_evidence_ids": [
               "EV-001",
@@ -167,7 +168,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.93,
+            "duration_ms": 0.77,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -218,7 +219,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.7,
+            "duration_ms": 0.73,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -243,8 +244,8 @@
               "EV-006"
             ],
             "retrieved_evidence_ids": [
-              "EV-002",
-              "EV-001"
+              "EV-001",
+              "EV-002"
             ],
             "cited_evidence_ids": [
               "EV-001",
@@ -272,7 +273,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 4.4,
+            "duration_ms": 0.75,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -327,8 +328,8 @@
           "total_llm_errors": 0,
           "total_timeouts": 0,
           "total_retries": 0,
-          "total_duration_ms": 17.6,
-          "mean_duration_ms": 3.52,
+          "total_duration_ms": 12.96,
+          "mean_duration_ms": 2.59,
           "total_llm_calls": 0,
           "total_prompt_tokens": null,
           "total_completion_tokens": null,
@@ -337,9 +338,9 @@
         "notes": null
       },
       "heuristic_run": {
-        "run_id": "eval-42b57c77e2b0",
-        "timestamp": "2026-09-26T02:28:44.722734+00:00",
-        "git_commit": "6d2f3da94c3f72b04ce01acd4167dc0e8628e961",
+        "run_id": "eval-db39aa716781",
+        "timestamp": "2026-09-26T15:39:43.668925+00:00",
+        "git_commit": "1c19b1402e2368164d2b6cbe455c4bac0d219e62",
         "dataset_version": "adaptive-v1",
         "baseline_name": "heuristic_baseline",
         "model_provider": "heuristic",
@@ -377,8 +378,8 @@
               "EV-001"
             ],
             "retrieved_evidence_ids": [
-              "EV-004",
-              "EV-001"
+              "EV-001",
+              "EV-004"
             ],
             "cited_evidence_ids": [
               "EV-001",
@@ -406,7 +407,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.97,
+            "duration_ms": 0.72,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -451,7 +452,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.68,
+            "duration_ms": 0.47,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -477,9 +478,9 @@
               "EV-003"
             ],
             "retrieved_evidence_ids": [
+              "EV-001",
               "EV-003",
-              "EV-002",
-              "EV-001"
+              "EV-002"
             ],
             "cited_evidence_ids": [
               "EV-001",
@@ -508,7 +509,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.96,
+            "duration_ms": 0.87,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -532,9 +533,9 @@
               "EV-2004"
             ],
             "retrieved_evidence_ids": [
-              "EV-002",
               "EV-001",
-              "EV-2004"
+              "EV-2004",
+              "EV-002"
             ],
             "cited_evidence_ids": [
               "EV-001",
@@ -563,7 +564,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.97,
+            "duration_ms": 0.68,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -588,9 +589,9 @@
               "EV-006"
             ],
             "retrieved_evidence_ids": [
+              "EV-001",
               "EV-009",
-              "EV-002",
-              "EV-001"
+              "EV-002"
             ],
             "cited_evidence_ids": [
               "EV-001",
@@ -619,7 +620,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 27.26,
+            "duration_ms": 0.67,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -674,8 +675,8 @@
           "total_llm_errors": 0,
           "total_timeouts": 0,
           "total_retries": 0,
-          "total_duration_ms": 30.84,
-          "mean_duration_ms": 6.17,
+          "total_duration_ms": 3.41,
+          "mean_duration_ms": 0.68,
           "total_llm_calls": 0,
           "total_prompt_tokens": null,
           "total_completion_tokens": null,
@@ -695,13 +696,14 @@
       }
     },
     "claim_b_neo4j_necessity": {
-      "title": "Neo4j Removal Experiment",
-      "status": "PROVEN",
-      "statement": "Neo4j provides meaningful value for multi-hop relationship traversal and prevents context contamination.",
+      "title": "Relationship-Aware Retrieval",
+      "status": "DEMONSTRATED",
+      "statement": "The controlled retrieval experiment showed measurable benefits from explicit relationship-aware traversal for this workload, including accuracy, relevance and provenance differences.",
+      "limitation": "This controlled experiment demonstrates the value of explicit relationship-aware retrieval for the tested workload. It does not establish that Neo4j is universally superior to a well-designed relational implementation.",
       "graph_run": {
-        "run_id": "eval-2233b3cdd3fe",
-        "timestamp": "2026-09-26T02:28:44.777760+00:00",
-        "git_commit": "6d2f3da94c3f72b04ce01acd4167dc0e8628e961",
+        "run_id": "eval-67006aa1eff1",
+        "timestamp": "2026-09-26T15:39:43.678315+00:00",
+        "git_commit": "1c19b1402e2368164d2b6cbe455c4bac0d219e62",
         "dataset_version": "benchmark-v1",
         "baseline_name": "deterministic_baseline",
         "model_provider": "deterministic",
@@ -776,7 +778,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 12.93,
+            "duration_ms": 0.39,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -835,7 +837,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 1.38,
+            "duration_ms": 0.4,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -895,7 +897,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 18.71,
+            "duration_ms": 0.33,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -955,7 +957,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.68,
+            "duration_ms": 0.36,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1019,7 +1021,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.61,
+            "duration_ms": 0.39,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1078,7 +1080,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.51,
+            "duration_ms": 0.3,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1123,7 +1125,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.14,
+            "duration_ms": 0.08,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1183,7 +1185,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.34,
+            "duration_ms": 0.23,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1238,8 +1240,8 @@
           "total_llm_errors": 0,
           "total_timeouts": 0,
           "total_retries": 0,
-          "total_duration_ms": 35.3,
-          "mean_duration_ms": 4.41,
+          "total_duration_ms": 2.48,
+          "mean_duration_ms": 0.31,
           "total_llm_calls": 0,
           "total_prompt_tokens": null,
           "total_completion_tokens": null,
@@ -1248,9 +1250,9 @@
         "notes": null
       },
       "flat_run": {
-        "run_id": "eval-e7fdb01969bc",
-        "timestamp": "2026-09-26T02:28:44.814143+00:00",
-        "git_commit": "6d2f3da94c3f72b04ce01acd4167dc0e8628e961",
+        "run_id": "eval-88698f229d24",
+        "timestamp": "2026-09-26T15:39:43.681450+00:00",
+        "git_commit": "1c19b1402e2368164d2b6cbe455c4bac0d219e62",
         "dataset_version": "benchmark-v1",
         "baseline_name": "flat_retrieval_baseline",
         "model_provider": "flat_retrieval",
@@ -1312,7 +1314,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 9.62,
+            "duration_ms": 5.68,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1366,7 +1368,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 2.63,
+            "duration_ms": 2.27,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1422,7 +1424,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 2.25,
+            "duration_ms": 1.4,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1478,7 +1480,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 2.52,
+            "duration_ms": 1.52,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1536,7 +1538,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 5.7,
+            "duration_ms": 1.42,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1591,7 +1593,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 4.41,
+            "duration_ms": 1.36,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1636,7 +1638,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 0.88,
+            "duration_ms": 0.59,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1686,7 +1688,7 @@
             "llm_errors": 0,
             "timeouts": 0,
             "retries": 0,
-            "duration_ms": 1.69,
+            "duration_ms": 1.27,
             "llm_calls": 0,
             "prompt_tokens": null,
             "completion_tokens": null,
@@ -1741,8 +1743,8 @@
           "total_llm_errors": 0,
           "total_timeouts": 0,
           "total_retries": 0,
-          "total_duration_ms": 29.7,
-          "mean_duration_ms": 3.71,
+          "total_duration_ms": 15.51,
+          "mean_duration_ms": 1.94,
           "total_llm_calls": 0,
           "total_prompt_tokens": null,
           "total_completion_tokens": null,
@@ -1762,15 +1764,15 @@
       }
     },
     "claim_c_evidence_chain": {
-      "title": "End-to-End Evidence Chain Verification",
-      "status": "PROVEN",
-      "statement": "The system produces a complete, auditable end-to-end evidence trace connecting input to outcome.",
+      "title": "End-to-End Evidence Chain",
+      "status": "VERIFIED",
+      "statement": "The demonstrated investigation trace reconstructs the path from investigation input through agent decisions, tool execution, evidence retrieval, deterministic validation, and final outcome while preserving the authority boundary and redacting secrets.",
       "trace": {
-        "investigation_id": "invg-8d329b8105d6",
+        "investigation_id": "invg-9201b8d235c1",
         "input": {
           "invoice_id": "INV-1001",
           "exception_id": null,
-          "created_at": "2026-09-26T02:28:44.846350+00:00",
+          "created_at": "2026-09-26T15:39:43.700314+00:00",
           "data_notice": "SIMULATED_DATA_FOR_EVALUATION"
         },
         "final_outcome": "VERIFIED",
@@ -1778,7 +1780,7 @@
         "events": [
           {
             "type": "input",
-            "timestamp": "2026-09-26T02:28:44.846350+00:00",
+            "timestamp": "2026-09-26T15:39:43.700314+00:00",
             "step": null,
             "action": null,
             "reason": null,
@@ -1795,7 +1797,7 @@
           },
           {
             "type": "agent_decision",
-            "timestamp": "2026-09-26T02:28:44.846499+00:00",
+            "timestamp": "2026-09-26T15:39:43.701395+00:00",
             "step": 1,
             "action": "get_invoice",
             "reason": "Retrieve invoice details to identify billed amount, customer, and governing contract link",
@@ -1811,7 +1813,7 @@
           },
           {
             "type": "tool_call",
-            "timestamp": "2026-09-26T02:28:44.846559+00:00",
+            "timestamp": "2026-09-26T15:39:43.701643+00:00",
             "step": 1,
             "action": "get_invoice",
             "reason": null,
@@ -1827,7 +1829,7 @@
           },
           {
             "type": "graph_retrieval",
-            "timestamp": "2026-09-26T02:28:44.846586+00:00",
+            "timestamp": "2026-09-26T15:39:43.701803+00:00",
             "step": 1,
             "action": "get_invoice",
             "reason": null,
@@ -1844,7 +1846,7 @@
           },
           {
             "type": "agent_decision",
-            "timestamp": "2026-09-26T02:28:44.846628+00:00",
+            "timestamp": "2026-09-26T15:39:43.701892+00:00",
             "step": 2,
             "action": "find_contract",
             "reason": "Retrieve terms and validity for governing contract 'CTR-001'",
@@ -1860,7 +1862,7 @@
           },
           {
             "type": "tool_call",
-            "timestamp": "2026-09-26T02:28:44.846680+00:00",
+            "timestamp": "2026-09-26T15:39:43.701994+00:00",
             "step": 2,
             "action": "find_contract",
             "reason": null,
@@ -1876,7 +1878,7 @@
           },
           {
             "type": "graph_retrieval",
-            "timestamp": "2026-09-26T02:28:44.846705+00:00",
+            "timestamp": "2026-09-26T15:39:43.702039+00:00",
             "step": 2,
             "action": "find_contract",
             "reason": null,
@@ -1892,7 +1894,7 @@
           },
           {
             "type": "agent_decision",
-            "timestamp": "2026-09-26T02:28:44.846744+00:00",
+            "timestamp": "2026-09-26T15:39:43.702289+00:00",
             "step": 3,
             "action": "get_contract_amendments",
             "reason": "Discover executed amendments for contract 'CTR-001' to verify authorized rates",
@@ -1908,7 +1910,7 @@
           },
           {
             "type": "tool_call",
-            "timestamp": "2026-09-26T02:28:44.846795+00:00",
+            "timestamp": "2026-09-26T15:39:43.702413+00:00",
             "step": 3,
             "action": "get_contract_amendments",
             "reason": null,
@@ -1924,7 +1926,7 @@
           },
           {
             "type": "graph_retrieval",
-            "timestamp": "2026-09-26T02:28:44.846821+00:00",
+            "timestamp": "2026-09-26T15:39:43.702461+00:00",
             "step": 3,
             "action": "get_contract_amendments",
             "reason": null,
@@ -1940,7 +1942,7 @@
           },
           {
             "type": "agent_decision",
-            "timestamp": "2026-09-26T02:28:44.846862+00:00",
+            "timestamp": "2026-09-26T15:39:43.702537+00:00",
             "step": 4,
             "action": "get_sows",
             "reason": "Discover Statements of Work (SOWs) for contract 'CTR-001' to verify deliverable scope",
@@ -1956,7 +1958,7 @@
           },
           {
             "type": "tool_call",
-            "timestamp": "2026-09-26T02:28:44.846909+00:00",
+            "timestamp": "2026-09-26T15:39:43.702626+00:00",
             "step": 4,
             "action": "get_sows",
             "reason": null,
@@ -1972,7 +1974,7 @@
           },
           {
             "type": "graph_retrieval",
-            "timestamp": "2026-09-26T02:28:44.846935+00:00",
+            "timestamp": "2026-09-26T15:39:43.702668+00:00",
             "step": 4,
             "action": "get_sows",
             "reason": null,
@@ -1988,7 +1990,7 @@
           },
           {
             "type": "agent_decision",
-            "timestamp": "2026-09-26T02:28:44.846975+00:00",
+            "timestamp": "2026-09-26T15:39:43.702739+00:00",
             "step": 5,
             "action": "find_approvals",
             "reason": "Check for executive or managerial approval on file for exception 'EX-001'",
@@ -2004,7 +2006,7 @@
           },
           {
             "type": "tool_call",
-            "timestamp": "2026-09-26T02:28:44.847027+00:00",
+            "timestamp": "2026-09-26T15:39:43.702824+00:00",
             "step": 5,
             "action": "find_approvals",
             "reason": null,
@@ -2020,7 +2022,7 @@
           },
           {
             "type": "graph_retrieval",
-            "timestamp": "2026-09-26T02:28:44.847052+00:00",
+            "timestamp": "2026-09-26T15:39:43.702864+00:00",
             "step": 5,
             "action": "find_approvals",
             "reason": null,
@@ -2036,7 +2038,7 @@
           },
           {
             "type": "agent_decision",
-            "timestamp": "2026-09-26T02:28:44.847104+00:00",
+            "timestamp": "2026-09-26T15:39:43.702948+00:00",
             "step": 6,
             "action": "get_related_evidence",
             "reason": "Retrieve supporting document clauses and citations for sources: ['CTR-001', 'AMD-001', 'AMD-002', 'AMD-003', 'AMD-004', 'AMD-005', 'AMD-006', 'SOW-001', 'APR-001', 'EX-001']",
@@ -2063,7 +2065,7 @@
           },
           {
             "type": "tool_call",
-            "timestamp": "2026-09-26T02:28:44.847209+00:00",
+            "timestamp": "2026-09-26T15:39:43.703128+00:00",
             "step": 6,
             "action": "get_related_evidence",
             "reason": null,
@@ -2090,7 +2092,7 @@
           },
           {
             "type": "graph_retrieval",
-            "timestamp": "2026-09-26T02:28:44.847238+00:00",
+            "timestamp": "2026-09-26T15:39:43.703176+00:00",
             "step": 6,
             "action": "get_related_evidence",
             "reason": null,
@@ -2115,7 +2117,7 @@
           },
           {
             "type": "agent_decision",
-            "timestamp": "2026-09-26T02:28:44.847277+00:00",
+            "timestamp": "2026-09-26T15:39:43.703239+00:00",
             "step": 7,
             "action": "validate_investigation",
             "reason": "All relevant contractual evidence gathered; invoke authoritative deterministic validation engine",
@@ -2129,7 +2131,7 @@
           },
           {
             "type": "tool_call",
-            "timestamp": "2026-09-26T02:28:44.847308+00:00",
+            "timestamp": "2026-09-26T15:39:43.703290+00:00",
             "step": 7,
             "action": "validate_investigation",
             "reason": null,
@@ -2143,7 +2145,7 @@
           },
           {
             "type": "validation",
-            "timestamp": "2026-09-26T02:28:44.847835+00:00",
+            "timestamp": "2026-09-26T15:39:43.704354+00:00",
             "step": null,
             "action": null,
             "reason": null,
@@ -2159,7 +2161,7 @@
           },
           {
             "type": "validation",
-            "timestamp": "2026-09-26T02:28:44.847860+00:00",
+            "timestamp": "2026-09-26T15:39:43.704404+00:00",
             "step": null,
             "action": null,
             "reason": null,
@@ -2175,7 +2177,7 @@
           },
           {
             "type": "validation",
-            "timestamp": "2026-09-26T02:28:44.847885+00:00",
+            "timestamp": "2026-09-26T15:39:43.704432+00:00",
             "step": null,
             "action": null,
             "reason": null,
@@ -2189,7 +2191,7 @@
           },
           {
             "type": "validation",
-            "timestamp": "2026-09-26T02:28:44.847905+00:00",
+            "timestamp": "2026-09-26T15:39:43.704454+00:00",
             "step": null,
             "action": null,
             "reason": null,
@@ -2206,7 +2208,7 @@
           },
           {
             "type": "validation",
-            "timestamp": "2026-09-26T02:28:44.847925+00:00",
+            "timestamp": "2026-09-26T15:39:43.704475+00:00",
             "step": null,
             "action": null,
             "reason": null,
@@ -2222,7 +2224,7 @@
           },
           {
             "type": "validation",
-            "timestamp": "2026-09-26T02:28:44.847947+00:00",
+            "timestamp": "2026-09-26T15:39:43.704498+00:00",
             "step": null,
             "action": null,
             "reason": null,
@@ -2238,7 +2240,7 @@
           },
           {
             "type": "validation",
-            "timestamp": "2026-09-26T02:28:44.847967+00:00",
+            "timestamp": "2026-09-26T15:39:43.704521+00:00",
             "step": null,
             "action": null,
             "reason": null,
@@ -2254,7 +2256,7 @@
           },
           {
             "type": "validation",
-            "timestamp": "2026-09-26T02:28:44.847986+00:00",
+            "timestamp": "2026-09-26T15:39:43.704541+00:00",
             "step": null,
             "action": null,
             "reason": null,
@@ -2271,7 +2273,7 @@
           },
           {
             "type": "outcome",
-            "timestamp": "2026-09-26T02:28:44.848005+00:00",
+            "timestamp": "2026-09-26T15:39:43.704567+00:00",
             "step": null,
             "action": null,
             "reason": "Invoice 'INV-1001' amount $10200.00 is authorized and verified under governing contract 'CTR-001'.",
@@ -2317,8 +2319,9 @@
     }
   },
   "summary": {
-    "all_claims_proven": true,
+    "all_claims_evaluated": true,
     "authority_boundary_enforced": true,
-    "overall_status": "COMPLETED"
+    "overall_status": "COMPLETED",
+    "scope_of_evidence": "These results are controlled experiments on synthetic investigation data. They demonstrate properties of this implementation and evaluation setup; they are not universal benchmarks of all agents, databases, or enterprise systems."
   }
 }

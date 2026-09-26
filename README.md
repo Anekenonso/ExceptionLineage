@@ -122,13 +122,39 @@ Generated reports are saved to:
 
 ## Current Status
 
-**Stage 18.5** — ARCHITECTURAL PROOF COMPLETE — Agent Necessity + Neo4j Necessity + End-to-End Evidence Chain Proven
+**Stage 21** — Architectural Proof & Demo Hardening Complete
 
-ExceptionLineage provides empirical proof for its core architectural components:
-- **Claim A (Agent Necessity) — PROVEN**: On non-linear branching workflows (`adaptive-v1`), the adaptive agent achieves **100.0% accuracy** (vs 80.0% fixed heuristic), reduces tool calls by **25.0%** (24 vs 32 calls), eliminates **all 7 unnecessary tool calls**, and executes **3 dynamic early stops**.
-- **Claim B (Neo4j Load-Bearing Role) — PROVEN**: Removing graph relationship traversal and using flat relational lookups drops validation accuracy to **87.5%** (false amendment conflicts), returns **37 irrelevant records**, reduces provenance completeness to **20.0%**, and multiplies queries to **8.25 operations/case**. Directional graph traversal is load-bearing to prevent customer-wide context pollution.
-- **Claim C (End-to-End Evidence Chain) — PROVEN**: Produces complete, machine-readable 30-event audit traces (`GET /api/investigations/{id}/trace`) linking `INPUT -> AGENT_DECISION -> TOOL_CALL -> GRAPH_RETRIEVAL -> VALIDATION -> OUTCOME`, with complete secret sanitization and tri-state check semantics.
-- **Authority Invariant**: *"AI handles ambiguity. Code handles authority."*
-- **Test Suite**: 277 passing unit and integration tests (2 skipped conditional live tests).
+ExceptionLineage provides empirical evaluation for its core architectural components:
+
+### A. Adaptive Investigation Value — DEMONSTRATED
+In controlled branching scenarios (`adaptive-v1`), adaptive, state-dependent investigation improved investigation efficiency and recovery compared with the fixed heuristic baseline:
+- **100.0% accuracy** (vs 80.0% fixed heuristic)
+- **25.0% tool call reduction** (24 calls vs 32 calls)
+- **Zero unnecessary tool calls** (avoided all 7 wasted calls made by the heuristic baseline)
+- **3 dynamic early stops** upon detecting conclusive base matches, severed lineage, or explicit rejections
+- **60.0% branching path recovery rate** (successfully navigated 3 of 5 branching paths in $\le$ 5 steps without redundant queries)
+
+*Scope note: The experiment demonstrates behavior on the tested scenarios. It does not establish a universal requirement for agentic AI or LLMs. (Live LLM evaluation was blocked by external provider quota/availability).*
+
+### B. Relationship-Aware Retrieval — DEMONSTRATED
+The controlled retrieval experiment showed measurable benefits from explicit relationship-aware traversal for this workload, including accuracy, relevance, and provenance differences:
+- **Validation accuracy:** 100.0% graph-aware vs 87.5% flat retrieval (unlinked amendments triggered false rate conflicts)
+- **Context relevance:** 0 irrelevant records retrieved with graph traversal vs 37 extraneous records under flat lookups
+- **Provenance completeness:** 100.0% multi-hop lineage vs 20.0% under flat retrieval (-80% loss in provenance)
+- **Retrieval operations:** 1.0 graph query vs 8.25 discrete operations/case under flat table scans
+
+> **Limitation:** This controlled experiment demonstrates the value of explicit relationship-aware retrieval for the tested workload. It does not establish that Neo4j is universally superior to a well-designed relational implementation.
+
+### C. End-to-End Evidence Chain — VERIFIED
+The demonstrated investigation trace reconstructs the path from investigation input through agent decisions, tool execution, evidence retrieval, deterministic validation, and final outcome while preserving the authority boundary and redacting secrets:
+- Complete 30-event chronological audit trace (`GET /api/investigations/{id}/trace`): `INPUT → AGENT_DECISION → TOOL_CALL → GRAPH_RETRIEVAL → VALIDATION → OUTCOME`
+- 7 agent decisions, 7 tool calls, 6 graph retrievals, 8 validation checks, 8 cited evidence items
+- `secrets_redacted = true` (automatic recursive redaction of credentials and keys)
+- `authority_boundary_preserved = true` (*"AI investigates. Deterministic logic verifies."*)
+
+> **Scope of evidence:** These results are controlled experiments on synthetic investigation data. They demonstrate properties of this implementation and evaluation setup; they are not universal benchmarks of all agents, databases, or enterprise systems.
+
+- **Test Suite**: 278 passed, 2 skipped (full test suite passing on Python 3.14).
+
 
 

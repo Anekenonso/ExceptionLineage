@@ -18,6 +18,27 @@ router = APIRouter()
 _default_service: InvestigationService | None = None
 
 
+CANONICAL_DEMO_CASES = [
+    ("INV-1001", "EX-001"),
+    ("INV-1002", "EX-002"),
+    ("INV-1003", "EX-003"),
+    ("INV-1004", "EX-004"),
+    ("INV-1005", "EX-005"),
+    ("INV-1006", "EX-006"),
+    ("INV-1007", "EX-007"),
+    ("INV-1008", "EX-008"),
+]
+
+
+def seed_canonical_demo_data(service: InvestigationService) -> None:
+    """Deterministically seed the 8 canonical benchmark cases for clean demo readiness."""
+    for inv_id, exc_id in CANONICAL_DEMO_CASES:
+        try:
+            service.run_investigation(invoice_id=inv_id, exception_id=exc_id)
+        except Exception:
+            pass
+
+
 def get_investigation_service() -> InvestigationService:
     """Dependency provider for InvestigationService with offline fallback."""
     global _default_service
@@ -33,6 +54,7 @@ def get_investigation_service() -> InvestigationService:
             lineage_repo = InMemoryLineageRepository(load_seed_lineages())
 
         _default_service = InvestigationService(lineage_repository=lineage_repo)
+        seed_canonical_demo_data(_default_service)
     return _default_service
 
 
@@ -59,11 +81,20 @@ def _safe_get_lineage(service: InvestigationService, invoice_id: str) -> dict | 
 def list_investigations(
     service: InvestigationService = Depends(get_investigation_service),
 ) -> list[InvestigationResponse]:
-    """Retrieve all investigations ordered chronologically (newest first)."""
+    """Retrieve all investigations ordered chronologically (newest first), deduplicated by invoice."""
     investigations = service.repository.list_all()
     sorted_invs = sorted(investigations, key=lambda x: x.created_at, reverse=True)
-    results: list[InvestigationResponse] = []
+
+    # Deduplicate by invoice_id so multiple development/demo executions do not display duplicate ledger rows
+    seen_invoices: set[str] = set()
+    deduped_invs = []
     for inv in sorted_invs:
+        if inv.invoice_id not in seen_invoices:
+            seen_invoices.add(inv.invoice_id)
+            deduped_invs.append(inv)
+
+    results: list[InvestigationResponse] = []
+    for inv in deduped_invs:
         events = service.get_events(inv.id, include_agent_events=False)
         agent_events = service.get_agent_events(inv.id)
         lineage = _safe_get_lineage(service, inv.invoice_id)

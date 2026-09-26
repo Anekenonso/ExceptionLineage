@@ -26,7 +26,7 @@
 - **Visual QA & Enterprise UI Polish**:
   - Refined enterprise SaaS styling with light backgrounds, crisp dark typography, restrained status badges, and zero decorative AI fluff.
   - Preserves tri-state deterministic logic (`UNKNOWN` is never coerced to `PASS` or `FAIL`).
-  - Authority boundary callout: *"AI handles ambiguity. Code handles authority."*
+  - Authority boundary callout: *"AI investigates. Deterministic logic verifies."*
   - Responsive, desktop-first layouts with smooth loading skeletons and zero layout shifts.
 
 - **Deployment & Production Readiness**:
@@ -35,7 +35,7 @@
   - Backend API health endpoint (`GET /health`) active and responsive.
   - Safe offline graph fallback (`InMemoryLineageRepository` populated from `data/seed` when Neo4j is offline).
   - Complete test suite passes: 278 unit/integration tests passing (2 skipped conditional live tests).
-  - Stage 18.5 architectural proofs verified: Claim A (Agent Necessity), Claim B (Neo4j Graph Necessity), Claim C (End-to-End Evidence Chain) 100% intact.
+  - Architectural evaluation verified: Claim A (Adaptive Investigation Value — DEMONSTRATED), Claim B (Relationship-Aware Retrieval — DEMONSTRATED), Claim C (End-to-End Evidence Chain — VERIFIED).
 
 ## Verified Benchmark Scenarios Matrix
 
