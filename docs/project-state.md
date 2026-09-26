@@ -2,70 +2,87 @@
 
 ## Current Stage
 
-**Stage 18.5** — ARCHITECTURAL PROOF COMPLETE — Agent Necessity + Neo4j Necessity + End-to-End Evidence Chain Proven
+**Stage 19** — COMPLETE — ExceptionLineage Investigation Workspace
 
 ## What Works
 
-- **Stage 18.5 Architectural Proof Suite (`evaluation/runner.py --stage-18-5`)**:
-  - Main CLI entry point: `evaluation/runner.py --stage-18-5`.
-  - Machine-readable JSON output: `evaluation/reports/stage-18-5-latest.json`.
-  - Human-readable Markdown output: `evaluation/reports/stage-18-5-latest.md`.
-  - **Claim A (Agent Necessity) — PROVEN**:
-    - Evaluated across 5 controlled branching scenarios (`adaptive-v1`): `BRANCH-001` through `BRANCH-005`.
-    - Adaptive agent achieved **100.0% accuracy** (vs 80.0% fixed heuristic), **24 tool calls** (vs 32 calls, 25% reduction), **0 unnecessary calls** (avoiding 7 wasted calls), and **3 dynamic early stops**.
-    - Proves agentic loop is necessary for non-linear enterprise exception discovery, dead-end backtracking, and query minimization.
-  - **Claim B (Neo4j Load-Bearing Role) — PROVEN**:
-    - Architectural ablation study comparing Knowledge Graph (`DeterministicValidationAdapter`) vs Flat Relational Mock (`FlatRetrievalAdapter`) across the 8-case benchmark suite.
-    - Flat retrieval caused accuracy to drop to **87.5%** (false amendment rate conflicts), returned **37 irrelevant records**, degraded provenance completeness to **20.0%** (vs 100%), and required **8.25 retrieval operations/case** (vs 1.0 graph query).
-    - Proves directional graph relationships (`Contract -[:AMENDED_BY]-> Amendment`) are load-bearing to prevent customer-wide context pollution.
-  - **Claim C (End-to-End Evidence Chain) — PROVEN**:
-    - Machine-readable trace generator (`app/investigations/trace.py`) and API endpoint `GET /api/investigations/{id}/trace`.
-    - Produces complete, unbroken 30-event audit trace: `INPUT -> AGENT_DECISION -> TOOL_CALL -> GRAPH_RETRIEVAL -> VALIDATION -> OUTCOME`.
-    - Verifies secret redaction (credentials/tokens sanitized to `[REDACTED]`), timestamp preservation, tri-state check semantics (`PASS`, `FAIL`, `UNKNOWN`), and strict preservation of the authority boundary (*"AI handles ambiguity. Code handles authority."*).
-- **Backend test suite with 277 passing tests and 2 conditional live tests (pytest)**.
-- **Reproducible Evaluation Harness (`evaluation/`)**:
-  - Main CLI entry point: `evaluation/runner.py` executable via `python evaluation/runner.py`.
-  - Explicit status taxonomy (`COMPLETED`, `BLOCKED_PROVIDER`, `PARTIAL`, `FAILED_SYSTEM`, `SKIPPED`) to rigorously distinguish model reasoning outcomes from external provider/network/system failures.
-  - Machine-readable JSON output: `evaluation/reports/latest.json`.
-  - Human-readable Markdown output: `evaluation/reports/latest.md`.
-  - Structured Pydantic schemas (`evaluation/schemas.py`).
-  - Evaluated Baselines (`evaluation/adapters/`).
-- **Ground-Truth Isolation Law**:
-  - Automated AST import validation (`tests/test_ground_truth_isolation.py`) rigorously confirms zero imports of `ground_truth`, `tests`, or benchmark datasets in `app/`.
-  - Zero hardcoded `CASE-` identifiers in production request-serving code.
-- **Controlled Failure-Mode Tests (`tests/test_failure_modes.py`, `tests/test_neo4j_removal_experiment.py`, `tests/test_agent_necessity_experiment.py`, `tests/test_evidence_chain_trace.py`)**:
-  - 14 dedicated failure and architectural proof tests.
-- **FastAPI backend with `GET /health` and full investigations API endpoints**:
+- **Production-Quality Investigation Workspace Frontend (`apps/web`)**:
+  - Built with Next.js 16 (App Router), React 19, and Tailwind CSS.
+  - Adheres to approved enterprise SaaS direction: light background, dark typography, subtle borders, restrained status badges, desktop-first responsive layout.
+  - Communicates *"Follow the evidence"* rather than decorative AI branding.
+  - **Investigations Dashboard (`/investigations`)**:
+    - Displays Investigation ID, Invoice ID, Customer, Amount, Status, Created Date, and Execution Duration.
+    - Interactive search across IDs, invoices, and customer names.
+    - Filter chips by status (`ALL`, `VERIFIED`, `NOT_VERIFIED`, `INSUFFICIENT_EVIDENCE`, `NEEDS_REVIEW`, `FAILED`).
+    - "New Investigation" modal with quick preset selection for benchmark scenarios (`INV-1001` through `INV-1008`).
+    - One-click benchmark case runner.
+    - Seamless navigation to detail workspaces (`/investigations/[id]`).
+  - **Main Investigation Workspace (`/investigations/[id]`)**:
+    - Follows the required structural hierarchy:
+      `HEADER ↓ INVOICE EXCEPTION + DETERMINATION ↓ LINEAGE GRAPH ↓ VALIDATION + EVIDENCE + ACTIVITY`
+    - **Header**: Exposes Investigation ID, Invoice ID, Customer, Investigation Type, Current Status, Started, Completed, Duration, "Export Report" action, and "Back to Investigations" link.
+    - **Invoice Exception Card**: Displays Invoice ID, Billed amount, Expected amount, Variance, Product, Invoice date, Customer, and Contract. Fields unavailable in backend data are represented as `Unavailable` / `—` rather than fabricated.
+    - **Determination Card**: Prominent status card with strict adherence to domain rules:
+      - `VERIFIED`: Displays backend-provided explanation and citation count.
+      - `NOT_VERIFIED`: Highlights specific failed deterministic checks and violated rules.
+      - `INSUFFICIENT_EVIDENCE`: Highlights missing evidence and indeterminate checks.
+      - `NEEDS_REVIEW`: Highlights conflicting or unresolved contractual authority.
+      - `FAILED`: Explicitly displays *"No determination was made."* without converting technical failures into business conclusions.
+    - **Lineage Graph (Central Visual Element)**:
+      - Interactive SVG graph rendering directional relationships: `Customer → Contract → Amendment → SOW → Approval → Invoice → Evidence`.
+      - Only renders relationships returned by the backend without inventing edges.
+      - Clickable nodes with status badges and an interactive Entity Inspector drawer showing full properties and raw data.
+      - Zoom and reset controls with responsive DAG layout.
+    - **Deterministic Validation Section**:
+      - Displays check name, status (`PASS`, `FAIL`, `UNKNOWN`), cited evidence links, and explanation messages.
+      - Obvious authority boundary callout: *"AI handles ambiguity. Code handles authority."*
+      - Preserves tri-state semantics (`UNKNOWN` is never coerced to `PASS` or `FAIL`).
+    - **Evidentiary Records Section & Drawer**:
+      - Tabular display of evidence items with ID, type, source, related entity, locator/scope, and validity dates.
+      - Slide-over Evidence Drawer displaying textual excerpts, legal validity dates, and confidence metrics.
+    - **Investigation Activity Trace**:
+      - Interactive timeline powered by `GET /api/investigations/{id}/trace`.
+      - Visually differentiates: `INPUT → AGENT DECISION → TOOL CALL → GRAPH RETRIEVAL → VALIDATION → RESULT`.
+      - Filterable by event type with sanitized tool arguments and redaction verification.
+    - **Report Export (`ExportReportModal`)**:
+      - Exports complete compliance investigation reports in both Markdown and raw JSON formats.
+    - **State Handlers**:
+      - Robust handling for Loading (skeletons), Empty (call-to-actions), Successful data, Insufficient evidence, Needs review, Failed investigation, and API error (with offline fixture toggle).
+    - **Isolated UI Development Fixtures (`apps/web/src/fixtures/investigations.ts`)**:
+      - Cleanly isolated mock dataset matching real API response contracts for offline testing across all 5 terminal states.
+  - **Landing Hub (`apps/web/src/app/page.tsx`)**:
+    - Direct launchpad to the Investigation Workspace.
+    - Architectural overview highlighting the 3 proven claims from Stage 18.5.
+    - Live system status and API health monitoring.
+- **FastAPI Backend Integration (`apps/api`)**:
+  - `GET /api/investigations`: Lists stored investigations with contextual customer, amount, and duration data.
+  - `GET /api/investigations/{id}`: Retrieves full investigation state, findings, metrics, and lineage.
+  - `GET /api/investigations/{id}/lineage`: Dedicated endpoint returning full graph lineage for the invoice.
+  - `GET /api/investigations/{id}/events`: Immutable audit event timeline.
+  - `GET /api/investigations/{id}/trace`: Machine-readable evidence trace for audit and verification.
   - `POST /api/investigations`: End-to-end investigation execution through agentic tool selection, deterministic validation, and state machine transition.
-  - `GET /api/investigations/{id}`: Retrieval of investigation state, findings, validation results, cited evidence, and agent execution metrics.
-  - `GET /api/investigations/{id}/events`: Retrieval of immutable chronological audit event timeline.
-  - `GET /api/investigations/{id}/trace`: Retrieval of machine-readable evidence trace for audit and verification.
-- **Controlled Agentic Loop (`app.agent`)**:
-  - Strict architectural authority boundary: *"AI handles ambiguity. Code handles authority"*.
-  - Real LLM decision adapter (`LLMDecisionModel` in `app.agent.llm_model.py`) connecting to any OpenAI-compatible provider/proxy.
-  - Pluggable Agent Models (`HeuristicAgentModel`, `ScriptedAgentModel`, `LLMDecisionModel`, `AdaptiveAgentModel`).
-  - 7 deterministic tools interfacing with `LineageRepository`.
-  - Comprehensive audit logging recording every `AGENT_DECISION`, `TOOL_CALL`, and `EVIDENCE_FOUND` event.
-- **Next.js frontend with system status page**.
+  - Safe offline graph fallback (`InMemoryLineageRepository` populated from `data/seed` when Neo4j is offline).
+- **Backend Test Suite with 280 tests (278 passing, 2 conditional live tests)**.
+- **Ground-Truth Isolation Law**:
+  - AST verification confirms zero imports of `ground_truth`, `tests`, or benchmark datasets in `app/`.
+  - Zero hardcoded `CASE-` identifiers in production request-serving code.
 
 ## Current Limitations
 
-- **Live LLM Reasoning Benchmark Pending Active Provider Run**: While evaluation infrastructure, schemas, adapters, and fail-closed handling are fully implemented and verified, live LLM reasoning accuracy, tool-selection accuracy, evidence recall, and token efficiency remain unmeasured due to provider quota exhaustion (HTTP 429). A live run with active provider credits is required before making any claims regarding model reasoning performance.
 - **In-Memory Persistence Only**: The current `InMemoryInvestigationRepository` holds lifecycle state in volatile application memory. Durable persistence (PostgreSQL/Neo4j) will be introduced in future persistence milestones.
 - **Simulated Seed Dataset**: All evidence, contracts, invoices, and approvals are synthetic simulated records created for testing and evaluation. No live enterprise connections exist.
+- **Live LLM Reasoning Benchmark Pending Active Provider Run**: While evaluation infrastructure, schemas, adapters, and fail-closed handling are fully implemented and verified, live LLM reasoning accuracy, tool-selection accuracy, evidence recall, and token efficiency remain unmeasured due to provider quota exhaustion (HTTP 429).
 - **Heuristic Baseline Default**: `AGENT_MODEL=heuristic` is active by default so CI and tests remain 100% deterministic and offline. External LLM requires explicit configuration or test flags.
-- **Live LLM Unevaluated in Default Runner**: Default `python evaluation/runner.py` evaluates Baseline A and Baseline B, explicitly marking live LLM as unevaluated to avoid fabricated claims or uncredited external API calls.
 
 ## What Does Not Exist Yet (Intentionally)
 
-- Persistent memory / Meterless H-MEM
+- Persistent PostgreSQL / Meterless H-MEM
 - Multi-agent systems / Zetaris data integration
 - Evidence ingestion pipelines
-- Production seed dataset / fake evaluation results
 - User authentication and authorization
-- Full investigation web dashboard UI
 - Background Celery/Redis workers
 
 ## Next Steps
 
-**Stage 19**: Persistence Layer & Multi-Source Ingestion — durable database storage for investigations/events and external evidence connectors.
+**Stage 20**: Durable Persistence & External Connectors — PostgreSQL storage for investigations/events and external enterprise connectors.
+

@@ -365,6 +365,46 @@ def test_api_all_8_benchmark_cases_end_to_end(client):
 
 
 # ==============================================================================
+# 6b. Investigation List and Lineage Endpoints (Stage 19)
+# ==============================================================================
+
+
+def test_list_investigations_and_lineage_endpoint(client):
+    """Verify GET /api/investigations and GET /api/investigations/{id}/lineage."""
+    # 1. Initially empty or lists existing
+    res_initial = client.get("/api/investigations")
+    assert res_initial.status_code == 200
+    initial_list = res_initial.json()
+    assert isinstance(initial_list, list)
+
+    # 2. Run investigation
+    res_post = client.post("/api/investigations", json={"invoice_id": "INV-1001", "exception_id": "EX-001"})
+    assert res_post.status_code == 200
+    inv_data = res_post.json()
+    inv_id = inv_data["investigation_id"]
+
+    # 3. GET /api/investigations lists it
+    res_list = client.get("/api/investigations")
+    assert res_list.status_code == 200
+    items = res_list.json()
+    assert len(items) >= 1
+    found = next((x for x in items if x["investigation_id"] == inv_id), None)
+    assert found is not None
+    assert found["invoice_id"] == "INV-1001"
+    assert found["customer_name"] == "Acme Global Enterprise Inc."
+    assert found["amount"] == "10200.00"
+
+    # 4. GET /api/investigations/{id}/lineage
+    res_lineage = client.get(f"/api/investigations/{inv_id}/lineage")
+    assert res_lineage.status_code == 200
+    lin = res_lineage.json()
+    assert "invoice" in lin
+    assert "customer" in lin
+    assert "contract" in lin
+    assert "evidence" in lin
+
+
+# ==============================================================================
 # 7. No Ground-Truth Leakage in API and Service Layer (Section 18)
 # ==============================================================================
 

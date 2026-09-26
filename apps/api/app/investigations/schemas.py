@@ -71,6 +71,24 @@ class InvestigationResponse(BaseModel):
         default=None,
         description="Detailed agent action and tool execution audit events",
     )
+    customer_id: str | None = Field(
+        default=None, description="Enterprise customer identifier if available"
+    )
+    customer_name: str | None = Field(
+        default=None, description="Enterprise customer name if available"
+    )
+    amount: str | None = Field(
+        default=None, description="Invoice amount if available"
+    )
+    currency: str | None = Field(
+        default="USD", description="Currency code for monetary amounts"
+    )
+    duration_seconds: float | None = Field(
+        default=None, description="Investigation execution duration in seconds"
+    )
+    lineage: dict[str, Any] | None = Field(
+        default=None, description="Graph lineage data (customer, contract, amendments, sows, exception, approval, evidence)"
+    )
 
     @classmethod
     def from_investigation(
@@ -78,14 +96,37 @@ class InvestigationResponse(BaseModel):
         inv: Investigation,
         events: list[InvestigationEvent] | None = None,
         agent_events: list[InvestigationEvent] | None = None,
+        lineage: dict[str, Any] | None = None,
     ) -> InvestigationResponse:
-        """Construct an InvestigationResponse from domain Investigation and events."""
+        """Construct an InvestigationResponse from domain Investigation, events, and lineage."""
+        from typing import Any
         raw_metrics = inv.agent_metrics
         parsed_metrics = None
         if isinstance(raw_metrics, AgentMetrics):
             parsed_metrics = raw_metrics
         elif isinstance(raw_metrics, dict):
             parsed_metrics = AgentMetrics(**raw_metrics)
+
+        # Extract contextual fields from lineage if available
+        customer_id = None
+        customer_name = None
+        amount = None
+        currency = "USD"
+        if lineage:
+            cust = lineage.get("customer") or {}
+            customer_name = cust.get("name")
+            customer_id = cust.get("id")
+            inv_data = lineage.get("invoice") or {}
+            if inv_data.get("amount") is not None:
+                amount = str(inv_data.get("amount"))
+            currency = inv_data.get("currency") or "USD"
+
+        # Calculate duration
+        duration_seconds = None
+        if parsed_metrics and parsed_metrics.investigation_duration_ms > 0:
+            duration_seconds = round(parsed_metrics.investigation_duration_ms / 1000.0, 3)
+        elif inv.updated_at and inv.created_at:
+            duration_seconds = round((inv.updated_at - inv.created_at).total_seconds(), 3)
 
         return cls(
             investigation_id=inv.id,
@@ -101,4 +142,10 @@ class InvestigationResponse(BaseModel):
             agent_metrics=parsed_metrics,
             events=events,
             agent_events=agent_events,
+            customer_id=customer_id,
+            customer_name=customer_name,
+            amount=amount,
+            currency=currency,
+            duration_seconds=duration_seconds,
+            lineage=lineage,
         )

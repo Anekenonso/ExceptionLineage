@@ -465,6 +465,81 @@ class SeedLoader:
         return report
 
 
+def load_seed_lineages(data_dir: Path | None = None) -> dict[str, dict[str, Any]]:
+    """Build graph traversal lineage representations directly from seed records.
+    
+    Enables deterministic offline investigation and UI testing when live Neo4j
+    is unavailable.
+    """
+    resolved_dir = data_dir or find_data_dir()
+    seed_dir = resolved_dir / "seed"
+
+    def read_seed(name: str) -> dict[str, dict[str, Any]]:
+        path = seed_dir / name
+        if not path.exists():
+            return {}
+        with open(path, "r", encoding="utf-8") as f:
+            items = json.load(f)
+            return {item["id"]: item for item in items}
+
+    customers = read_seed("customers.json")
+    contracts = read_seed("contracts.json")
+    amendments = read_seed("amendments.json")
+    sows = read_seed("sows.json")
+    exceptions = read_seed("exceptions.json")
+    approvals = read_seed("approvals.json")
+    invoices = read_seed("invoices.json")
+    evidence = read_seed("evidence.json")
+
+    lineages: dict[str, dict[str, Any]] = {}
+
+    for inv_id, inv in invoices.items():
+        cid = inv.get("customer_id")
+        kid = inv.get("contract_id")
+        eid = inv.get("exception_id")
+
+        cust_node = customers.get(cid) if cid else None
+        contract_node = contracts.get(kid) if kid else None
+        exception_node = exceptions.get(eid) if eid else None
+
+        approval_node = None
+        if exception_node:
+            for apr in approvals.values():
+                if apr.get("exception_id") == exception_node["id"]:
+                    approval_node = apr
+                    break
+
+        linked_amendments = []
+        linked_sows = []
+        if contract_node:
+            linked_amendments = [
+                a for a in amendments.values() if a.get("contract_id") == contract_node["id"]
+            ]
+            linked_sows = [
+                s for s in sows.values() if s.get("contract_id") == contract_node["id"]
+            ]
+
+        active_ids = {
+            x["id"]
+            for x in [contract_node, exception_node, approval_node, *linked_amendments, *linked_sows]
+            if x is not None
+        }
+        linked_evidence = [ev for ev in evidence.values() if ev.get("source_id") in active_ids]
+
+        lineages[inv_id] = {
+            "invoice": inv,
+            "customer": cust_node,
+            "contract": contract_node,
+            "exception": exception_node,
+            "approval": approval_node,
+            "amendments": linked_amendments,
+            "sows": linked_sows,
+            "evidence": linked_evidence,
+        }
+
+    return lineages
+
+
 if __name__ == "__main__":
     import sys
 

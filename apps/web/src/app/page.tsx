@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { checkApiHealth } from "@/lib/api";
+import { Navigation } from "@/components/Navigation";
+import { AuthorityBoundaryBanner } from "@/components/AuthorityBoundaryBanner";
 
 interface HealthResponse {
   status: string;
@@ -12,101 +16,161 @@ type ConnectionStatus = "checking" | "connected" | "error";
 
 export default function Home() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [connectionStatus, setConnectionStatus] =
-    useState<ConnectionStatus>("checking");
-  const [environment, setEnvironment] = useState<string>("development");
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("checking");
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    setEnvironment(process.env.NODE_ENV || "development");
-
-    async function checkHealth() {
+    async function check() {
       try {
-        const response = await fetch(`${apiUrl}/health`);
-        if (response.ok) {
-          const data: HealthResponse = await response.json();
-          setHealth(data);
-          setConnectionStatus("connected");
-        } else {
-          setConnectionStatus("error");
-        }
+        const data = await checkApiHealth();
+        setHealth(data);
+        setConnectionStatus("connected");
       } catch {
         setConnectionStatus("error");
       }
     }
 
-    checkHealth();
-    const interval = setInterval(checkHealth, 30000);
+    check();
+    const interval = setInterval(check, 15000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <main className="flex-1 flex items-center justify-center p-8">
-      <div className="w-full max-w-lg">
-        {/* Header */}
-        <div className="mb-10 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground mb-3">
+    <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
+      <Navigation />
+
+      <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+        {/* Hero Section */}
+        <div className="text-center space-y-4 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-slate-200 bg-white text-xs font-mono text-slate-600 shadow-2xs">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span>Stage 19 — Investigation Workspace</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900">
             ExceptionLineage
           </h1>
-          <p className="text-lg text-foreground/60">
-            Evidence-backed investigation
-            <br />
-            for enterprise transaction exceptions.
+          <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
+            Evidence-backed transaction exception investigation for enterprise SaaS.
+            Follow the evidence across contracts, amendments, SOWs, and approvals.
           </p>
+
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
+            <Link
+              href="/investigations"
+              className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition"
+            >
+              <span>Launch Investigation Workspace</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+
+            <Link
+              href="/investigations?action=new"
+              className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+            >
+              <span>Run New Investigation</span>
+            </Link>
+          </div>
         </div>
 
-        {/* Status Card */}
-        <div className="rounded-xl border border-foreground/10 bg-foreground/[0.02] p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground/40 mb-5">
-            System Status
-          </h2>
+        {/* Authority Boundary Banner */}
+        <AuthorityBoundaryBanner />
 
-          <div className="space-y-4">
-            {/* API Connection */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-foreground/70">API Connection</span>
-              <StatusIndicator status={connectionStatus} />
+        {/* 3 Core Architectural Pillars (Proven in Stage 18.5) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Pillar 1 */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-2">
+            <div className="h-8 w-8 rounded-md bg-blue-50 text-blue-700 flex items-center justify-center font-mono font-bold text-xs">
+              01
+            </div>
+            <h3 className="font-semibold text-slate-900 text-sm tracking-tight">
+              Agent Necessity
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Autonomous reasoning over non-linear branching paths, dead-end backtracking, and dynamic early stop to minimize wasted queries.
+            </p>
+          </div>
+
+          {/* Pillar 2 */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-2">
+            <div className="h-8 w-8 rounded-md bg-purple-50 text-purple-700 flex items-center justify-center font-mono font-bold text-xs">
+              02
+            </div>
+            <h3 className="font-semibold text-slate-900 text-sm tracking-tight">
+              Neo4j Load-Bearing Role
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Directional graph relationships (<code className="font-mono text-slate-700">-[:AMENDED_BY]-&gt;</code>) eliminate customer-wide context pollution that degrades flat retrieval to 20% completeness.
+            </p>
+          </div>
+
+          {/* Pillar 3 */}
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-2">
+            <div className="h-8 w-8 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center font-mono font-bold text-xs">
+              03
+            </div>
+            <h3 className="font-semibold text-slate-900 text-sm tracking-tight">
+              End-to-End Evidence Chain
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Auditable provenance trace from input trigger through tool execution, graph traversal, and deterministic rule evaluation to final outcome.
+            </p>
+          </div>
+        </div>
+
+        {/* System & Architecture Status */}
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
+                System Infrastructure Status
+              </h2>
+              <p className="text-xs text-slate-500">Live operational runtime metrics</p>
+            </div>
+            <div className="text-xs font-mono">
+              <span className="text-slate-400">Environment: </span>
+              <span className="font-semibold text-slate-700">production / evaluation</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+            <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <div>
+                <span className="text-slate-500 text-[11px] block">FastAPI Backend</span>
+                <span className="font-mono font-semibold text-slate-900">
+                  {health?.service || "ExceptionLineage API"}
+                </span>
+              </div>
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  connectionStatus === "connected"
+                    ? "bg-emerald-500"
+                    : connectionStatus === "checking"
+                    ? "bg-amber-400 animate-pulse"
+                    : "bg-rose-500"
+                }`}
+              />
             </div>
 
-            {/* Environment */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-foreground/70">Environment</span>
-              <span className="text-sm font-mono text-foreground/50">
-                {environment}
+            <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+              <span className="text-slate-500 text-[11px] block">API Version</span>
+              <span className="font-mono font-semibold text-slate-900">
+                {health?.version || "0.1.0"}
               </span>
             </div>
 
-            {/* Version */}
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-foreground/70">Version</span>
-              <span className="text-sm font-mono text-foreground/50">
-                {health?.version ?? "—"}
+            <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+              <span className="text-slate-500 text-[11px] block">Authority Model</span>
+              <span className="font-semibold text-slate-900">
+                Deterministic Validation Engine
               </span>
             </div>
           </div>
         </div>
-      </div>
-    </main>
-  );
-}
+      </main>
 
-function StatusIndicator({ status }: { status: ConnectionStatus }) {
-  const config = {
-    checking: { color: "bg-yellow-400", label: "Checking…" },
-    connected: { color: "bg-emerald-400", label: "Connected" },
-    error: { color: "bg-red-400", label: "Unavailable" },
-  };
-
-  const { color, label } = config[status];
-
-  return (
-    <span className="inline-flex items-center gap-2 text-sm text-foreground/50">
-      <span
-        className={`inline-block h-2 w-2 rounded-full ${color} ${
-          status === "checking" ? "animate-pulse" : ""
-        }`}
-      />
-      {label}
-    </span>
+      <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500 font-mono">
+        ExceptionLineage — Evidence-backed investigation for enterprise transaction exceptions.
+      </footer>
+    </div>
   );
 }

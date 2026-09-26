@@ -19,10 +19,20 @@ _default_service: InvestigationService | None = None
 
 
 def get_investigation_service() -> InvestigationService:
-    """Dependency provider for InvestigationService."""
+    """Dependency provider for InvestigationService with offline fallback."""
     global _default_service
     if _default_service is None:
-        _default_service = InvestigationService()
+        from app.graph.client import Neo4jClient
+        from app.graph.lineage import InMemoryLineageRepository, Neo4jLineageRepository
+        from app.graph.loader import load_seed_lineages
+
+        client = Neo4jClient()
+        if client.verify_connectivity():
+            lineage_repo = Neo4jLineageRepository(client=client)
+        else:
+            lineage_repo = InMemoryLineageRepository(load_seed_lineages())
+
+        _default_service = InvestigationService(lineage_repository=lineage_repo)
     return _default_service
 
 
@@ -30,6 +40,39 @@ def reset_default_service(service: InvestigationService | None = None) -> None:
     """Helper to reset or inject service instance for testing."""
     global _default_service
     _default_service = service
+
+
+def _safe_get_lineage(service: InvestigationService, invoice_id: str) -> dict | None:
+    """Safely fetch lineage without propagating graph connection or retrieval failures."""
+    try:
+        return service.lineage_repository.get_invoice_lineage(invoice_id)
+    except Exception:
+        return None
+
+
+@router.get(
+    "",
+    response_model=list[InvestigationResponse],
+    summary="List all investigations",
+    description="Retrieves all investigations currently stored in repository storage.",
+)
+def list_investigations(
+    service: InvestigationService = Depends(get_investigation_service),
+) -> list[InvestigationResponse]:
+    """Retrieve all investigations ordered chronologically (newest first)."""
+    investigations = service.repository.list_all()
+    sorted_invs = sorted(investigations, key=lambda x: x.created_at, reverse=True)
+    results: list[InvestigationResponse] = []
+    for inv in sorted_invs:
+        events = service.get_events(inv.id, include_agent_events=False)
+        agent_events = service.get_agent_events(inv.id)
+        lineage = _safe_get_lineage(service, inv.invoice_id)
+        results.append(
+            InvestigationResponse.from_investigation(
+                inv, events=events, agent_events=agent_events, lineage=lineage
+            )
+        )
+    return results
 
 
 @router.post(
@@ -50,8 +93,9 @@ def create_investigation(
     )
     events = service.get_events(inv.id, include_agent_events=False)
     agent_events = service.get_agent_events(inv.id)
+    lineage = _safe_get_lineage(service, inv.invoice_id)
     return InvestigationResponse.from_investigation(
-        inv, events=events, agent_events=agent_events
+        inv, events=events, agent_events=agent_events, lineage=lineage
     )
 
 
@@ -69,9 +113,26 @@ def get_investigation(
     inv = service.get_investigation(investigation_id)
     events = service.get_events(investigation_id, include_agent_events=False)
     agent_events = service.get_agent_events(investigation_id)
+    lineage = _safe_get_lineage(service, inv.invoice_id)
     return InvestigationResponse.from_investigation(
-        inv, events=events, agent_events=agent_events
+        inv, events=events, agent_events=agent_events, lineage=lineage
     )
+
+
+@router.get(
+    "/{investigation_id}/lineage",
+    response_model=dict,
+    summary="Get investigation lineage graph",
+    description="Retrieves the graph lineage (customer, contract, amendments, sows, exception, approval, evidence) for the investigated invoice.",
+)
+def get_investigation_lineage(
+    investigation_id: str,
+    service: InvestigationService = Depends(get_investigation_service),
+) -> dict:
+    """Retrieve the graph lineage for an investigation."""
+    inv = service.get_investigation(investigation_id)
+    lineage = _safe_get_lineage(service, inv.invoice_id)
+    return lineage or {}
 
 
 @router.get(
