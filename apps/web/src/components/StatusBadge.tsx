@@ -1,5 +1,6 @@
 import React from "react";
 import { InvestigationStatus, ValidationStatus } from "@/types/investigation";
+import { getStatusLabel, getValidationStatusLabel } from "@/lib/formatters";
 
 interface StatusBadgeProps {
   status: InvestigationStatus | ValidationStatus | string;
@@ -20,77 +21,77 @@ export function StatusBadge({ status, size = "md", showDot = true }: StatusBadge
       text: "text-emerald-700",
       border: "border-emerald-200",
       dot: "bg-emerald-500",
-      label: "Verified",
+      label: getStatusLabel("VERIFIED"),
     },
     PASS: {
       bg: "bg-emerald-50 text-emerald-800",
       text: "text-emerald-700",
       border: "border-emerald-200",
       dot: "bg-emerald-500",
-      label: "Pass",
+      label: getValidationStatusLabel("PASS"),
     },
     NOT_VERIFIED: {
       bg: "bg-rose-50 text-rose-800",
       text: "text-rose-700",
       border: "border-rose-200",
       dot: "bg-rose-500",
-      label: "Not Verified",
+      label: getStatusLabel("NOT_VERIFIED"),
     },
     FAIL: {
       bg: "bg-rose-50 text-rose-800",
       text: "text-rose-700",
       border: "border-rose-200",
       dot: "bg-rose-500",
-      label: "Fail",
+      label: getValidationStatusLabel("FAIL"),
     },
     INSUFFICIENT_EVIDENCE: {
       bg: "bg-amber-50 text-amber-900",
       text: "text-amber-800",
       border: "border-amber-200",
       dot: "bg-amber-500",
-      label: "Insufficient Evidence",
+      label: getStatusLabel("INSUFFICIENT_EVIDENCE"),
     },
     UNKNOWN: {
       bg: "bg-amber-50 text-amber-900",
       text: "text-amber-800",
       border: "border-amber-200",
       dot: "bg-amber-500",
-      label: "Unknown",
+      label: getValidationStatusLabel("UNKNOWN"),
     },
     NEEDS_REVIEW: {
       bg: "bg-purple-50 text-purple-900",
       text: "text-purple-800",
       border: "border-purple-200",
       dot: "bg-purple-500",
-      label: "Needs Review",
+      label: getStatusLabel("NEEDS_REVIEW"),
     },
     FAILED: {
       bg: "bg-red-50 text-red-900",
       text: "text-red-700",
       border: "border-red-200",
       dot: "bg-red-500",
-      label: "Failed",
+      label: getStatusLabel("FAILED"),
     },
     INVESTIGATING: {
       bg: "bg-blue-50 text-blue-800",
       text: "text-blue-700",
       border: "border-blue-200",
       dot: "bg-blue-500 animate-pulse",
-      label: "Investigating",
+      label: getStatusLabel("INVESTIGATING"),
     },
     VALIDATING: {
       bg: "bg-indigo-50 text-indigo-800",
       text: "text-indigo-700",
       border: "border-indigo-200",
       dot: "bg-indigo-500 animate-pulse",
-      label: "Validating",
+      label: getStatusLabel("VALIDATING"),
     },
     QUEUED: {
       bg: "bg-slate-100 text-slate-700",
       text: "text-slate-600",
       border: "border-slate-200",
       dot: "bg-slate-400",
-      label: "Queued",
+      label: getStatusLabel("QUEUED"),
     },
   };
 
@@ -99,7 +100,7 @@ export function StatusBadge({ status, size = "md", showDot = true }: StatusBadge
     text: "text-slate-600",
     border: "border-slate-200",
     dot: "bg-slate-400",
-    label: normStatus || "Unknown",
+    label: normStatus ? getStatusLabel(normStatus) : "Unknown",
   };
 
   const sizeClasses = {

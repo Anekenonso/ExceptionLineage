@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createInvestigation } from "@/lib/api";
+import { StatusBadge } from "./StatusBadge";
 
 interface NewInvestigationModalProps {
   isOpen: boolean;
@@ -23,77 +24,69 @@ export function NewInvestigationModal({
 
   if (!isOpen) return null;
 
-  const standardScenarios = [
+  const demoCases = [
     {
       invoice: "INV-1001",
       exception: "EX-001",
-      customer: "Acme Global Enterprise Inc.",
-      title: "Rate Adjustment with Approved Variance (Flagship)",
-      outcome: "VERIFIED",
-      outcomeBadge: "bg-emerald-100 text-emerald-800",
+      customer: "Acme Global Enterprise",
+      title: "Rate adjustment with approved variance",
+      status: "VERIFIED",
     },
     {
       invoice: "INV-1002",
       exception: "EX-002",
-      customer: "Acme Global Enterprise Inc.",
-      title: "Surcharge Variance with Missing Approval Evidence",
-      outcome: "INSUFFICIENT EVIDENCE",
-      outcomeBadge: "bg-amber-100 text-amber-800",
+      customer: "Acme Global Enterprise",
+      title: "Surcharge variance with missing approval evidence",
+      status: "INSUFFICIENT_EVIDENCE",
     },
     {
       invoice: "INV-1003",
       exception: "EX-003",
-      customer: "Acme Global Enterprise Inc.",
-      title: "Rate Discrepancy Exceeding Allowable Threshold",
-      outcome: "NOT VERIFIED",
-      outcomeBadge: "bg-rose-100 text-rose-800",
+      customer: "Acme Global Enterprise",
+      title: "Rate discrepancy exceeding contract threshold",
+      status: "NOT_VERIFIED",
     },
     {
       invoice: "INV-1004",
       exception: "EX-004",
-      customer: "Acme Global Enterprise Inc.",
-      title: "Expired Contractual Rate & Unauthorized Variance",
-      outcome: "NOT VERIFIED",
-      outcomeBadge: "bg-rose-100 text-rose-800",
+      customer: "Acme Global Enterprise",
+      title: "Expired contractual rate & unapproved variance",
+      status: "NOT_VERIFIED",
     },
     {
       invoice: "INV-1005",
       exception: "EX-005",
-      customer: "Acme Global Enterprise Inc.",
-      title: "Conflicting Amendment & SOW Terms",
-      outcome: "NEEDS REVIEW",
-      outcomeBadge: "bg-purple-100 text-purple-800",
+      customer: "Acme Global Enterprise",
+      title: "Conflicting amendment & SOW terms",
+      status: "NEEDS_REVIEW",
     },
     {
       invoice: "INV-1006",
       exception: "EX-006",
-      customer: "Acme Global Enterprise Inc.",
-      title: "Duplicate Invoice Submission with Modified Terms",
-      outcome: "NOT VERIFIED",
-      outcomeBadge: "bg-rose-100 text-rose-800",
+      customer: "Acme Global Enterprise",
+      title: "Duplicate submission with modified terms",
+      status: "NOT_VERIFIED",
     },
     {
       invoice: "INV-1007",
       exception: "EX-007",
       customer: "Beta Logistics Corp",
-      title: "Orphaned Invoice Missing Governing Contract",
-      outcome: "INSUFFICIENT EVIDENCE",
-      outcomeBadge: "bg-amber-100 text-amber-800",
+      title: "Missing governing master contract",
+      status: "INSUFFICIENT_EVIDENCE",
     },
     {
       invoice: "INV-1008",
       exception: "EX-008",
       customer: "Beta Logistics Corp",
-      title: "Amended Multi-Tier SOW with Verified VP Approval",
-      outcome: "VERIFIED",
-      outcomeBadge: "bg-emerald-100 text-emerald-800",
+      title: "Amended multi-tier SOW with recorded VP approval",
+      status: "VERIFIED",
     },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!invoiceId.trim()) {
-      setError("Please provide an Invoice ID.");
+      setError("Please provide an invoice number.");
       return;
     }
 
@@ -111,7 +104,7 @@ export function NewInvestigationModal({
       }
     } catch (err: unknown) {
       setLoading(false);
-      const msg = err instanceof Error ? err.message : "Failed to run investigation";
+      const msg = err instanceof Error ? err.message : "Failed to review invoice";
       setError(msg);
     }
   };
@@ -135,10 +128,10 @@ export function NewInvestigationModal({
         <div className="flex items-start justify-between pb-3 border-b border-slate-100">
           <div>
             <h2 className="text-base font-bold text-slate-900 tracking-tight">
-              Initiate Investigation
+              Review an invoice
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Execute agentic discovery and deterministic contractual validation.
+              Enter an invoice to understand why it was flagged and check the supporting records.
             </p>
           </div>
           <button
@@ -165,36 +158,35 @@ export function NewInvestigationModal({
           </div>
         )}
 
-        {/* Quick Presets */}
+        {/* Demo Cases */}
         <div>
-          <span className="text-[11px] font-mono uppercase tracking-wider text-slate-500 font-semibold block mb-2">
-            Target Dataset Scenarios
+          <span className="text-xs font-semibold text-slate-700 block mb-2">
+            Try a demo case
           </span>
           <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-1">
-            {standardScenarios.map((sc, idx) => (
+            {demoCases.map((sc, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => selectPreset(sc.invoice, sc.exception)}
-                className={`p-2.5 rounded-lg border text-left text-xs transition flex items-center justify-between gap-2 ${
+                className={`p-2.5 rounded-lg border text-left text-xs transition flex items-center justify-between gap-3 ${
                   invoiceId === sc.invoice
-                    ? "border-blue-500 bg-blue-50/40 ring-1 ring-blue-500"
-                    : "border-slate-200 bg-slate-50/50 hover:bg-slate-100 hover:border-slate-300"
+                    ? "border-slate-900 bg-slate-50 ring-1 ring-slate-900"
+                    : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300"
                 }`}
               >
                 <div>
-                  <div className="flex items-center gap-1.5 font-mono text-[11px] font-bold text-slate-900">
-                    <span>{sc.invoice}</span>
-                    {sc.exception && <span className="text-slate-400">/ {sc.exception}</span>}
+                  <div className="flex items-center gap-1.5 font-semibold text-slate-900">
+                    <span className="font-mono">{sc.invoice}</span>
+                    <span className="text-slate-400 font-normal">·</span>
+                    <span className="text-slate-700 font-normal">{sc.customer}</span>
                   </div>
-                  <div className="text-[11.5px] text-slate-600 font-medium">{sc.title}</div>
+                  <div className="text-[11.5px] text-slate-500 mt-0.5">{sc.title}</div>
                 </div>
 
-                <span
-                  className={`text-[9.5px] font-mono px-2 py-0.5 rounded font-semibold shrink-0 ${sc.outcomeBadge}`}
-                >
-                  {sc.outcome}
-                </span>
+                <div className="shrink-0">
+                  <StatusBadge status={sc.status} size="sm" />
+                </div>
               </button>
             ))}
           </div>
@@ -204,7 +196,7 @@ export function NewInvestigationModal({
         <form onSubmit={handleSubmit} className="space-y-4 pt-2 border-t border-slate-100">
           <div>
             <label htmlFor="invoice-id" className="block text-xs font-semibold text-slate-700 mb-1">
-              Target Invoice ID *
+              Invoice number *
             </label>
             <input
               id="invoice-id"
@@ -219,12 +211,12 @@ export function NewInvestigationModal({
 
           <div>
             <label htmlFor="exception-id" className="block text-xs font-semibold text-slate-700 mb-1">
-              Transaction Exception ID (Optional)
+              Exception or flag reference (Optional)
             </label>
             <input
               id="exception-id"
               type="text"
-              placeholder="e.g. EX-001"
+              placeholder="e.g. EX-001 or Rate variance"
               value={exceptionId}
               onChange={(e) => setExceptionId(e.target.value)}
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-xs font-mono text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 shadow-2xs"
@@ -250,7 +242,7 @@ export function NewInvestigationModal({
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
               )}
-              <span>{loading ? "Running Pipeline…" : "Execute Investigation"}</span>
+              <span>{loading ? "Reviewing invoice…" : "Start review"}</span>
             </button>
           </div>
         </form>

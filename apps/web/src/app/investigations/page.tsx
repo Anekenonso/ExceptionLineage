@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { InvestigationResponse, InvestigationStatus } from "@/types/investigation";
+import { InvestigationResponse } from "@/types/investigation";
 import { fetchInvestigations, createInvestigation } from "@/lib/api";
 import { ALL_FIXTURES } from "@/fixtures/investigations";
 import { Navigation } from "@/components/Navigation";
@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { NewInvestigationModal } from "@/components/NewInvestigationModal";
 import { LoadingSkeleton, EmptyState, ApiErrorBanner } from "@/components/StateHandlers";
 import { AuthorityBoundaryBanner } from "@/components/AuthorityBoundaryBanner";
+import { formatAmount, formatDateTime } from "@/lib/formatters";
 
 export default function InvestigationsDashboard() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function InvestigationsDashboard() {
     setError(null);
   };
 
-  // Seed sample investigations into the live backend
+  // Seed sample cases into the live backend
   const handleRunSeedScenarios = async () => {
     setIsSeeding(true);
     setError(null);
@@ -71,7 +72,7 @@ export default function InvestigationsDashboard() {
 
       await loadData();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to run seed scenarios";
+      const msg = err instanceof Error ? err.message : "Failed to load sample cases";
       setError(msg);
     } finally {
       setIsSeeding(false);
@@ -91,7 +92,9 @@ export default function InvestigationsDashboard() {
         const query = searchQuery.toLowerCase();
         const invIdMatch = inv.investigation_id?.toLowerCase().includes(query);
         const invoiceMatch = inv.invoice_id?.toLowerCase().includes(query);
-        const customerMatch = inv.customer_name?.toLowerCase().includes(query) || inv.customer_id?.toLowerCase().includes(query);
+        const customerMatch =
+          inv.customer_name?.toLowerCase().includes(query) ||
+          inv.customer_id?.toLowerCase().includes(query);
         const summaryMatch = inv.summary?.toLowerCase().includes(query);
         if (!invIdMatch && !invoiceMatch && !customerMatch && !summaryMatch) {
           return false;
@@ -111,10 +114,10 @@ export default function InvestigationsDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Investigation Workspace
+              Investigations
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Evidence-backed transaction exception investigations with deterministic contractual verification.
+              Review flagged invoices against contracts, amendments and approvals.
             </p>
           </div>
 
@@ -126,7 +129,7 @@ export default function InvestigationsDashboard() {
                 disabled={isSeeding}
                 className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 disabled:opacity-50 transition"
               >
-                {isSeeding ? "Executing Benchmark Cases…" : "Run Benchmark Cases"}
+                {isSeeding ? "Loading sample cases…" : "Load sample cases"}
               </button>
             )}
 
@@ -138,12 +141,12 @@ export default function InvestigationsDashboard() {
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
-              <span>New Investigation</span>
+              <span>Review an invoice</span>
             </button>
           </div>
         </div>
 
-        {/* Authority Boundary Banner */}
+        {/* How We Verify Banner */}
         <AuthorityBoundaryBanner />
 
         {/* Error banner if API is unreachable */}
@@ -159,7 +162,7 @@ export default function InvestigationsDashboard() {
         {usingFixtures && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 flex items-center justify-between">
             <span className="font-medium">
-              Offline Demo Mode Active: Displaying local UI development fixtures for all terminal states.
+              Demo Mode Active: Displaying local sample investigations.
             </span>
             <button
               type="button"
@@ -182,30 +185,30 @@ export default function InvestigationsDashboard() {
             </span>
             <input
               type="text"
-              placeholder="Search by ID, Invoice, Customer..."
+              placeholder="Search by invoice, customer, or finding..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 font-mono shadow-2xs"
+              className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900 shadow-2xs"
             />
           </div>
 
-          {/* Filter Status Pills */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-xs font-mono">
+          {/* Filter Status Pills - Human Labels */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 text-xs">
             {[
               { id: "ALL", label: "All" },
               { id: "VERIFIED", label: "Verified" },
-              { id: "NOT_VERIFIED", label: "Not Verified" },
-              { id: "INSUFFICIENT_EVIDENCE", label: "Insufficient" },
-              { id: "NEEDS_REVIEW", label: "Needs Review" },
-              { id: "FAILED", label: "Failed" },
+              { id: "NOT_VERIFIED", label: "Not verified" },
+              { id: "INSUFFICIENT_EVIDENCE", label: "Not enough evidence" },
+              { id: "NEEDS_REVIEW", label: "Needs review" },
+              { id: "FAILED", label: "Review couldn't be completed" },
             ].map((st) => (
               <button
                 key={st.id}
                 type="button"
                 onClick={() => setStatusFilter(st.id)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition shrink-0 ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition shrink-0 ${
                   statusFilter === st.id
-                    ? "bg-slate-900 text-white shadow-2xs"
+                    ? "bg-slate-900 text-white font-semibold shadow-2xs"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                 }`}
               >
@@ -217,19 +220,19 @@ export default function InvestigationsDashboard() {
 
         {/* Content Section: Loading, Empty, or Table */}
         {loading ? (
-          <LoadingSkeleton title="Loading investigations from API…" />
+          <LoadingSkeleton title="Loading investigations…" />
         ) : filteredInvestigations.length === 0 ? (
           investigations.length === 0 ? (
             <EmptyState
-              title="No Investigations Recorded"
-              description="No transaction exceptions have been investigated yet in this session. Run an investigation against any seed invoice to trace evidence lineage."
-              actionLabel="New Investigation"
+              title="No Invoices Under Review"
+              description="No transaction exceptions have been reviewed yet. Enter an invoice to trace contracts, amendments, and approvals."
+              actionLabel="Review an invoice"
               onAction={() => setIsModalOpen(true)}
-              secondaryActionLabel="Run Benchmark Cases"
+              secondaryActionLabel="Load sample cases"
               onSecondaryAction={handleRunSeedScenarios}
             />
           ) : (
-            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500 font-mono">
+            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
               No investigations match the current search or status filter.
             </div>
           )
@@ -238,40 +241,19 @@ export default function InvestigationsDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 font-mono text-[11px] uppercase">
-                    <th className="py-3 px-4 font-semibold">Investigation ID</th>
-                    <th className="py-3 px-4 font-semibold">Invoice ID</th>
-                    <th className="py-3 px-4 font-semibold">Customer</th>
-                    <th className="py-3 px-4 font-semibold">Amount</th>
-                    <th className="py-3 px-4 font-semibold">Status</th>
-                    <th className="py-3 px-4 font-semibold">Created Date</th>
-                    <th className="py-3 px-4 font-semibold">Duration</th>
-                    <th className="py-3 px-4 font-semibold text-right">Action</th>
+                  <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-500 text-[11px] font-medium">
+                    <th className="py-3 px-4">Invoice</th>
+                    <th className="py-3 px-4">Customer</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4">Finding</th>
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4 text-right">Review</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredInvestigations.map((inv) => {
-                    const formattedDate = inv.created_at
-                      ? new Date(inv.created_at).toLocaleString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          timeZone: "UTC",
-                        }) + " UTC"
-                      : "—";
-
-                    const amountDisplay = inv.amount
-                      ? `${inv.currency || "USD"} ${Number(inv.amount).toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}`
-                      : "—";
-
-                    const durationDisplay =
-                      inv.duration_seconds !== undefined && inv.duration_seconds !== null
-                        ? `${inv.duration_seconds}s`
-                        : "—";
+                    const formattedDate = formatDateTime(inv.created_at);
+                    const amountDisplay = formatAmount(inv.amount, inv.currency || "USD");
 
                     return (
                       <tr
@@ -279,58 +261,48 @@ export default function InvestigationsDashboard() {
                         className="hover:bg-slate-50/80 transition cursor-pointer group"
                         onClick={() => router.push(`/investigations/${inv.investigation_id}`)}
                       >
-                        {/* Investigation ID */}
-                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                        {/* Invoice */}
+                        <td className="py-3.5 px-4 font-semibold text-slate-900">
                           <Link
                             href={`/investigations/${inv.investigation_id}`}
-                            className="hover:underline flex items-center gap-1.5"
+                            className="hover:underline flex flex-col"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <span>{inv.investigation_id}</span>
+                            <span className="font-mono">{inv.invoice_id}</span>
+                            {inv.exception_id && (
+                              <span className="text-[11px] text-slate-400 font-normal">
+                                Ref: {inv.exception_id}
+                              </span>
+                            )}
                           </Link>
                         </td>
 
-                        {/* Invoice ID */}
-                        <td className="py-3.5 px-4 font-mono font-semibold text-slate-800">
-                          {inv.invoice_id}
-                          {inv.exception_id && (
-                            <span className="block text-[10px] text-slate-400 font-mono">
-                              {inv.exception_id}
-                            </span>
-                          )}
-                        </td>
-
                         {/* Customer */}
-                        <td className="py-3.5 px-4 text-slate-900 font-medium">
-                          <div className="truncate max-w-[200px]" title={inv.customer_name || inv.customer_id || "—"}>
+                        <td className="py-3.5 px-4 text-slate-800 font-medium">
+                          <div className="truncate max-w-[220px]" title={inv.customer_name || inv.customer_id || "—"}>
                             {inv.customer_name || inv.customer_id || "—"}
                           </div>
                         </td>
 
                         {/* Amount */}
-                        <td className="py-3.5 px-4 font-mono font-semibold text-slate-900">
+                        <td className="py-3.5 px-4 font-mono font-medium text-slate-900">
                           {amountDisplay}
                         </td>
 
-                        {/* Status */}
+                        {/* Finding */}
                         <td className="py-3.5 px-4">
                           <StatusBadge status={inv.status} size="sm" />
                         </td>
 
-                        {/* Created Date */}
-                        <td className="py-3.5 px-4 font-mono text-slate-500 text-[11px]">
+                        {/* Date */}
+                        <td className="py-3.5 px-4 text-slate-500 text-[11px]">
                           {formattedDate}
                         </td>
 
-                        {/* Duration */}
-                        <td className="py-3.5 px-4 font-mono text-slate-600 text-[11px]">
-                          {durationDisplay}
-                        </td>
-
-                        {/* Open Action */}
+                        {/* Review Action */}
                         <td className="py-3.5 px-4 text-right">
-                          <span className="text-blue-600 group-hover:text-blue-800 font-semibold font-mono text-xs inline-flex items-center gap-1">
-                            Inspect →
+                          <span className="text-slate-700 group-hover:text-slate-900 font-semibold text-xs inline-flex items-center gap-1">
+                            Review →
                           </span>
                         </td>
                       </tr>

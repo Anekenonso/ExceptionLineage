@@ -2,8 +2,8 @@ import React from "react";
 
 export function AuthorityBoundaryBanner() {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3.5 sm:p-4 text-xs text-slate-700 flex items-start gap-3 shadow-2xs">
-      <div className="p-1 rounded-md bg-slate-200 text-slate-700 shrink-0 mt-0.5">
+    <div className="rounded-lg border border-slate-200 bg-white p-3.5 sm:p-4 text-xs text-slate-700 flex items-start gap-3 shadow-2xs">
+      <div className="p-1 rounded-md bg-slate-100 text-slate-600 shrink-0 mt-0.5">
         <svg
           className="h-4 w-4"
           fill="none"
@@ -19,21 +19,12 @@ export function AuthorityBoundaryBanner() {
           />
         </svg>
       </div>
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold uppercase tracking-wider text-[11px] text-slate-800">
-            Authority Boundary
-          </span>
-          <span className="text-[10px] text-slate-500 font-mono">
-            Strict Separation of Responsibilities
-          </span>
-        </div>
+      <div className="space-y-0.5">
+        <h4 className="font-semibold text-slate-900 text-xs">
+          How we verify
+        </h4>
         <p className="text-slate-600 leading-relaxed">
-          <strong className="text-slate-900 font-medium">
-            AI handles ambiguity. Code handles authority.
-          </strong>{" "}
-          The investigation agent autonomously gathers and navigates evidentiary relationships across contracts,
-          amendments, and approvals. Final determinations are enforced solely by deterministic validation rules.
+          AI helps investigate the available records. Verification is performed using deterministic checks against the evidence found.
         </p>
       </div>
     </div>

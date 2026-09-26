@@ -1,24 +1,21 @@
 import React from "react";
 
-export function LoadingSkeleton({ title = "Loading Investigation Data…" }: { title?: string }) {
+export function LoadingSkeleton({ title = "Loading invoice review…" }: { title?: string }) {
   return (
     <div className="space-y-6 animate-pulse">
-      {/* Header skeleton */}
-      <div className="h-20 rounded-xl bg-slate-200/70 border border-slate-200" />
+      {/* Top Invoice Card skeleton */}
+      <div className="h-44 rounded-xl bg-slate-200/70 border border-slate-200" />
 
-      {/* Top Cards skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="h-52 rounded-xl bg-slate-200/60 border border-slate-200" />
-        <div className="h-52 rounded-xl bg-slate-200/60 border border-slate-200" />
-      </div>
+      {/* Finding Card skeleton */}
+      <div className="h-56 rounded-xl bg-slate-200/80 border border-slate-200" />
 
-      {/* Graph skeleton */}
+      {/* Verification checks skeleton */}
+      <div className="h-60 rounded-xl bg-slate-200/60 border border-slate-200" />
+
+      {/* Contract history skeleton */}
       <div className="h-72 rounded-xl bg-slate-200/50 border border-slate-200 flex items-center justify-center">
-        <span className="text-xs font-mono text-slate-400">{title}</span>
+        <span className="text-xs text-slate-400 font-medium">{title}</span>
       </div>
-
-      {/* Bottom sections skeleton */}
-      <div className="h-64 rounded-xl bg-slate-200/40 border border-slate-200" />
     </div>
   );
 }
@@ -107,7 +104,7 @@ export function ApiErrorBanner({ error, onRetry, onUseFixtures }: ApiErrorBanner
         </div>
         <div>
           <span className="font-bold text-rose-950 block text-xs">
-            API Communication Notice
+            Engine Connection Notice
           </span>
           <p className="text-rose-800 mt-0.5">{error}</p>
         </div>
@@ -129,7 +126,7 @@ export function ApiErrorBanner({ error, onRetry, onUseFixtures }: ApiErrorBanner
             onClick={onUseFixtures}
             className="px-3 py-1.5 rounded-md bg-rose-800 text-white font-semibold hover:bg-rose-900 transition shadow-xs"
           >
-            Load Offline Demo Fixtures
+            Load Sample Cases
           </button>
         )}
       </div>

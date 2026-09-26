@@ -2,7 +2,7 @@
 
 ## Current Stage
 
-**Stage 20** — COMPLETE — Demo & Production Hardening
+**Stage 20.5** — COMPLETE — Product UX & Language Refinement
 
 ## What Works
 
@@ -68,6 +68,55 @@
 - Evidence ingestion pipelines
 - User authentication and authorization
 - Background Celery/Redis workers
+
+## Stage 20.5 — Product UX & Language Refinement
+
+Completed full product positioning, information hierarchy, and visual refinement to achieve "Simple Surface, Sophisticated Engine":
+
+- **Product Language Refinement**:
+  - Replaced internal engineering/evaluation jargon across the primary customer UX.
+  - Positioned product as: *"Understand why a transaction was flagged. ExceptionLineage traces invoices through contracts, amendments, SOWs and approvals to explain what happened and whether the available records support the charge."*
+  - Internal backend enums preserved while frontend translates:
+    - `VERIFIED` → **Verified**
+    - `NOT_VERIFIED` → **Not verified**
+    - `INSUFFICIENT_EVIDENCE` → **Not enough evidence**
+    - `NEEDS_REVIEW` → **Needs review**
+    - `FAILED` → **Review couldn't be completed**
+    - `QUEUED` → **Queued**
+    - `INVESTIGATING` → **Investigating**
+    - `VALIDATING` → **Verifying**
+    - `PASS` → **Passed**, `FAIL` → **Failed**, `UNKNOWN` → **Not available**
+
+- **Primary Navigation**:
+  - Restructured to: **ExceptionLineage** (Brand), **Overview**, **Investigations**, **Evidence**, **Reports**.
+  - Replaced engineering action buttons with **Review an invoice**.
+  - Moved system/engine connectivity status to a secondary, non-intrusive status popover.
+  - Removed internal stage development badges from navigation and primary views.
+
+- **Information Hierarchy**:
+  - Restructured investigation workspace into a clear operational hierarchy:
+    1. **Invoice**: Clean business metadata (invoice number, customer, amount, currency, issuance date, flagged reason).
+    2. **Finding**: Visual focal point with human-friendly determination statements.
+    3. **Why**: Concise, evidence-backed explanations translating raw validation checks into plain business language.
+    4. **Verification checks**: Renamed from "Validation Engine", showing human-readable checks with pass/fail/unavailable status and cited records.
+    5. **Contract history**: Renamed from "Lineage Graph", highlighting how the invoice connects to the contract, amendments, SOWs, and approvals.
+    6. **Supporting records**: Renamed from "Evidentiary Records", with clean clause excerpts, source references, and validity dates.
+    7. **Investigation activity**: Human-readable execution timeline first (Invoice received → Contract identified → Amendment reviewed → Approval checked → Finding reached).
+    8. **Technical trace**: Granular tool execution, agent decisions, graph retrievals, and raw JSON arguments moved behind a collapsible **View technical trace** secondary interaction.
+
+- **Authority Boundary / How We Verify**:
+  - Redesigned from a dominant banner into a concise, reassuring explanation: *"How we verify: AI helps investigate the available records. Verification is performed using deterministic checks against the evidence found."*
+
+- **Visual Quality & Responsive UX**:
+  - Stripe/Linear-inspired light neutral palette (`bg-slate-50`, `bg-white`, subtle borders, restrained badge colors).
+  - Clean typography: sans-serif for UI copy, monospace strictly reserved for IDs, timestamps, code, and raw trace data.
+  - Fully responsive on desktop, tablet, and mobile with zero horizontal overflow.
+
+- **Verification Results**:
+  - Backend tests: 278 passed, 2 skipped (100% passing across unit/integration tests).
+  - TypeScript type check (`tsc --noEmit`): clean with 0 errors.
+  - Frontend production build (`next build` / Turbopack): clean with 0 errors.
+  - Zero backend changes, zero logic changes, zero API contract regressions.
 
 ## Next Steps
 

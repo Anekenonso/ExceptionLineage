@@ -24,15 +24,15 @@ export function EvidenceDrawer({ evidence, onClose }: EvidenceDrawerProps) {
         <div className="p-5 border-b border-slate-200 bg-slate-50 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Evidence Record
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                Supporting Record
               </span>
-              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-teal-100 text-teal-800">
+              <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-800">
                 {evidence.id}
               </span>
             </div>
             <h3 className="text-base font-bold text-slate-900 mt-1">
-              {evidence.title || evidence.evidence_type}
+              {evidence.title || evidence.evidence_type.replace(/_/g, " ")}
             </h3>
           </div>
 
@@ -40,7 +40,7 @@ export function EvidenceDrawer({ evidence, onClose }: EvidenceDrawerProps) {
             type="button"
             onClick={onClose}
             className="text-slate-400 hover:text-slate-700 p-1 rounded-md"
-            aria-label="Close evidence drawer"
+            aria-label="Close drawer"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -53,8 +53,8 @@ export function EvidenceDrawer({ evidence, onClose }: EvidenceDrawerProps) {
           {/* Excerpt / Clause Content */}
           {evidence.excerpt && (
             <div>
-              <span className="font-semibold text-slate-900 uppercase tracking-wider text-[11px] block mb-2 font-mono">
-                Contractual Text / Content Excerpt
+              <span className="font-semibold text-slate-900 text-xs block mb-2">
+                Verbatim Clause / Record Excerpt
               </span>
               <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 font-serif leading-relaxed italic text-[13px]">
                 “{evidence.excerpt}”
@@ -64,66 +64,66 @@ export function EvidenceDrawer({ evidence, onClose }: EvidenceDrawerProps) {
 
           {/* Properties Table */}
           <div className="space-y-3">
-            <span className="font-semibold text-slate-900 uppercase tracking-wider text-[11px] block font-mono">
-              Provenance & Metadata
+            <span className="font-semibold text-slate-900 text-xs block">
+              Source & Provenance
             </span>
 
             <dl className="grid grid-cols-2 gap-4 p-4 rounded-lg bg-slate-50/60 border border-slate-200 text-xs">
               <div>
-                <dt className="text-slate-500 font-medium">Evidence ID</dt>
+                <dt className="text-slate-500 font-medium">Record ID</dt>
                 <dd className="font-mono font-semibold text-slate-900 mt-0.5">{evidence.id}</dd>
               </div>
 
               <div>
-                <dt className="text-slate-500 font-medium">Evidence Type</dt>
-                <dd className="font-mono text-slate-900 mt-0.5">{evidence.evidence_type}</dd>
+                <dt className="text-slate-500 font-medium">Record Type</dt>
+                <dd className="text-slate-900 mt-0.5 capitalize">{evidence.evidence_type.replace(/_/g, " ")}</dd>
               </div>
 
               <div>
-                <dt className="text-slate-500 font-medium">Origin Source</dt>
+                <dt className="text-slate-500 font-medium">Document / Source</dt>
                 <dd className="font-mono text-slate-900 mt-0.5">{evidence.source}</dd>
               </div>
 
               <div>
-                <dt className="text-slate-500 font-medium">Related Entity (Source ID)</dt>
+                <dt className="text-slate-500 font-medium">Related Entity Ref</dt>
                 <dd className="font-mono font-semibold text-blue-700 mt-0.5">{evidence.source_id}</dd>
               </div>
 
               <div>
-                <dt className="text-slate-500 font-medium">Document Locator</dt>
+                <dt className="text-slate-500 font-medium">Document Section</dt>
                 <dd className="text-slate-900 mt-0.5">{evidence.locator || "—"}</dd>
               </div>
 
               <div>
-                <dt className="text-slate-500 font-medium">Scope / Jurisdiction</dt>
+                <dt className="text-slate-500 font-medium">Scope</dt>
                 <dd className="text-slate-900 mt-0.5">{evidence.scope || "—"}</dd>
               </div>
 
               <div>
                 <dt className="text-slate-500 font-medium">Effective From</dt>
-                <dd className="font-mono text-slate-900 mt-0.5">
+                <dd className="text-slate-900 mt-0.5">
                   {evidence.effective_from ? new Date(evidence.effective_from).toLocaleDateString() : "—"}
                 </dd>
               </div>
 
               <div>
                 <dt className="text-slate-500 font-medium">Effective Until</dt>
-                <dd className="font-mono text-slate-900 mt-0.5">
-                  {evidence.effective_until ? new Date(evidence.effective_until).toLocaleDateString() : "Active / Unbounded"}
+                <dd className="text-slate-900 mt-0.5">
+                  {evidence.effective_until ? new Date(evidence.effective_until).toLocaleDateString() : "Active / Open"}
                 </dd>
               </div>
 
               {evidence.confidence !== undefined && evidence.confidence !== null && (
                 <div>
-                  <dt className="text-slate-500 font-medium">Extraction Confidence</dt>
+                  <dt className="text-slate-500 font-medium">Confidence</dt>
                   <dd className="font-mono text-slate-900 mt-0.5">{(evidence.confidence * 100).toFixed(0)}%</dd>
                 </div>
               )}
 
               {evidence.captured_at && (
                 <div>
-                  <dt className="text-slate-500 font-medium">Ingestion Timestamp</dt>
-                  <dd className="font-mono text-slate-900 mt-0.5">
+                  <dt className="text-slate-500 font-medium">Timestamp</dt>
+                  <dd className="font-mono text-slate-700 mt-0.5 text-[11px]">
                     {new Date(evidence.captured_at).toISOString()}
                   </dd>
                 </div>

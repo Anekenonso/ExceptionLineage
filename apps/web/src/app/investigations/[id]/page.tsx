@@ -26,6 +26,7 @@ import { InvestigationActivityTrace } from "@/components/InvestigationActivityTr
 import { ExportReportModal } from "@/components/ExportReportModal";
 import { LoadingSkeleton, EmptyState, ApiErrorBanner } from "@/components/StateHandlers";
 import { EvidenceDrawer } from "@/components/EvidenceDrawer";
+import { formatAmount } from "@/lib/formatters";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -104,7 +105,6 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
     setError(null);
   };
 
-  // Find evidence by ID for quick inspection from validation checks
   const handleSelectEvidenceById = (evId: string) => {
     const allEvidence = lineage?.evidence || investigation?.lineage?.evidence || [];
     const found = allEvidence.find((e) => e.id === evId);
@@ -113,53 +113,23 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
     }
   };
 
-  // Compute duration display
-  const durationDisplay =
-    investigation?.duration_seconds !== undefined && investigation?.duration_seconds !== null
-      ? `${investigation.duration_seconds}s`
-      : investigation?.agent_metrics?.investigation_duration_ms
-      ? `${(investigation.agent_metrics.investigation_duration_ms / 1000).toFixed(2)}s`
-      : "—";
-
   const customerDisplay =
     investigation?.customer_name ||
     lineage?.customer?.name ||
     investigation?.customer_id ||
-    "Unavailable";
+    "Customer";
 
-  const formattedStarted = investigation?.created_at
-    ? new Date(investigation.created_at).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        timeZone: "UTC",
-      }) + " UTC"
-    : "—";
-
-  const formattedCompleted = investigation?.updated_at
-    ? new Date(investigation.updated_at).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        timeZone: "UTC",
-      }) + " UTC"
-    : investigation?.status !== "QUEUED" &&
-      investigation?.status !== "INVESTIGATING" &&
-      investigation?.status !== "VALIDATING"
-    ? formattedStarted
-    : "In Progress";
+  const amountDisplay = formatAmount(investigation?.amount, investigation?.currency || "USD");
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
-      <Navigation />
+      <Navigation
+        onOpenReportModal={() => {
+          if (investigation) setIsExportOpen(true);
+        }}
+      />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Error State */}
         {error && (
           <ApiErrorBanner
@@ -173,8 +143,7 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
         {usingFixtures && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 flex items-center justify-between">
             <span className="font-medium">
-              Demo Fixture Active: Viewing isolated development test data for{" "}
-              {investigation?.status}.
+              Demo Mode Active: Displaying local sample investigation.
             </span>
             <button
               type="button"
@@ -187,181 +156,106 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
         )}
 
         {loading ? (
-          <LoadingSkeleton title={`Loading investigation ${investigationId}…`} />
+          <LoadingSkeleton title={`Loading invoice review…`} />
         ) : !investigation ? (
           <EmptyState
             title="Investigation Not Found"
-            description={`Could not find an investigation matching identifier "${investigationId}".`}
+            description={`Could not find an invoice investigation matching "${investigationId}".`}
             actionLabel="Return to Investigations"
             onAction={() => window.location.assign("/investigations")}
           />
         ) : (
-          <div className="space-y-6">
-            {/* =========================================================================
-                1. HEADER
-                - Investigation ID
-                - Invoice ID
-                - Customer
-                - Investigation type
-                - Current status
-                - Started
-                - Completed
-                - Duration
-                Actions: Export Report, Back to Investigations
-                ========================================================================= */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100">
-                {/* Identification & Status */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href="/investigations"
-                      className="text-xs text-slate-500 hover:text-slate-800 font-mono flex items-center gap-1"
-                    >
-                      ← Back to Investigations
-                    </Link>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3 pt-1">
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-mono">
-                      {investigation.investigation_id}
-                    </h1>
-                    <StatusBadge status={investigation.status} size="md" />
-                  </div>
-                  <p className="text-xs text-slate-500 font-mono">
-                    Target Invoice:{" "}
-                    <strong className="text-slate-900">{investigation.invoice_id}</strong>
-                    {investigation.exception_id && (
-                      <span>
-                        {" "}
-                        | Exception Ref:{" "}
-                        <strong className="text-slate-900">{investigation.exception_id}</strong>
-                      </span>
-                    )}
-                  </p>
+          <div className="space-y-8">
+            {/* Top Bar: Back Link & Quick Actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+              <div className="space-y-1">
+                <Link
+                  href="/investigations"
+                  className="text-xs text-slate-500 hover:text-slate-900 font-medium flex items-center gap-1"
+                >
+                  ← Back to investigations
+                </Link>
+                <div className="flex items-center gap-3 pt-1">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                    Review: {investigation.invoice_id}
+                  </h1>
+                  <StatusBadge status={investigation.status} size="md" />
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsExportOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
-                  >
-                    <svg
-                      className="h-4 w-4 text-slate-500"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-                      />
-                    </svg>
-                    <span>Export Report</span>
-                  </button>
-
-                  <Link
-                    href="/investigations"
-                    className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition"
-                  >
-                    <span>Dashboard</span>
-                  </Link>
-                </div>
+                <p className="text-xs text-slate-500">
+                  {customerDisplay} · {amountDisplay}
+                </p>
               </div>
 
-              {/* Metadata Summary Row */}
-              <dl className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-y-3 gap-x-6 pt-4 text-xs">
-                <div>
-                  <dt className="text-slate-400 text-[11px] font-medium">Customer</dt>
-                  <dd className="font-semibold text-slate-900 truncate" title={customerDisplay}>
-                    {customerDisplay}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-slate-400 text-[11px] font-medium">Investigation Type</dt>
-                  <dd className="font-medium text-slate-900 truncate">
-                    Rate & Terms Compliance
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-slate-400 text-[11px] font-medium">Started</dt>
-                  <dd className="font-mono text-slate-700 text-[11px]">{formattedStarted}</dd>
-                </div>
-
-                <div>
-                  <dt className="text-slate-400 text-[11px] font-medium">Completed</dt>
-                  <dd className="font-mono text-slate-700 text-[11px]">{formattedCompleted}</dd>
-                </div>
-
-                <div>
-                  <dt className="text-slate-400 text-[11px] font-medium">Execution Duration</dt>
-                  <dd className="font-mono font-semibold text-slate-900">{durationDisplay}</dd>
-                </div>
-
-                <div>
-                  <dt className="text-slate-400 text-[11px] font-medium">Substantiated Citations</dt>
-                  <dd className="font-mono font-bold text-emerald-700">
-                    {investigation.cited_evidence_ids?.length || 0} Records
-                  </dd>
-                </div>
-              </dl>
-            </div>
-
-            {/* Authority Boundary Banner */}
-            <AuthorityBoundaryBanner />
-
-            {/* =========================================================================
-                2. INVOICE EXCEPTION + DETERMINATION
-                Two-column desktop grid for immediate clarity
-                ========================================================================= */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Invoice Exception Card */}
-              <InvoiceExceptionCard
-                investigation={investigation}
-                lineage={lineage || investigation.lineage}
-              />
-
-              {/* Prominent Determination Card */}
-              <DeterminationCard investigation={investigation} />
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsExportOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+                >
+                  <svg
+                    className="h-4 w-4 text-slate-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                    />
+                  </svg>
+                  <span>Export report</span>
+                </button>
+              </div>
             </div>
 
             {/* =========================================================================
-                3. LINEAGE GRAPH
-                Central visual element exposing the real directional relationship graph
+                PHASE 6 INFORMATION HIERARCHY
+                1. Invoice
+                2. Finding
+                3. Why (integrated inside Finding card)
+                4. Verification checks
+                5. Contract history
+                6. Supporting records
+                7. Investigation activity & Technical trace
                 ========================================================================= */}
+
+            {/* 1. INVOICE SECTION */}
+            <InvoiceExceptionCard
+              investigation={investigation}
+              lineage={lineage || investigation.lineage}
+            />
+
+            {/* 2 & 3. FINDING & WHY SECTION (Dominant Focal Point) */}
+            <DeterminationCard investigation={investigation} />
+
+            {/* 4. VERIFICATION CHECKS */}
+            <ValidationSection
+              results={investigation.validation_results}
+              onSelectEvidenceId={handleSelectEvidenceById}
+            />
+
+            {/* 5. CONTRACT HISTORY */}
             <LineageGraph
               lineage={lineage || investigation.lineage}
               onSelectEvidence={(ev) => setInspectedEvidence(ev)}
             />
 
-            {/* =========================================================================
-                4. VALIDATION + EVIDENCE + ACTIVITY
-                Detailed evidentiary sections completing the unbroken verification chain
-                ========================================================================= */}
-            <div className="space-y-6">
-              {/* Deterministic Validation Section */}
-              <ValidationSection
-                results={investigation.validation_results}
-                onSelectEvidenceId={handleSelectEvidenceById}
-              />
+            {/* 6. SUPPORTING RECORDS */}
+            <EvidenceSection
+              evidence={lineage?.evidence || investigation.lineage?.evidence}
+              citedEvidenceIds={investigation.cited_evidence_ids}
+            />
 
-              {/* Evidentiary Records Section */}
-              <EvidenceSection
-                evidence={lineage?.evidence || investigation.lineage?.evidence}
-                citedEvidenceIds={investigation.cited_evidence_ids}
-              />
+            {/* 7. INVESTIGATION ACTIVITY & TECHNICAL TRACE */}
+            <InvestigationActivityTrace
+              trace={trace}
+              events={investigation.events || investigation.agent_events}
+            />
 
-              {/* Investigation Activity & Evidence Trace */}
-              <InvestigationActivityTrace
-                trace={trace}
-                events={investigation.events || investigation.agent_events}
-              />
-            </div>
+            {/* 8. HOW WE VERIFY */}
+            <AuthorityBoundaryBanner />
           </div>
         )}
       </main>

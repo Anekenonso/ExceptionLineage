@@ -1,5 +1,6 @@
 import React from "react";
 import { InvestigationResponse, LineageData } from "@/types/investigation";
+import { formatAmount } from "@/lib/formatters";
 
 interface InvoiceExceptionCardProps {
   investigation: InvestigationResponse;
@@ -12,18 +13,23 @@ export function InvoiceExceptionCard({ investigation, lineage }: InvoiceExceptio
   const contract = lineage?.contract;
   const customer = lineage?.customer;
 
-  // 1. Invoice ID
-  const invoiceId = investigation.invoice_id || inv?.id || "—";
+  // 1. Invoice Number
+  const invoiceNumber = investigation.invoice_id || inv?.id || "—";
 
   // 2. Customer
-  const customerName = investigation.customer_name || customer?.name || (investigation.customer_id ? `ID: ${investigation.customer_id}` : "Unavailable");
+  const customerName =
+    investigation.customer_name ||
+    customer?.name ||
+    (investigation.customer_id ? `Customer ${investigation.customer_id}` : "Unavailable");
   const customerId = investigation.customer_id || customer?.id || inv?.customer_id;
 
   // 3. Contract
-  const contractTitle = contract?.title ? `${contract.title} (${contract.id})` : contract?.id ? contract.id : inv?.contract_id || "Unavailable";
+  const contractTitle =
+    contract?.title || (contract?.id ? `Contract ${contract.id}` : inv?.contract_id ? `Contract ${inv.contract_id}` : "Not identified");
+  const contractId = contract?.id || inv?.contract_id;
 
-  // 4. Product
-  const product = inv?.product_id || "Unavailable";
+  // 4. Product / Service
+  const product = inv?.product_id || null;
 
   // 5. Invoice Date
   const invoiceDate = inv?.issued_at
@@ -34,21 +40,19 @@ export function InvoiceExceptionCard({ investigation, lineage }: InvoiceExceptio
       })
     : "Unavailable";
 
-  // 6. Billed amount
+  // 6. Billed Amount
   const rawBilled = investigation.amount || inv?.amount || exc?.actual_amount;
   const currency = investigation.currency || inv?.currency || exc?.currency || "USD";
-  const billedAmount = rawBilled !== undefined && rawBilled !== null
-    ? `${currency} ${Number(rawBilled).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : "Unavailable";
+  const billedAmount = formatAmount(rawBilled, currency);
 
-  // 7. Expected amount
+  // 7. Expected Amount
   const rawExpected = exc?.expected_amount;
   const expectedAmount = rawExpected !== undefined && rawExpected !== null
-    ? `${currency} ${Number(rawExpected).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : "Unavailable";
+    ? formatAmount(rawExpected, currency)
+    : null;
 
   // 8. Variance
-  let varianceDisplay = "Unavailable";
+  let varianceDisplay: string | null = null;
   let varianceIsPositive = false;
   let varianceIsZero = false;
 
@@ -59,123 +63,131 @@ export function InvoiceExceptionCard({ investigation, lineage }: InvoiceExceptio
     varianceIsPositive = diff > 0;
     varianceIsZero = Math.abs(diff) < 0.001;
     const sign = diff > 0 ? "+" : "";
-    varianceDisplay = `${sign}${currency} ${diff.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    varianceDisplay = `${sign}${formatAmount(diff, currency)}`;
   }
 
-  // Exception code / type if present
-  const exceptionType = exc?.exception_type || investigation.exception_id || null;
+  // Exception description / flag
   const exceptionDesc = exc?.description || null;
+  const exceptionType = exc?.exception_type || investigation.exception_id || null;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-slate-100 gap-2">
-        <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-mono font-bold">
-            TX
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
-              Invoice Exception Details
-            </h2>
-            <p className="text-xs text-slate-500 font-mono">
-              Target Invoice {invoiceId}
-            </p>
-          </div>
+    <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+        <div>
+          <h2 className="text-base font-bold text-slate-900 tracking-tight">
+            Invoice
+          </h2>
+          <p className="text-xs text-slate-500">
+            Transaction details and flagged reason
+          </p>
         </div>
 
         {exceptionType && (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs font-mono">
-            <span className="font-semibold">Exception:</span>
-            <span>{exceptionType}</span>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
+            <span>Flagged:</span>
+            <span className="font-semibold">{exceptionType}</span>
           </div>
         )}
       </div>
 
       {exceptionDesc && (
-        <div className="mb-5 p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700">
-          <span className="font-semibold text-slate-900 block mb-0.5">Reported Variance Trigger:</span>
+        <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700">
+          <span className="font-semibold text-slate-900 block mb-0.5">Why it was flagged:</span>
           {exceptionDesc}
         </div>
       )}
 
-      {/* Grid of Fields */}
+      {/* Grid of Business Information */}
       <dl className="grid grid-cols-2 sm:grid-cols-4 gap-y-4 gap-x-6 text-xs">
-        {/* Invoice ID */}
+        {/* Invoice Number */}
         <div>
-          <dt className="text-slate-500 font-medium mb-1">Invoice ID</dt>
+          <dt className="text-slate-500 text-[11px] font-medium mb-0.5">Invoice Number</dt>
           <dd className="font-mono font-semibold text-slate-900 text-sm">
-            {invoiceId}
+            {invoiceNumber}
           </dd>
         </div>
 
         {/* Customer */}
         <div>
-          <dt className="text-slate-500 font-medium mb-1">Customer</dt>
-          <dd className="font-medium text-slate-900 truncate" title={customerName}>
+          <dt className="text-slate-500 text-[11px] font-medium mb-0.5">Customer</dt>
+          <dd className="font-medium text-slate-900 text-sm truncate" title={customerName}>
             {customerName}
             {customerId && customerId !== customerName && (
-              <span className="block text-[11px] text-slate-500 font-mono">{customerId}</span>
+              <span className="block text-[11px] text-slate-400 font-mono font-normal">
+                {customerId}
+              </span>
             )}
           </dd>
         </div>
 
-        {/* Billed Amount */}
+        {/* Amount */}
         <div>
-          <dt className="text-slate-500 font-medium mb-1">Billed Amount</dt>
+          <dt className="text-slate-500 text-[11px] font-medium mb-0.5">Amount Billed</dt>
           <dd className="font-mono font-semibold text-slate-900 text-sm">
             {billedAmount}
           </dd>
         </div>
 
-        {/* Expected Amount */}
-        <div>
-          <dt className="text-slate-500 font-medium mb-1">Expected Amount</dt>
-          <dd className="font-mono font-semibold text-slate-700 text-sm">
-            {expectedAmount}
-          </dd>
-        </div>
-
-        {/* Variance */}
-        <div>
-          <dt className="text-slate-500 font-medium mb-1">Variance</dt>
-          <dd
-            className={`font-mono font-bold text-sm ${
-              varianceIsZero
-                ? "text-slate-700"
-                : varianceIsPositive
-                ? "text-rose-600"
-                : varianceDisplay === "Unavailable"
-                ? "text-slate-400 font-normal"
-                : "text-emerald-600"
-            }`}
-          >
-            {varianceDisplay}
-          </dd>
-        </div>
-
-        {/* Product / Service */}
-        <div>
-          <dt className="text-slate-500 font-medium mb-1">Product</dt>
-          <dd className="font-mono text-slate-900 truncate" title={product}>
-            {product}
-          </dd>
-        </div>
+        {/* Expected Amount / Variance if flagged */}
+        {expectedAmount ? (
+          <div>
+            <dt className="text-slate-500 text-[11px] font-medium mb-0.5">Expected Baseline</dt>
+            <dd className="font-mono font-medium text-slate-700 text-sm">
+              {expectedAmount}
+              {varianceDisplay && (
+                <span
+                  className={`block text-[11px] font-medium ${
+                    varianceIsZero
+                      ? "text-slate-500"
+                      : varianceIsPositive
+                      ? "text-rose-600"
+                      : "text-emerald-600"
+                  }`}
+                >
+                  Variance: {varianceDisplay}
+                </span>
+              )}
+            </dd>
+          </div>
+        ) : (
+          <div>
+            <dt className="text-slate-500 text-[11px] font-medium mb-0.5">Currency</dt>
+            <dd className="font-medium text-slate-900 text-sm font-mono">
+              {currency}
+            </dd>
+          </div>
+        )}
 
         {/* Invoice Date */}
         <div>
-          <dt className="text-slate-500 font-medium mb-1">Invoice Date</dt>
+          <dt className="text-slate-500 text-[11px] font-medium mb-0.5">Invoice Date</dt>
           <dd className="text-slate-900 font-medium">
             {invoiceDate}
           </dd>
         </div>
 
         {/* Governing Contract */}
-        <div>
-          <dt className="text-slate-500 font-medium mb-1">Governing Contract</dt>
-          <dd className="font-mono text-slate-900 truncate" title={contractTitle}>
+        <div className="sm:col-span-2">
+          <dt className="text-slate-500 text-[11px] font-medium mb-0.5">Governing Contract</dt>
+          <dd className="text-slate-900 font-medium truncate" title={contractTitle}>
             {contractTitle}
+            {contractId && contractTitle !== contractId && (
+              <span className="text-[11px] text-slate-400 font-mono font-normal ml-1">
+                ({contractId})
+              </span>
+            )}
           </dd>
         </div>
+
+        {/* Product / Service if available */}
+        {product && (
+          <div>
+            <dt className="text-slate-500 text-[11px] font-medium mb-0.5">Product</dt>
+            <dd className="text-slate-900 font-medium truncate" title={product}>
+              {product}
+            </dd>
+          </div>
+        )}
       </dl>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { LineageData, EvidenceItem } from "@/types/investigation";
+import { formatAmount } from "@/lib/formatters";
 
 interface LineageGraphProps {
   lineage?: LineageData | null;
@@ -11,8 +12,8 @@ interface LineageGraphProps {
 interface GraphNode {
   id: string;
   type: "customer" | "contract" | "amendment" | "sow" | "exception" | "approval" | "invoice" | "evidence";
-  label: string;
-  sublabel: string;
+  title: string;
+  subtitle: string;
   statusBadge?: string;
   badgeColor?: string;
   column: number;
@@ -43,14 +44,14 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
     const eList: GraphEdge[] = [];
     const nMap = new Map<string, GraphNode>();
 
-    // 1. Customer
+    // 1. Customer (Column 0)
     if (lineage.customer && lineage.customer.id) {
       const c = lineage.customer;
       const node: GraphNode = {
         id: c.id,
         type: "customer",
-        label: c.name || c.id,
-        sublabel: `Customer ${c.id}`,
+        title: c.name || "Customer",
+        subtitle: `ID: ${c.id}`,
         column: 0,
         row: 0,
         data: c as unknown as Record<string, unknown>,
@@ -59,15 +60,15 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
       nMap.set(node.id, node);
     }
 
-    // 2. Contract
+    // 2. Contract (Column 1)
     if (lineage.contract && lineage.contract.id) {
       const k = lineage.contract;
       const node: GraphNode = {
         id: k.id,
         type: "contract",
-        label: k.title || k.id,
-        sublabel: `Contract ${k.id}`,
-        statusBadge: k.status,
+        title: k.title || "Governing Contract",
+        subtitle: `Contract ${k.id}`,
+        statusBadge: k.status === "ACTIVE" ? "Active" : k.status,
         badgeColor: k.status === "ACTIVE" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700",
         column: 1,
         row: 0,
@@ -81,7 +82,7 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
           id: `${k.customer_id}->${k.id}`,
           sourceId: k.customer_id,
           targetId: k.id,
-          label: "HAS_CONTRACT",
+          label: "Contract with",
           type: "has_contract",
         });
       }
@@ -94,10 +95,10 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
       const node: GraphNode = {
         id: amd.id,
         type: "amendment",
-        label: amd.title || `Amendment #${amd.amendment_number}`,
-        sublabel: `Amendment ${amd.id}`,
-        statusBadge: `Amd #${amd.amendment_number}`,
-        badgeColor: "bg-amber-100 text-amber-800",
+        title: amd.title || `Amendment #${amd.amendment_number}`,
+        subtitle: `Ref: ${amd.id}`,
+        statusBadge: `Amendment #${amd.amendment_number}`,
+        badgeColor: "bg-blue-50 text-blue-800",
         column: 2,
         row: col2Row++,
         data: amd as unknown as Record<string, unknown>,
@@ -110,7 +111,7 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
           id: `${amd.contract_id}->${amd.id}`,
           sourceId: amd.contract_id,
           targetId: amd.id,
-          label: "HAS_AMENDMENT",
+          label: "Amended by",
           type: "has_amendment",
         });
       }
@@ -121,10 +122,10 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
       const node: GraphNode = {
         id: sow.id,
         type: "sow",
-        label: sow.title || sow.reference,
-        sublabel: `SOW ${sow.id}`,
-        statusBadge: sow.reference || "SOW",
-        badgeColor: "bg-cyan-100 text-cyan-800",
+        title: sow.title || "Statement of Work",
+        subtitle: sow.reference || `SOW ${sow.id}`,
+        statusBadge: "SOW",
+        badgeColor: "bg-cyan-50 text-cyan-800",
         column: 2,
         row: col2Row++,
         data: sow as unknown as Record<string, unknown>,
@@ -137,7 +138,7 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
           id: `${sow.contract_id}->${sow.id}`,
           sourceId: sow.contract_id,
           targetId: sow.id,
-          label: "HAS_SOW",
+          label: "Includes scope",
           type: "has_sow",
         });
       }
@@ -150,10 +151,10 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
       const node: GraphNode = {
         id: exc.id,
         type: "exception",
-        label: exc.exception_type || "Exception",
-        sublabel: `Exception ${exc.id}`,
-        statusBadge: exc.exception_type,
-        badgeColor: "bg-purple-100 text-purple-800",
+        title: exc.exception_type ? `Flag: ${exc.exception_type}` : "Flagged Variance",
+        subtitle: exc.expected_amount ? `Expected ${formatAmount(exc.expected_amount, exc.currency || "USD")}` : "Discrepancy",
+        statusBadge: "Flagged",
+        badgeColor: "bg-amber-100 text-amber-800",
         column: 3,
         row: col3Row++,
         data: exc as unknown as Record<string, unknown>,
@@ -166,7 +167,7 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
           id: `${exc.contract_id}->${exc.id}`,
           sourceId: exc.contract_id,
           targetId: exc.id,
-          label: "HAS_EXCEPTION",
+          label: "Pertains to",
           type: "has_exception",
         });
       }
@@ -177,9 +178,9 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
       const node: GraphNode = {
         id: apr.id,
         type: "approval",
-        label: apr.status || "Approval",
-        sublabel: `Approval ${apr.id}`,
-        statusBadge: apr.status,
+        title: apr.approver ? `Approval by ${apr.approver}` : "Operational Approval",
+        subtitle: `Ref: ${apr.id}`,
+        statusBadge: apr.status === "APPROVED" ? "Approved" : apr.status,
         badgeColor: apr.status === "APPROVED" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800",
         column: 3,
         row: col3Row++,
@@ -193,7 +194,7 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
           id: `${apr.exception_id}->${apr.id}`,
           sourceId: apr.exception_id,
           targetId: apr.id,
-          label: "HAS_APPROVAL",
+          label: "Approved by",
           type: "has_approval",
         });
       }
@@ -205,8 +206,8 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
       const node: GraphNode = {
         id: inv.id,
         type: "invoice",
-        label: `Invoice ${inv.id}`,
-        sublabel: inv.amount ? `${inv.currency || "USD"} ${Number(inv.amount).toFixed(2)}` : "Invoice",
+        title: `Invoice ${inv.id}`,
+        subtitle: inv.amount ? formatAmount(inv.amount, inv.currency || "USD") : "Invoice",
         statusBadge: "Target Invoice",
         badgeColor: "bg-slate-900 text-white",
         column: 4,
@@ -221,7 +222,7 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
           id: `${inv.id}->${inv.customer_id}`,
           sourceId: inv.id,
           targetId: inv.customer_id,
-          label: "BILLED_TO",
+          label: "Billed to",
           type: "billed_to",
         });
       }
@@ -230,7 +231,7 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
           id: `${inv.id}->${inv.contract_id}`,
           sourceId: inv.id,
           targetId: inv.contract_id,
-          label: "GOVERNED_BY",
+          label: "Governed by",
           type: "governed_by",
         });
       }
@@ -239,7 +240,7 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
           id: `${inv.id}->${inv.exception_id}`,
           sourceId: inv.id,
           targetId: inv.exception_id,
-          label: "HAS_EXCEPTION",
+          label: "Flagged with",
           type: "has_exception",
         });
       }
@@ -251,10 +252,10 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
       const node: GraphNode = {
         id: ev.id,
         type: "evidence",
-        label: ev.title || ev.evidence_type,
-        sublabel: ev.locator || ev.source,
-        statusBadge: ev.evidence_type.replace(/_/g, " "),
-        badgeColor: "bg-teal-100 text-teal-800",
+        title: ev.title || ev.evidence_type.replace(/_/g, " "),
+        subtitle: ev.locator || ev.source,
+        statusBadge: "Evidence",
+        badgeColor: "bg-slate-100 text-slate-800",
         column: 5,
         row: idx,
         isCited: true,
@@ -268,7 +269,7 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
           id: `${ev.source_id}->${ev.id}`,
           sourceId: ev.source_id,
           targetId: ev.id,
-          label: "HAS_EVIDENCE",
+          label: "Documented in",
           type: "has_evidence",
         });
       }
@@ -278,10 +279,10 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
   }, [lineage]);
 
   // Layout coordinates calculation
-  const nodeWidth = 180;
-  const nodeHeight = 84;
+  const nodeWidth = 190;
+  const nodeHeight = 82;
   const colSpacing = 240;
-  const rowSpacing = 110;
+  const rowSpacing = 105;
   const startX = 30;
   const startY = 40;
 
@@ -291,25 +292,19 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
     return { x, y, cx: x + nodeWidth / 2, cy: y + nodeHeight / 2 };
   };
 
-  // Compute total canvas dimensions
   const maxCol = Math.max(1, ...nodes.map((n) => n.column));
   const maxRow = Math.max(1, ...nodes.map((n) => n.row));
-  const canvasWidth = Math.max(1000, startX * 2 + (maxCol + 1) * colSpacing);
-  const canvasHeight = Math.max(340, startY * 2 + (maxRow + 1) * rowSpacing);
+  const canvasWidth = Math.max(1050, startX * 2 + (maxCol + 1) * colSpacing);
+  const canvasHeight = Math.max(320, startY * 2 + (maxRow + 1) * rowSpacing);
 
   const selectedNode = selectedNodeId ? nodeMap.get(selectedNodeId) : null;
 
   if (!lineage || nodes.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-xs">
-        <div className="h-10 w-10 mx-auto rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-3">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0 0 20.25 18V6A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25Z" />
-          </svg>
-        </div>
-        <h3 className="text-sm font-semibold text-slate-900">Lineage Unavailable</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Contract History Unavailable</h3>
         <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-          No directional relationship graph was returned by the backend for this invoice.
+          No relationship records were found for this invoice.
         </p>
       </div>
     );
@@ -317,61 +312,35 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-      {/* Header bar with controls */}
-      <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded bg-slate-900 text-white flex items-center justify-center text-[10px] font-mono font-bold">
-            G
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
-              Evidence Lineage Graph
-            </h3>
-            <p className="text-[11px] text-slate-500 font-mono">
-              Directional graph retrieval ({nodes.length} nodes, {edges.length} relationships)
-            </p>
-          </div>
+      {/* Header bar */}
+      <div className="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-base font-bold text-slate-900 tracking-tight">
+            Contract history
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            See how this invoice connects to the contract, amendments and approvals.
+          </p>
         </div>
 
-        {/* Graph Legend & Zoom Controls */}
+        {/* Zoom Controls */}
         <div className="flex items-center gap-3">
-          <div className="hidden lg:flex items-center gap-2 text-[10px] text-slate-500 font-mono">
-            <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-indigo-500 inline-block" /> Customer
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-blue-500 inline-block" /> Contract
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-amber-500 inline-block" /> Amendment
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-purple-500 inline-block" /> Exception
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" /> Approval
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-teal-500 inline-block" /> Evidence
-            </span>
-          </div>
-
           <div className="flex items-center rounded-md border border-slate-200 bg-white shadow-2xs">
             <button
               type="button"
               onClick={() => setZoomLevel((z) => Math.max(0.6, z - 0.1))}
-              className="px-2 py-1 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-r border-slate-200"
+              className="px-2.5 py-1 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-r border-slate-200"
               title="Zoom Out"
             >
               −
             </button>
-            <span className="px-2 py-1 text-[11px] font-mono text-slate-600">
+            <span className="px-2.5 py-1 text-[11px] font-mono text-slate-600">
               {Math.round(zoomLevel * 100)}%
             </span>
             <button
               type="button"
               onClick={() => setZoomLevel((z) => Math.min(1.4, z + 0.1))}
-              className="px-2 py-1 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-r border-slate-200"
+              className="px-2.5 py-1 text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 border-r border-slate-200"
               title="Zoom In"
             >
               +
@@ -379,7 +348,7 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
             <button
               type="button"
               onClick={() => setZoomLevel(1)}
-              className="px-2 py-1 text-[11px] text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+              className="px-2.5 py-1 text-[11px] text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               title="Reset Zoom"
             >
               Reset
@@ -406,7 +375,6 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
             xmlns="http://www.w3.org/2000/svg"
           >
             <defs>
-              {/* Arrowhead marker */}
               <marker
                 id="arrowhead"
                 markerWidth="8"
@@ -425,19 +393,19 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
                 refY="3"
                 orient="auto"
               >
-                <polygon points="0 0, 8 3, 0 6" fill="#3b82f6" />
+                <polygon points="0 0, 8 3, 0 6" fill="#0f172a" />
               </marker>
             </defs>
 
-            {/* Stage Column Labels */}
-            {["Customer", "Contract", "Amendments & SOWs", "Exception & Approval", "Target Invoice", "Cited Evidence"].map(
+            {/* Column Titles */}
+            {["Customer", "Contract", "Amendments & SOWs", "Approvals & Variance", "Invoice", "Supporting Records"].map(
               (header, colIdx) => (
                 <text
                   key={colIdx}
                   x={startX + colIdx * colSpacing + nodeWidth / 2}
-                  y={22}
+                  y={20}
                   textAnchor="middle"
-                  className="fill-slate-400 text-[10px] uppercase font-mono font-bold tracking-wider"
+                  className="fill-slate-400 text-[11px] font-medium"
                 >
                   {header}
                 </text>
@@ -453,14 +421,12 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
               const srcPos = getNodePos(src);
               const tgtPos = getNodePos(tgt);
 
-              // Connect from right of source to left of target (or vice-versa depending on columns)
               const isReverse = srcPos.x > tgtPos.x;
               const x1 = isReverse ? srcPos.x : srcPos.x + nodeWidth;
               const y1 = srcPos.cy;
               const x2 = isReverse ? tgtPos.x + nodeWidth : tgtPos.x;
               const y2 = tgtPos.cy;
 
-              // Cubic bezier control points
               const dx = Math.abs(x2 - x1) * 0.5;
               const pathD = `M ${x1} ${y1} C ${isReverse ? x1 - dx : x1 + dx} ${y1}, ${
                 isReverse ? x2 + dx : x2 - dx
@@ -469,7 +435,6 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
               const isEdgeActive =
                 selectedNodeId && (edge.sourceId === selectedNodeId || edge.targetId === selectedNodeId);
 
-              // Midpoint for label
               const midX = (x1 + x2) / 2;
               const midY = (y1 + y2) / 2 - 4;
 
@@ -478,27 +443,26 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
                   <path
                     d={pathD}
                     fill="none"
-                    stroke={isEdgeActive ? "#3b82f6" : "#cbd5e1"}
-                    strokeWidth={isEdgeActive ? 2 : 1.5}
+                    stroke={isEdgeActive ? "#0f172a" : "#cbd5e1"}
+                    strokeWidth={isEdgeActive ? 2 : 1.2}
                     markerEnd={isEdgeActive ? "url(#arrowhead-active)" : "url(#arrowhead)"}
-                    strokeDasharray={edge.type.includes("exception") ? "4 3" : undefined}
                   />
                   <rect
-                    x={midX - 35}
+                    x={midX - 40}
                     y={midY - 7}
-                    width={70}
-                    height={14}
+                    width={80}
+                    height={15}
                     rx={3}
                     fill="#ffffff"
-                    stroke={isEdgeActive ? "#bfdbfe" : "#e2e8f0"}
+                    stroke={isEdgeActive ? "#94a3b8" : "#e2e8f0"}
                     strokeWidth={1}
                   />
                   <text
                     x={midX}
-                    y={midY + 3.5}
+                    y={midY + 4}
                     textAnchor="middle"
-                    className={`text-[8.5px] font-mono tracking-tight font-semibold ${
-                      isEdgeActive ? "fill-blue-700" : "fill-slate-500"
+                    className={`text-[9px] font-medium ${
+                      isEdgeActive ? "fill-slate-900 font-semibold" : "fill-slate-500"
                     }`}
                   >
                     {edge.label}
@@ -511,23 +475,6 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
             {nodes.map((node) => {
               const pos = getNodePos(node);
               const isSelected = selectedNodeId === node.id;
-
-              // Border and styling based on type
-              const typeColorMap: Record<
-                string,
-                { border: string; bg: string; dot: string; tag: string }
-              > = {
-                customer: { border: "border-indigo-200", bg: "bg-white", dot: "bg-indigo-500", tag: "Customer" },
-                contract: { border: "border-blue-200", bg: "bg-white", dot: "bg-blue-500", tag: "Contract" },
-                amendment: { border: "border-amber-200", bg: "bg-white", dot: "bg-amber-500", tag: "Amendment" },
-                sow: { border: "border-cyan-200", bg: "bg-white", dot: "bg-cyan-500", tag: "SOW" },
-                exception: { border: "border-purple-200", bg: "bg-white", dot: "bg-purple-500", tag: "Exception" },
-                approval: { border: "border-emerald-200", bg: "bg-white", dot: "bg-emerald-500", tag: "Approval" },
-                invoice: { border: "border-slate-800", bg: "bg-slate-900 text-white", dot: "bg-slate-400", tag: "Invoice" },
-                evidence: { border: "border-teal-200", bg: "bg-teal-50/50", dot: "bg-teal-500", tag: "Evidence" },
-              };
-
-              const style = typeColorMap[node.type] || typeColorMap.contract;
 
               return (
                 <foreignObject
@@ -547,21 +494,28 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
                   <div
                     className={`h-full w-full rounded-lg border p-2.5 flex flex-col justify-between transition shadow-2xs hover:shadow-md ${
                       isSelected
-                        ? "ring-2 ring-blue-500 border-blue-500 bg-blue-50/20"
-                        : `${style.border} ${style.bg}`
+                        ? "ring-2 ring-slate-900 border-slate-900 bg-slate-50"
+                        : node.type === "invoice"
+                        ? "border-slate-800 bg-slate-900 text-white"
+                        : "border-slate-200 bg-white"
                     }`}
                   >
                     {/* Top Row: Type tag & Status badge */}
                     <div className="flex items-center justify-between gap-1">
-                      <span className="flex items-center gap-1 text-[10px] font-mono font-bold tracking-tight text-slate-500">
-                        <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
-                        <span>{style.tag}</span>
+                      <span
+                        className={`text-[10px] font-medium tracking-tight ${
+                          node.type === "invoice" ? "text-slate-300" : "text-slate-500"
+                        }`}
+                      >
+                        {node.type.charAt(0).toUpperCase() + node.type.slice(1)}
                       </span>
 
                       {node.statusBadge && (
                         <span
-                          className={`text-[9px] font-mono px-1.5 py-0.5 rounded truncate max-w-[85px] ${
-                            node.badgeColor || "bg-slate-100 text-slate-700"
+                          className={`text-[9px] px-1.5 py-0.5 rounded truncate max-w-[95px] font-medium ${
+                            node.type === "invoice"
+                              ? "bg-slate-800 text-white"
+                              : node.badgeColor || "bg-slate-100 text-slate-700"
                           }`}
                           title={node.statusBadge}
                         >
@@ -570,19 +524,25 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
                       )}
                     </div>
 
-                    {/* Middle: ID / Primary identifier */}
-                    <div className="my-1">
-                      <div className="font-mono text-xs font-bold text-slate-900 truncate" title={node.id}>
-                        {node.id}
-                      </div>
-                      <div className="text-[11px] text-slate-600 truncate leading-tight" title={node.label}>
-                        {node.label}
+                    {/* Middle: Title */}
+                    <div className="my-0.5">
+                      <div
+                        className={`text-xs font-semibold truncate leading-tight ${
+                          node.type === "invoice" ? "text-white" : "text-slate-900"
+                        }`}
+                        title={node.title}
+                      >
+                        {node.title}
                       </div>
                     </div>
 
-                    {/* Bottom: Sublabel or locator */}
-                    <div className="text-[9.5px] font-mono text-slate-400 truncate">
-                      {node.sublabel}
+                    {/* Bottom: Subtitle / ref */}
+                    <div
+                      className={`text-[10px] truncate ${
+                        node.type === "invoice" ? "text-slate-400" : "text-slate-400"
+                      }`}
+                    >
+                      {node.subtitle}
                     </div>
                   </div>
                 </foreignObject>
@@ -592,44 +552,44 @@ export function LineageGraph({ lineage, onSelectEvidence }: LineageGraphProps) {
         </div>
       </div>
 
-      {/* Selected Node Details Drawer / Inspector */}
+      {/* Selected Node Details Drawer */}
       {selectedNode && (
         <div className="p-4 border-t border-slate-200 bg-slate-50 text-xs">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="uppercase tracking-wider font-mono text-[10px] font-bold text-slate-500">
-                  Node Inspector: {selectedNode.type}
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Record Details: {selectedNode.type}
                 </span>
-                <span className="font-mono font-bold text-slate-900">{selectedNode.id}</span>
+                <span className="font-mono text-slate-900 font-bold">{selectedNode.id}</span>
                 {selectedNode.statusBadge && (
-                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${selectedNode.badgeColor}`}>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${selectedNode.badgeColor}`}>
                     {selectedNode.statusBadge}
                   </span>
                 )}
               </div>
-              <p className="text-slate-700 font-medium">{selectedNode.label}</p>
+              <p className="text-slate-800 font-medium">{selectedNode.title}</p>
             </div>
 
             <button
               type="button"
               onClick={() => setSelectedNodeId(null)}
-              className="text-slate-400 hover:text-slate-700 p-1"
-              title="Close inspector"
+              className="text-slate-400 hover:text-slate-700 p-1 font-bold text-sm"
+              title="Close details"
             >
               ✕
             </button>
           </div>
 
           {/* Properties Grid */}
-          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3 rounded-lg border border-slate-200 font-mono text-[11px]">
+          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3 rounded-lg border border-slate-200 text-xs">
             {Object.entries(selectedNode.data)
               .filter(([k, v]) => v !== null && v !== undefined && typeof v !== "object")
               .slice(0, 8)
               .map(([k, v]) => (
                 <div key={k}>
-                  <span className="text-slate-400 block text-[9.5px] uppercase">{k}</span>
-                  <span className="text-slate-800 font-medium truncate block" title={String(v)}>
+                  <span className="text-slate-400 block text-[10px] uppercase font-medium">{k.replace(/_/g, " ")}</span>
+                  <span className="text-slate-800 font-medium truncate block font-mono text-[11px]" title={String(v)}>
                     {String(v)}
                   </span>
                 </div>
