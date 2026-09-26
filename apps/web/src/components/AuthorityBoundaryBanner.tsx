@@ -2,8 +2,8 @@ import React from "react";
 
 export function AuthorityBoundaryBanner() {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3.5 sm:p-4 text-xs text-slate-700 flex items-start gap-3 shadow-2xs">
-      <div className="p-1 rounded-md bg-slate-100 text-slate-600 shrink-0 mt-0.5">
+    <div className="rounded-2xl border border-[#e6dccb] bg-[#fffdf9] p-4 text-xs text-[#4a564f] flex items-start gap-3.5 shadow-2xs">
+      <div className="p-1.5 rounded-lg bg-[#faf6ef] text-[#1f4d3a] border border-[#e6dccb] shrink-0 mt-0.5">
         <svg
           className="h-4 w-4"
           fill="none"
@@ -20,10 +20,10 @@ export function AuthorityBoundaryBanner() {
         </svg>
       </div>
       <div className="space-y-0.5">
-        <h4 className="font-semibold text-slate-900 text-xs">
+        <h4 className="font-serif font-bold text-[#1c2621] text-sm">
           How we verify
         </h4>
-        <p className="text-slate-600 leading-relaxed">
+        <p className="text-[#4a564f] leading-relaxed">
           AI helps investigate the available records. Verification is performed using deterministic checks against the evidence found.
         </p>
       </div>

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { checkApiHealth } from "@/lib/api";
+import { BrandLogo } from "@/components/BrandLogo";
 
 interface NavigationProps {
   onOpenNewModal?: () => void;
@@ -38,53 +39,51 @@ export function Navigation({ onOpenNewModal, onOpenReportModal }: NavigationProp
   }, []);
 
   return (
-    <header className="border-b border-slate-200 bg-white sticky top-0 z-30 shadow-xs">
+    <header className="border-b border-[#e6dccb] bg-[#fffdf9] sticky top-0 z-30 shadow-2xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo & Main Nav */}
           <div className="flex items-center gap-8">
             <Link
               href="/"
-              className="flex items-center gap-2.5 text-slate-900 group"
+              className="flex items-center gap-3 text-[#1c2621] group transition"
             >
-              <div className="h-8 w-8 rounded-md bg-slate-900 text-white flex items-center justify-center font-bold text-sm tracking-wider shadow-xs group-hover:bg-slate-800 transition">
-                EL
-              </div>
+              <BrandLogo size={34} />
               <div className="flex flex-col">
-                <span className="font-semibold text-base tracking-tight leading-none text-slate-900">
+                <span className="font-serif font-bold text-lg tracking-tight leading-none text-[#1c2621]">
                   ExceptionLineage
                 </span>
-                <span className="text-[11px] text-slate-500 tracking-normal leading-none mt-1">
+                <span className="text-[10px] uppercase font-semibold tracking-[0.14em] text-[#5b7f6a] leading-none mt-1">
                   Invoice Investigation
                 </span>
               </div>
             </Link>
 
             {/* Primary Navigation: Overview, Investigations, Evidence, Reports */}
-            <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
+            <nav className="hidden md:flex items-center gap-1.5 text-sm font-medium">
               <Link
                 href="/"
-                className={`px-3 py-1.5 rounded-md transition ${
+                className={`px-3 py-1.5 rounded-lg transition ${
                   pathname === "/"
-                    ? "bg-slate-100 text-slate-900 font-semibold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    ? "bg-[#faf6ef] text-[#1c2621] font-semibold border border-[#e6dccb]"
+                    : "text-[#4a564f] hover:text-[#1c2621] hover:bg-[#faf6ef]"
                 }`}
               >
                 Overview
               </Link>
               <Link
                 href="/investigations"
-                className={`px-3 py-1.5 rounded-md transition ${
+                className={`px-3 py-1.5 rounded-lg transition ${
                   pathname?.startsWith("/investigations")
-                    ? "bg-slate-100 text-slate-900 font-semibold"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    ? "bg-[#faf6ef] text-[#1c2621] font-semibold border border-[#e6dccb]"
+                    : "text-[#4a564f] hover:text-[#1c2621] hover:bg-[#faf6ef]"
                 }`}
               >
                 Investigations
               </Link>
               <Link
                 href="/investigations#evidence"
-                className="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
+                className="px-3 py-1.5 rounded-lg text-[#4a564f] hover:text-[#1c2621] hover:bg-[#faf6ef] transition"
               >
                 Evidence
               </Link>
@@ -92,14 +91,14 @@ export function Navigation({ onOpenNewModal, onOpenReportModal }: NavigationProp
                 <button
                   type="button"
                   onClick={onOpenReportModal}
-                  className="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
+                  className="px-3 py-1.5 rounded-lg text-[#4a564f] hover:text-[#1c2621] hover:bg-[#faf6ef] transition cursor-pointer"
                 >
                   Reports
                 </button>
               ) : (
                 <Link
                   href="/investigations"
-                  className="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition"
+                  className="px-3 py-1.5 rounded-lg text-[#4a564f] hover:text-[#1c2621] hover:bg-[#faf6ef] transition"
                 >
                   Reports
                 </Link>
@@ -109,28 +108,28 @@ export function Navigation({ onOpenNewModal, onOpenReportModal }: NavigationProp
 
           {/* Right actions */}
           <div className="flex items-center gap-3">
-            {/* System Status - secondary/secondary interaction */}
+            {/* System Status */}
             <button
               type="button"
               onClick={() => setShowSystemInfo((prev) => !prev)}
-              className="flex items-center gap-2 px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 text-xs text-slate-600 hover:bg-slate-100 transition"
+              className="flex items-center gap-2 px-3 py-1 rounded-full border border-[#e6dccb] bg-[#faf6ef] text-xs text-[#4a564f] hover:border-[#cfc2ab] transition cursor-pointer"
               title="Click to view engine connection details"
               aria-label="Engine status"
             >
               <span
                 className={`h-2 w-2 rounded-full ${
                   apiConnected === true
-                    ? "bg-emerald-500"
+                    ? "bg-[#1f4d3a]"
                     : apiConnected === false
-                    ? "bg-rose-500"
-                    : "bg-amber-400 animate-pulse"
+                    ? "bg-[#c2512f]"
+                    : "bg-[#b97d10] animate-pulse"
                 }`}
               />
-              <span className="text-[11px] hidden sm:inline text-slate-600">
+              <span className="text-[11px] hidden sm:inline text-[#4a564f] font-medium">
                 {apiConnected === true
-                  ? "System Online"
+                  ? "Engine Online"
                   : apiConnected === false
-                  ? "System Offline"
+                  ? "Engine Offline"
                   : "Connecting…"}
               </span>
             </button>
@@ -140,7 +139,7 @@ export function Navigation({ onOpenNewModal, onOpenReportModal }: NavigationProp
               <button
                 type="button"
                 onClick={onOpenNewModal}
-                className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#1f4d3a] px-4 py-2 text-xs sm:text-sm font-semibold text-[#faf6ef] shadow-xs hover:bg-[#163828] transition focus:outline-none focus:ring-2 focus:ring-[#1f4d3a] focus:ring-offset-2 cursor-pointer"
               >
                 <svg
                   className="h-4 w-4"
@@ -157,7 +156,7 @@ export function Navigation({ onOpenNewModal, onOpenReportModal }: NavigationProp
             ) : (
               <Link
                 href="/investigations?action=new"
-                className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#1f4d3a] px-4 py-2 text-xs sm:text-sm font-semibold text-[#faf6ef] shadow-xs hover:bg-[#163828] transition focus:outline-none focus:ring-2 focus:ring-[#1f4d3a] focus:ring-offset-2"
               >
                 <svg
                   className="h-4 w-4"

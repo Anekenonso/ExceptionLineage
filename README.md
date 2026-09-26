@@ -6,6 +6,21 @@ Evidence-backed investigation system for enterprise transaction exceptions.
 
 ExceptionLineage investigates relationships across contracts, amendments, SOWs, approvals and invoices to produce evidence-backed determinations for enterprise transaction exceptions.
 
+## User Interface
+
+ExceptionLineage features an editorial, calm, and audit-grade interface designed with classical typography, architectural brand linework, and fine edges.
+
+### Overview & Activity Ledger
+![ExceptionLineage Overview Dashboard](docs/screenshots/homepage.png)
+
+### Investigations Directory
+*Searchable directory with real-time status filter pills, multi-parameter sorting, and dense ledger view.*
+![ExceptionLineage Investigations Directory](docs/screenshots/investigations.png)
+
+### Investigation Workspace & Lineage Pedigree
+*Side-by-side contract vs billed discrepancy terms, deterministic check matrix, and interactive governance graph.*
+![ExceptionLineage Workspace](docs/screenshots/workspace.png)
+
 ## Project Structure
 
 ```

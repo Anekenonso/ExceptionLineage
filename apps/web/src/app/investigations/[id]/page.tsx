@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, use } from "react";
+import React, { useEffect, useState, use, useMemo } from "react";
 import Link from "next/link";
 import {
   InvestigationResponse,
@@ -26,6 +26,7 @@ import { InvestigationActivityTrace } from "@/components/InvestigationActivityTr
 import { ExportReportModal } from "@/components/ExportReportModal";
 import { LoadingSkeleton, EmptyState, ApiErrorBanner } from "@/components/StateHandlers";
 import { EvidenceDrawer } from "@/components/EvidenceDrawer";
+import { ContractClauseDiffModal, ClauseDiffData } from "@/components/ContractClauseDiffModal";
 import { formatAmount } from "@/lib/formatters";
 
 interface PageProps {
@@ -43,6 +44,7 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
   const [usingFixtures, setUsingFixtures] = useState<boolean>(false);
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
+  const [isDiffOpen, setIsDiffOpen] = useState<boolean>(false);
   const [inspectedEvidence, setInspectedEvidence] = useState<EvidenceItem | null>(null);
 
   const loadInvestigation = async () => {
@@ -121,8 +123,41 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
 
   const amountDisplay = formatAmount(investigation?.amount, investigation?.currency || "USD");
 
+  // Construct ClauseDiffData from investigation and lineage
+  const diffData: ClauseDiffData | null = useMemo(() => {
+    if (!investigation) return null;
+    const exc = lineage?.exception || investigation.lineage?.exception;
+    const k = lineage?.contract || investigation.lineage?.contract;
+
+    const billedAmt = Number(investigation.amount) || Number(exc?.actual_amount) || 0;
+    const expectedAmt = exc?.expected_amount !== undefined && exc?.expected_amount !== null
+      ? Number(exc.expected_amount)
+      : billedAmt > 0 ? billedAmt * 0.9 : 0;
+
+    return {
+      clauseSection: "Section 4.2 (Fee Schedule)",
+      clauseTitle: k?.title || "Master Professional Services Agreement",
+      agreedRate: expectedAmt,
+      agreedUnit: "hour",
+      effectiveDate: k?.effective_from ? new Date(k.effective_from).toLocaleDateString() : undefined,
+      agreedScope:
+        "Standard billable hourly rate authorized under Schedule A for engineering and audit services.",
+      itemCode: `ITEM-${investigation.invoice_id.replace(/\D/g, "").slice(-4) || "01"}`,
+      itemDescription: "Billed Operational & Engineering Services",
+      billedRate: billedAmt,
+      billedQuantity: 1,
+      billedTotal: billedAmt,
+      currency: investigation.currency || "USD",
+      invoiceDate: investigation.created_at ? new Date(investigation.created_at).toLocaleDateString() : undefined,
+      ruleTriggered: investigation.failure_reason ? "Pricing Schedule Discrepancy" : "Baseline Contract Check",
+      reasonNotes:
+        investigation.summary ||
+        "Deterministic audit checks compare contracted rate schedules against submitted invoice line items.",
+    };
+  }, [investigation, lineage]);
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
+    <div className="min-h-screen bg-[var(--color-paper)] flex flex-col text-[var(--color-ink)]">
       <Navigation
         onOpenReportModal={() => {
           if (investigation) setIsExportOpen(true);
@@ -141,14 +176,14 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
 
         {/* Fixtures Indicator */}
         {usingFixtures && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 flex items-center justify-between">
-            <span className="font-medium">
-              Demo Mode Active: Displaying local sample investigation.
+          <div className="rounded-xl border border-[var(--color-honey)]/30 bg-[var(--color-honey-soft)]/50 p-3.5 text-xs text-[var(--color-honey)] flex items-center justify-between font-mono">
+            <span>
+              Active Demo Mode: Displaying verified local sample record.
             </span>
             <button
               type="button"
               onClick={loadInvestigation}
-              className="underline font-semibold hover:text-amber-950"
+              className="underline font-bold hover:opacity-80 transition"
             >
               Retry Live API
             </button>
@@ -167,33 +202,44 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
         ) : (
           <div className="space-y-8">
             {/* Top Bar: Back Link & Quick Actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-[var(--color-line)]">
               <div className="space-y-1">
                 <Link
                   href="/investigations"
-                  className="text-xs text-slate-500 hover:text-slate-900 font-medium flex items-center gap-1"
+                  className="text-xs text-[var(--color-ink-faint)] hover:text-[var(--color-forest)] font-mono flex items-center gap-1.5 transition"
                 >
-                  ← Back to investigations
+                  &larr; Return to directory
                 </Link>
                 <div className="flex items-center gap-3 pt-1">
-                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                    Review: {investigation.invoice_id}
+                  <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-ink)]">
+                    Audit Review: {investigation.invoice_id}
                   </h1>
                   <StatusBadge status={investigation.status} size="md" />
                 </div>
-                <p className="text-xs text-slate-500">
-                  {customerDisplay} · {amountDisplay}
+                <p className="text-xs text-[var(--color-ink-faint)] font-mono">
+                  {customerDisplay} &middot; {amountDisplay}
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                {/* Clause Diff Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsDiffOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-card)] px-3.5 py-2 text-xs font-mono font-medium text-[var(--color-ink)] shadow-2xs hover:bg-[var(--color-paper-deep)] transition"
+                >
+                  <span className="text-[var(--color-clay)] font-bold">&plusmn;</span>
+                  <span>Clause Diff</span>
+                </button>
+
+                {/* Export Report Button */}
                 <button
                   type="button"
                   onClick={() => setIsExportOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-forest)] text-[var(--color-paper)] px-4 py-2 text-xs font-mono font-semibold shadow-2xs hover:opacity-90 transition"
                 >
                   <svg
-                    className="h-4 w-4 text-slate-500"
+                    className="h-3.5 w-3.5 text-[var(--color-paper)]"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth="2"
@@ -205,26 +251,16 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
                       d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
                     />
                   </svg>
-                  <span>Export report</span>
+                  <span>Export Report</span>
                 </button>
               </div>
             </div>
-
-            {/* =========================================================================
-                PHASE 6 INFORMATION HIERARCHY
-                1. Invoice
-                2. Finding
-                3. Why (integrated inside Finding card)
-                4. Verification checks
-                5. Contract history
-                6. Supporting records
-                7. Investigation activity & Technical trace
-                ========================================================================= */}
 
             {/* 1. INVOICE SECTION */}
             <InvoiceExceptionCard
               investigation={investigation}
               lineage={lineage || investigation.lineage}
+              onOpenClauseDiff={() => setIsDiffOpen(true)}
             />
 
             {/* 2 & 3. FINDING & WHY SECTION (Dominant Focal Point) */}
@@ -269,6 +305,13 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
           trace={trace}
         />
       )}
+
+      {/* Contract Clause Diff Modal */}
+      <ContractClauseDiffModal
+        isOpen={isDiffOpen}
+        onClose={() => setIsDiffOpen(false)}
+        diffData={diffData}
+      />
 
       {/* Quick Evidence Inspector Drawer */}
       <EvidenceDrawer

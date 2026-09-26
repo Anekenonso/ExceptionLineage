@@ -144,3 +144,83 @@ export function formatDateTime(isoString: string | null | undefined): string {
     return isoString;
   }
 }
+
+/**
+ * Formats timestamps as relative time (e.g. "12m ago", "2h ago").
+ */
+export function formatRelativeTime(isoString: string | null | undefined): string {
+  if (!isoString) return "—";
+  try {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    if (diffMs < 0) return formatDateTime(isoString);
+
+    const diffSec = Math.floor(diffMs / 1000);
+    if (diffSec < 60) return `${diffSec}s ago`;
+
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return isoString;
+  }
+}
+
+/**
+ * Formats duration between two timestamps or milliseconds (e.g., "340ms", "1.8s").
+ */
+export function formatDuration(startIso?: string | null, endIso?: string | null): string {
+  if (!startIso || !endIso) return "—";
+  try {
+    const start = new Date(startIso).getTime();
+    const end = new Date(endIso).getTime();
+    const durationMs = Math.max(0, end - start);
+    if (durationMs < 1000) return `${durationMs}ms`;
+    return `${(durationMs / 1000).toFixed(1)}s`;
+  } catch {
+    return "—";
+  }
+}
+
+/**
+ * Formats variance between billed and expected amounts with percentage and sign.
+ */
+export function formatVariance(
+  billed: number | string | null | undefined,
+  expected: number | string | null | undefined,
+  currency: string = "USD"
+): { formattedDiff: string; percentChange: string; isOver: boolean; isZero: boolean } {
+  const b = typeof billed === "number" ? billed : parseFloat(String(billed || "0"));
+  const e = typeof expected === "number" ? expected : parseFloat(String(expected || "0"));
+
+  if (isNaN(b) || isNaN(e)) {
+    return { formattedDiff: "—", percentChange: "0.0%", isOver: false, isZero: true };
+  }
+
+  const diff = b - e;
+  const isZero = Math.abs(diff) < 0.001;
+  const isOver = diff > 0;
+  const pct = e !== 0 ? (diff / e) * 100 : 0;
+
+  const sign = isOver ? "+" : isZero ? "" : "-";
+  const absDiff = Math.abs(diff).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  return {
+    formattedDiff: `${sign}${currency} ${absDiff}`,
+    percentChange: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`,
+    isOver,
+    isZero,
+  };
+}
+

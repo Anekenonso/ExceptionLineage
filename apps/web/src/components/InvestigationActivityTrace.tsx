@@ -115,53 +115,56 @@ export function InvestigationActivityTrace({ trace, events }: InvestigationActiv
     string,
     { label: string; bg: string; text: string; border: string }
   > = {
-    input: { label: "Input", bg: "bg-slate-100", text: "text-slate-800", border: "border-slate-300" },
-    agent_decision: { label: "Agent Decision", bg: "bg-blue-50", text: "text-blue-800", border: "border-blue-200" },
-    tool_call: { label: "Tool Call", bg: "bg-indigo-50", text: "text-indigo-800", border: "border-indigo-200" },
-    graph_retrieval: { label: "Graph Retrieval", bg: "bg-purple-50", text: "text-purple-800", border: "border-purple-200" },
-    evidence_found: { label: "Evidence Found", bg: "bg-teal-50", text: "text-teal-800", border: "border-teal-200" },
-    validation: { label: "Validation", bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200" },
-    outcome: { label: "Final Outcome", bg: "bg-emerald-50", text: "text-emerald-800", border: "border-emerald-200" },
-    state_transition: { label: "Lifecycle State", bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200" },
+    input: { label: "Input", bg: "bg-[var(--color-paper-deep)]", text: "text-[var(--color-ink)]", border: "border-[var(--color-line)]" },
+    agent_decision: { label: "Agent Decision", bg: "bg-[var(--color-sky-soft)]", text: "text-[var(--color-sky)]", border: "border-[var(--color-sky)]/20" },
+    tool_call: { label: "Tool Call", bg: "bg-[var(--color-forest-soft)]", text: "text-[var(--color-forest)]", border: "border-[var(--color-forest)]/20" },
+    graph_retrieval: { label: "Graph Retrieval", bg: "bg-[var(--color-paper-deep)]", text: "text-[var(--color-ink)]", border: "border-[var(--color-line)]" },
+    evidence_found: { label: "Evidence Found", bg: "bg-[var(--color-forest-soft)]", text: "text-[var(--color-forest)]", border: "border-[var(--color-forest)]/20" },
+    validation: { label: "Validation", bg: "bg-[var(--color-honey-soft)]", text: "text-[var(--color-honey)]", border: "border-[var(--color-honey)]/20" },
+    outcome: { label: "Final Outcome", bg: "bg-[var(--color-forest-soft)]", text: "text-[var(--color-forest)]", border: "border-[var(--color-forest)]/20" },
+    state_transition: { label: "Lifecycle State", bg: "bg-[var(--color-paper)]", text: "text-[var(--color-ink-soft)]", border: "border-[var(--color-line)]" },
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs space-y-6">
+    <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-card)] p-5 sm:p-6 shadow-xs space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[var(--color-line)] gap-3">
         <div>
-          <h3 className="text-base font-bold text-slate-900 tracking-tight">
-            Investigation activity
+          <span className="text-[10px] font-mono uppercase tracking-wider font-semibold text-[var(--color-ink-faint)]">
+            Execution Log
+          </span>
+          <h3 className="font-serif text-base font-bold text-[var(--color-ink)] tracking-tight">
+            Investigation Activity
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Key steps taken to review this transaction and check contract records.
+          <p className="text-xs text-[var(--color-ink-faint)] mt-0.5">
+            Key steps taken to review this transaction and check contract records
           </p>
         </div>
 
         <button
           type="button"
           onClick={() => setShowTechnicalTrace((prev) => !prev)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition self-start sm:self-center"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-line)] bg-[var(--color-paper)] text-xs font-mono font-medium text-[var(--color-ink)] hover:bg-[var(--color-paper-deep)] transition self-start sm:self-center shadow-2xs"
         >
           <span>{showTechnicalTrace ? "Hide technical trace" : "View technical trace"}</span>
-          <span className="text-slate-400 font-normal">({traceEvents.length} events)</span>
+          <span className="text-[var(--color-ink-faint)]">({traceEvents.length} events)</span>
         </button>
       </div>
 
       {/* PHASE 13: Concise User-Readable Activity Timeline */}
-      <div className="relative pl-6 space-y-4 border-l-2 border-slate-200 ml-2">
+      <div className="relative pl-6 space-y-4 border-l-2 border-[var(--color-line-strong)] ml-2">
         {highLevelSteps.map((st, sIdx) => (
           <div key={sIdx} className="relative group">
             {/* Step dot */}
-            <div className="absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-full border-2 border-slate-900 bg-white flex items-center justify-center">
-              <div className="h-1.5 w-1.5 rounded-full bg-slate-900" />
+            <div className="absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-full border-2 border-[var(--color-forest)] bg-[var(--color-card)] flex items-center justify-center">
+              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-forest)]" />
             </div>
 
             <div className="text-xs space-y-0.5">
-              <div className="font-semibold text-slate-900 text-sm">
+              <div className="font-serif font-bold text-[var(--color-ink)] text-sm">
                 {st.title}
               </div>
-              <div className="text-slate-500 text-xs">
+              <div className="text-[var(--color-ink-faint)] text-xs">
                 {st.subtitle}
               </div>
             </div>
@@ -171,13 +174,13 @@ export function InvestigationActivityTrace({ trace, events }: InvestigationActiv
 
       {/* PHASE 14: Secondary Technical Trace */}
       {showTechnicalTrace && (
-        <div className="mt-6 pt-6 border-t border-slate-200 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+        <div className="mt-6 pt-6 border-t border-[var(--color-line)] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[var(--color-line)]">
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--color-ink)]">
                 Technical Execution Trace
               </h4>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-[var(--color-ink-faint)]">
                 Granular agent decisions, tool calls, graph queries, and validation timestamps
               </p>
             </div>
@@ -195,10 +198,10 @@ export function InvestigationActivityTrace({ trace, events }: InvestigationActiv
                   key={tab.key}
                   type="button"
                   onClick={() => setFilterType(tab.key)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition shrink-0 ${
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-mono transition shrink-0 ${
                     filterType === tab.key
-                      ? "bg-slate-900 text-white font-semibold"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      ? "bg-[var(--color-ink)] text-[var(--color-paper)] font-bold shadow-2xs"
+                      : "text-[var(--color-ink-soft)] hover:text-[var(--color-ink)] hover:bg-[var(--color-paper-deep)]"
                   }`}
                 >
                   {tab.label}
@@ -208,7 +211,7 @@ export function InvestigationActivityTrace({ trace, events }: InvestigationActiv
           </div>
 
           {filteredEvents.length === 0 ? (
-            <div className="py-6 text-center text-xs text-slate-500 font-mono">
+            <div className="py-6 text-center text-xs text-[var(--color-ink-faint)] font-mono">
               No technical events matching filter.
             </div>
           ) : (
@@ -219,36 +222,36 @@ export function InvestigationActivityTrace({ trace, events }: InvestigationActiv
                 return (
                   <div
                     key={idx}
-                    className="p-3 rounded-lg border border-slate-200 bg-slate-50/60 text-xs space-y-2"
+                    className="p-3.5 rounded-xl border border-[var(--color-line)] bg-[var(--color-paper)]/40 text-xs space-y-2"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded border ${conf.bg} ${conf.text} ${conf.border}`}
+                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${conf.bg} ${conf.text} ${conf.border}`}
                         >
                           {conf.label}
                         </span>
 
                         {evt.action && (
-                          <span className="font-semibold text-slate-900">
+                          <span className="font-semibold text-[var(--color-ink)]">
                             {evt.action}
                           </span>
                         )}
 
                         {evt.check && (
-                          <span className="font-semibold text-slate-800">
+                          <span className="font-semibold text-[var(--color-ink-soft)]">
                             {evt.check}
                           </span>
                         )}
 
                         {evt.status && (
                           <span
-                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                            className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
                               evt.status === "PASS" || evt.status === "VERIFIED"
-                                ? "bg-emerald-100 text-emerald-800"
+                                ? "bg-[var(--color-forest-soft)] text-[var(--color-forest)]"
                                 : evt.status === "FAIL" || evt.status === "NOT_VERIFIED"
-                                ? "bg-rose-100 text-rose-800"
-                                : "bg-amber-100 text-amber-800"
+                                ? "bg-[var(--color-clay-soft)] text-[var(--color-clay)]"
+                                : "bg-[var(--color-honey-soft)] text-[var(--color-honey)]"
                             }`}
                           >
                             {evt.status}
@@ -257,7 +260,7 @@ export function InvestigationActivityTrace({ trace, events }: InvestigationActiv
                       </div>
 
                       {evt.timestamp && (
-                        <span className="text-[10.5px] text-slate-400">
+                        <span className="text-[10.5px] text-[var(--color-ink-faint)] font-mono">
                           {new Date(evt.timestamp).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -269,14 +272,14 @@ export function InvestigationActivityTrace({ trace, events }: InvestigationActiv
                     </div>
 
                     {evt.message && (
-                      <p className="text-slate-700 leading-relaxed font-sans text-xs">
+                      <p className="text-[var(--color-ink-soft)] leading-relaxed font-sans text-xs">
                         {evt.message}
                       </p>
                     )}
 
                     {evt.arguments && Object.keys(evt.arguments).length > 0 && (
-                      <div className="mt-1 p-2 rounded bg-white border border-slate-200 text-[10.5px] text-slate-700 overflow-x-auto">
-                        <span className="text-slate-400 block text-[9.5px] uppercase font-semibold">
+                      <div className="mt-1 p-2 rounded-lg bg-[var(--color-card)] border border-[var(--color-line)] text-[10.5px] text-[var(--color-ink-soft)] overflow-x-auto">
+                        <span className="text-[var(--color-ink-faint)] block text-[9.5px] font-mono uppercase tracking-wider font-semibold">
                           Arguments:
                         </span>
                         <code>{JSON.stringify(evt.arguments, null, 2)}</code>
@@ -285,11 +288,11 @@ export function InvestigationActivityTrace({ trace, events }: InvestigationActiv
 
                     {evt.relationships && evt.relationships.length > 0 && (
                       <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                        <span className="text-[10px] text-slate-400">Traversed:</span>
+                        <span className="text-[10px] font-mono text-[var(--color-ink-faint)]">Traversed:</span>
                         {evt.relationships.map((rel, rIdx) => (
                           <span
                             key={rIdx}
-                            className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200"
+                            className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--color-paper-deep)] text-[var(--color-ink-soft)] border border-[var(--color-line)]"
                           >
                             -[:{rel}]-&gt;
                           </span>
