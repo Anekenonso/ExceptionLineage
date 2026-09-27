@@ -217,8 +217,8 @@ To maintain strict technical honesty, reviewers should note the following curren
 ## Hackathon
 
 - **Event**: Open Agent Hackathon 2026
-- **Selected Track**: `[VERIFY BEFORE SUBMISSION]`
-- **Why ExceptionLineage Fits**: ExceptionLineage is purpose-built to autonomously investigate enterprise transaction exceptions and explain why they occurred by traversing relational lineage across contracts, amendments, SOWs, approvals, and invoices, producing an auditable chain of cited evidence and deterministic validation checks rather than black-box assertions.
+- **Selected Track**: Track 03: The Agent That Can Explain Why *(also strongly aligned with Track 02: Autonomous Agent)*
+- **Why ExceptionLineage Fits This Track**: The "Agent That Can Explain Why" track specifically challenges builders to demonstrate a compelling use of relationships and evidence to produce explainable conclusions. ExceptionLineage is purpose-built to answer *why* enterprise transaction exceptions occur by traversing relational lineage across contracts, amendments, SOWs, approvals, and invoices, producing an auditable chain of cited evidence and deterministic validation checks rather than black-box assertions.
 - **Repository**: [https://github.com/Anekenonso/ExceptionLineage](https://github.com/Anekenonso/ExceptionLineage)
 - **Video Walkthrough**: `[TODO: Link to 3-5 minute demo video]`
 - **Sponsor Technology Actually Used**:
