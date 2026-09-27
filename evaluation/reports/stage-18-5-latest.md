@@ -2,9 +2,9 @@
 
 ## Adaptive Investigation Value + Relationship-Aware Retrieval + End-to-End Evidence Chain
 
-- **Suite ID:** `proof-18-5-64cb31ddd26d`
-- **Timestamp:** `2026-09-27T03:37:22.334843+00:00`
-- **Git Commit:** `bbc4cae2d6938f3801ffbe2961a1122f752d2a93`
+- **Suite ID:** `proof-18-5-6110933c67f8`
+- **Timestamp:** `2026-09-27T04:42:53.998228+00:00`
+- **Git Commit:** `5a8f3622486fbce5006f120da726dd9ac00a078d`
 - **Dataset:** `adaptive-v1` (Branching) + `benchmark-v1` (Canonical)
 - **Architectural Invariant:** *"AI handles ambiguity. Code handles authority."*
 
