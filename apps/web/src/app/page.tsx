@@ -111,7 +111,7 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-[#7d877f]">Requires Attention</span>
               <span className="bg-[#f8e4db] text-[#9d3f22] border border-[#c2512f]/20 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider">
-                Clay
+                Attention
               </span>
             </div>
             <div className="mt-1 flex items-baseline gap-2">
@@ -126,7 +126,7 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-[#7d877f]">Supported by Records</span>
               <span className="bg-[#dfeae3] text-[#163828] border border-[#1f4d3a]/20 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider">
-                Forest
+                Verified
               </span>
             </div>
             <div className="mt-1 flex items-baseline gap-2">

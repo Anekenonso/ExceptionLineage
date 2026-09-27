@@ -4,7 +4,7 @@ Evidence-backed investigation system for enterprise transaction exceptions.
 
 ---
 
-## The Problem
+## Problem
 
 Enterprise transaction exceptions—such as invoice rate variances, unapproved service fees, and billing disputes—are notoriously time-consuming and expensive to investigate. In typical enterprises, accounts payable and finance teams spend hours manually cross-referencing records because supporting evidence is fragmented across disconnected systems:
 
@@ -19,7 +19,7 @@ When an exception occurs, a human reviewer must reconstruct the multi-hop relati
 
 ---
 
-## The Solution
+## Solution
 
 **ExceptionLineage** investigates enterprise transaction exceptions by tracing relationship lineage across contracts, amendments, SOWs, approvals, and invoices to produce evidence-backed, auditable determinations.
 
@@ -138,7 +138,7 @@ Enterprise contracts form a dense, directed property graph:
 
 In our controlled retrieval experiments, explicit relationship traversal proved load-bearing:
 - **Contract Boundary Isolation**: In flat relational queries, querying amendments by customer ID pulled amendments belonging to *unrelated contracts* of the same customer, contaminating the validation context and creating false rate conflicts.
-- **Directional Traversal**: Traversing `(Contract)-[:AMENDED_BY]->(Amendment)` guarantees that only legally binding amendments for that specific contract are considered.
+- **Directional Traversal**: Traversing `(Contract)-[:AMENDED_BY]->(Amendment)` ensures that only amendments explicitly linked to that specific contract are considered.
 - **Multi-Hop Lineage**: Graph queries maintain end-to-end evidence chains from the invoice line item back to the governing contract with 100% provenance completeness.
 
 > **Limitation Note:** This experiment demonstrates the value of explicit relationship-aware retrieval for the tested workload. It does not establish that Neo4j is universally superior to a well-designed relational schema.
@@ -180,7 +180,7 @@ ExceptionLineage includes a fully reproducible quantitative evaluation harness (
 | :--- | :--- | :--- | :--- |
 | **Claim A: Adaptive Investigation Value** | Adaptive Agent (state-dependent tool selection) | Heuristic Baseline (fixed query sequence) | • **100.0% accuracy** vs 80.0%<br>• **25.0% tool call reduction** (24 vs 32 calls)<br>• **0 unnecessary tool calls** (avoided 7 wasted queries)<br>• **3 dynamic early stops**<br>• **60.0% branching path recovery rate** (3/5 cases in $\le 5$ steps) |
 | **Claim B: Relationship-Aware Retrieval** | Graph Traversal (`Neo4jLineageRepository`) | Flat Relational Mock (`FlatRetrievalAdapter`) | • **100.0% validation accuracy** vs 87.5% (flat lookups caused false amendment conflicts)<br>• **0 irrelevant records retrieved** vs 37 extraneous records<br>• **100.0% multi-hop provenance** vs 20.0%<br>• **1.0 query/case** vs 8.25 operations/case |
-| **Claim C: End-to-End Evidence Chain** | Chronological Audit Trace Generator | Schema & Redaction Verifier | • **30 total chronological events** verified end-to-end<br>• 7 agent decisions, 7 tool calls, 6 graph retrievals, 8 validation checks, 3 cited evidence items<br>• `secrets_redacted = true`<br>• `authority_boundary_preserved = true` |
+| **Claim C: End-to-End Evidence Chain** | Chronological Audit Trace Generator | Schema & Redaction Verifier | • **30 total chronological events** verified end-to-end<br>• 7 agent decisions, 7 tool calls, 6 graph retrievals, 8 validation checks, 3 cited evidence items (`EV-001`, `EV-002`, `EV-003` directly citing authorized terms across 8 validation checks)<br>• `secrets_redacted = true`<br>• `authority_boundary_preserved = true` |
 | **Live LLM Evaluation Status** | `LLMDecisionModel` (live OpenAI API) | Provider Quota / Availability | Provider quota was exhausted (HTTP 429). In accordance with evaluation standards, live LLM accuracy was marked **UNMEASURABLE** (`null`) rather than 0% to prevent conflating provider availability with model reasoning ability. The system safely failed closed with 0 hallucinations. |
 
 ---
@@ -196,7 +196,7 @@ ExceptionLineage treats failure and uncertainty as first-class states, never as 
 
 ---
 
-## Real vs Synthetic Data
+## Real vs Synthetic
 
 All demonstrations, seed records, contracts, invoices, and evaluation cases in this repository are **simulated, synthetic data** created specifically for testing and benchmark evaluation.
 
@@ -214,10 +214,11 @@ To maintain strict technical honesty, reviewers should note the following curren
 
 ---
 
-## Hackathon Submission
+## Hackathon
 
 - **Event**: Open Agent Hackathon 2026
-- **Track**: Enterprise Agents / Knowledge Graphs
+- **Selected Track**: Track 03: The Agent That Can Explain Why *(also strongly aligned with Track 02: Autonomous Agent)*
+- **Why ExceptionLineage Fits This Track**: The "Agent That Can Explain Why" track specifically challenges builders to demonstrate a compelling use of relationships and evidence to produce explainable conclusions. ExceptionLineage is purpose-built to answer *why* enterprise transaction exceptions occur by traversing relational lineage across contracts, amendments, SOWs, approvals, and invoices, producing an auditable chain of cited evidence and deterministic validation checks rather than black-box assertions.
 - **Repository**: [https://github.com/Anekenonso/ExceptionLineage](https://github.com/Anekenonso/ExceptionLineage)
 - **Video Walkthrough**: `[TODO: Link to 3-5 minute demo video]`
 - **Sponsor Technology Actually Used**:
@@ -226,23 +227,6 @@ To maintain strict technical honesty, reviewers should note the following curren
   - **Meterless**: Not integrated into current persistence tier.
   - **Zetaris**: Not integrated into current data virtualization tier.
   *(We do not claim sponsor integrations that are not load-bearing in the codebase.)*
-
----
-
-## User Interface
-
-ExceptionLineage features an editorial, calm, and audit-grade interface designed with classical typography, architectural linework, and restrained visual indicators:
-
-### Overview & Activity Ledger
-![ExceptionLineage Overview Dashboard](docs/screenshots/homepage.png)
-
-### Investigations Directory
-*Searchable directory with real-time status filter pills, multi-parameter sorting, and dense ledger view.*
-![ExceptionLineage Investigations Directory](docs/screenshots/investigations.png)
-
-### Investigation Workspace & Lineage Pedigree
-*Side-by-side contract vs billed discrepancy terms, deterministic check matrix, and interactive governance graph.*
-![ExceptionLineage Workspace](docs/screenshots/workspace.png)
 
 ---
 
@@ -362,7 +346,24 @@ ExceptionLineage/
 
 ---
 
-## Credits & Attribution
+## Screenshots
+
+ExceptionLineage features an editorial, calm, and audit-grade interface designed with classical typography, architectural linework, and restrained visual indicators:
+
+### Overview & Activity Ledger
+![ExceptionLineage Overview Dashboard](docs/screenshots/homepage.png)
+
+### Investigations Directory
+*Searchable directory with real-time status filter pills, multi-parameter sorting, and dense ledger view.*
+![ExceptionLineage Investigations Directory](docs/screenshots/investigations.png)
+
+### Investigation Workspace & Lineage Pedigree
+*Side-by-side contract vs billed discrepancy terms, deterministic check matrix, and interactive governance graph.*
+![ExceptionLineage Workspace](docs/screenshots/workspace.png)
+
+---
+
+## Credits / Attribution
 
 - Built for the **Open Agent Hackathon 2026**
 - **Graph Database**: Neo4j

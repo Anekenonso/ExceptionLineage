@@ -1,4 +1,4 @@
-# Quantitative Evaluation Framework (Stage 18 — ENGINEERING COMPLETE — LIVE LLM PERFORMANCE PENDING ACTIVE PROVIDER RUN)
+# Quantitative Evaluation Framework
 
 Comprehensive evaluation and benchmarking system for ExceptionLineage.
 
@@ -238,11 +238,12 @@ A flat relational repository was created that stores the exact same nodes as tab
 **Verification Results:**
 - **Endpoint:** `GET /api/investigations/{id}/trace` $\rightarrow$ `InvestigationEvidenceTrace`
 - **Chain Integrity:** `VERIFIED` (unbroken 30-event chronological chain)
+- **Event Breakdown:** 30 chronological events (7 agent decisions, 7 tool calls, 6 graph retrievals, 8 validation checks, 3 cited evidence items: `EV-001`, `EV-002`, `EV-003`)
 - **Chain Flow:**
   $$\text{INPUT} \rightarrow \text{AGENT\_DECISION} \rightarrow \text{TOOL\_CALL} \rightarrow \text{GRAPH\_RETRIEVAL} \rightarrow \text{VALIDATION} \rightarrow \text{OUTCOME}$$
-- **Secret Redaction:** Fully verified; API keys, tokens, and credentials sanitized to `[REDACTED]`.
+- **Secret Redaction:** Fully verified (`secrets_redacted = true`); API keys, tokens, and credentials sanitized to `[REDACTED]`.
 - **Validation Semantics:** Discrete rule check events preserve strict tri-state statuses (`PASS`, `FAIL`, `UNKNOWN`).
-- **Authority Preservation:** Agent decisions remain strictly evidentiary; business outcomes are emitted solely by the deterministic validation engine.
+- **Authority Preservation:** Agent decisions remain strictly evidentiary; business outcomes are emitted solely by the deterministic validation engine (`authority_boundary_preserved = true`).
 
 ### 8.4 Reproduction Commands
 ```powershell
