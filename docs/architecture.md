@@ -188,12 +188,12 @@ The system provides a secure, sandboxed testing ingress that allows evaluators t
 ### 5.2 Ephemeral Execution Pipeline
 
 1. **Ingress & Format Enforcement:**
-   - The file is received via `UploadFile` strictly checking for `.json` extension and `application/json` MIME type.
-   - Bounded file size verification enforces a hard limit of `MAX_TEST_CASE_SIZE_BYTES = 1,048,576` (1 MB).
+   - The file is received via `UploadFile` strictly checking for `.json` extension and `application/json` or `text/json` MIME type.
+   - Bounded chunked streaming verification reads in 64 KB chunks up to `MAX_TEST_CASE_SIZE_BYTES = 1,048,576` (1 MB), aborting immediately with HTTP 413 if the threshold is exceeded.
 2. **Schema & Semantic Parsing:**
    - The file payload is parsed through `TestCasePayload` Pydantic models with `strict=False` parsing for strings/numbers.
-   - Validates existence of mandatory core objects: `invoice`, `customer`, `contract`, and `exception`.
-   - Normalizes optional nodes: `amendments`, `sows`, `evidence`, and `approval`.
+   - Validates existence of the mandatory `invoice` object.
+   - Lineage anchors (`customer`, `contract`, `exception`) and supporting records (`amendments`, `sows`, `evidence`, `approval`) are intentionally optional: this enables evaluators to test missing contracts, unanchored invoices, or missing approvals to observe deterministic `UNKNOWN` $\rightarrow$ `INSUFFICIENT_EVIDENCE` determinations.
 3. **Sandbox Population:**
    - A fresh, request-scoped `InMemoryLineageRepository` instance is allocated.
    - The normalized nodes and their explicit relationship pointers are populated in memory.

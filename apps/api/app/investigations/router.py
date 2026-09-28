@@ -263,21 +263,40 @@ def get_test_case_template() -> dict:
 async def test_your_own_case(
     file: UploadFile = File(..., description="Structured .json test case file"),
 ) -> InvestigationResponse:
-    """Execute an independently supplied JSON case in an isolated, temporary in-memory environment."""
-    # 1. Format verification: JSON only
+    # 1. Format verification: JSON extension and MIME type
     if not file.filename or not file.filename.lower().endswith(".json"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Unsupported file format. Only .json files are accepted for external case testing.",
         )
 
-    # 2. Read in-memory buffer with size bounding
-    contents = await file.read()
-    if len(contents) > MAX_TEST_CASE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File exceeds maximum allowed size of 1MB ({MAX_TEST_CASE_SIZE_BYTES} bytes).",
-        )
+    # Validate Content-Type MIME header if provided
+    if file.content_type:
+        mime = file.content_type.split(";")[0].strip().lower()
+        if mime not in ("application/json", "text/json", "application/problem+json"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid MIME type '{file.content_type}'. Must be 'application/json'.",
+            )
+
+    # 2. Bounded chunked streaming read (aborts immediately if stream exceeds 1 MB)
+    chunks: list[bytes] = []
+    total_bytes = 0
+    chunk_size = 64 * 1024  # 64 KB
+
+    while True:
+        chunk = await file.read(chunk_size)
+        if not chunk:
+            break
+        total_bytes += len(chunk)
+        if total_bytes > MAX_TEST_CASE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File exceeds maximum allowed size of 1MB ({MAX_TEST_CASE_SIZE_BYTES} bytes).",
+            )
+        chunks.append(chunk)
+
+    contents = b"".join(chunks)
     if not contents.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

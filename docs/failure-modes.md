@@ -95,19 +95,19 @@ Under this invariant, the system must fail safely under corrupted, missing, adve
 ### FM-015: Non-JSON and Malformed File Ingress in Ephemeral Sandbox
 - **Scenario:** A user attempts to upload a CSV, PDF, executable, or malformed JSON syntax to the test case endpoint (`POST /api/investigations/test-case`).
 - **Risk:** Server crashes, code execution, or unhandled parser exceptions.
-- **Defense:** Strict file extension check (`.json` only) and MIME type validation (`application/json`). `json.loads` syntax parsing isolates malformed syntax and returns an explicit HTTP 400 with exact error details.
-- **Tested by:** `apps/api/tests/test_test_your_own_case.py::test_reject_non_json_extensions` and `test_reject_malformed_json_syntax`
+- **Defense:** Strict file extension check (`.json` only) and MIME type validation (`application/json`, `text/json`). `json.loads` syntax parsing isolates malformed syntax and returns an explicit HTTP 400 with exact error details.
+- **Tested by:** `apps/api/tests/test_test_your_own_case.py::test_reject_non_json_extensions`, `test_reject_invalid_mime_type`, and `test_reject_malformed_json_syntax`
 
 ### FM-016: Missing Mandatory Nodes in Uploaded Test Case Schema
-- **Scenario:** An uploaded JSON case omits mandatory contractual lineage entities (e.g., missing `invoice`, `customer`, `contract`, or `exception`).
+- **Scenario:** An uploaded JSON case omits the mandatory invoice entity.
 - **Risk:** Null-pointer exceptions during relationship resolution or corrupt state transitions.
-- **Defense:** Pydantic schema validation (`TestCasePayload`) rigorously verifies required node structures prior to engine instantiation. Missing mandatory elements return HTTP 422 with exact field locators.
+- **Defense:** Pydantic schema validation (`TestCasePayload`) rigorously verifies the mandatory `invoice` structure prior to engine instantiation. Missing mandatory invoice elements return HTTP 422 with exact field locators. Supporting lineage anchors (`customer`, `contract`, `exception`) are intentionally optional so evaluators can test unanchored or missing-contract scenarios without upload rejection.
 - **Tested by:** `apps/api/tests/test_test_your_own_case.py::test_reject_schema_missing_required_invoice`
 
 ### FM-017: Oversized Test Case Payload Denial-of-Service
 - **Scenario:** An adversary uploads a multi-megabyte or gigabyte JSON file attempting to exhaust server memory.
 - **Risk:** Memory exhaustion (OOM), thread blocking, or server unresponsiveness.
-- **Defense:** Streaming byte boundary verification (`MAX_TEST_CASE_SIZE_BYTES = 1,048,576` / 1 MB). If the byte counter exceeds the threshold, the upload is aborted immediately with HTTP 413 (`Request Entity Too Large`).
+- **Defense:** Bounded chunked streaming verification (`MAX_TEST_CASE_SIZE_BYTES = 1,048,576` / 1 MB). Incoming chunks (64 KB) are measured sequentially; as soon as cumulative bytes exceed 1 MB, the upload is aborted immediately with HTTP 413 (`Request Entity Too Large`) without buffering the remainder.
 - **Tested by:** `apps/api/tests/test_test_your_own_case.py::test_reject_oversized_file`
 
 ### FM-018: Ephemeral Sandbox Persistence Leak

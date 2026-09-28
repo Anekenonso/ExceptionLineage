@@ -172,8 +172,8 @@ Used by the secure ephemeral test case ingress (`POST /api/investigations/test-c
 
 ### Format & Ingress Constraints
 - **File Format:** Strictly `.json` format uploaded via `multipart/form-data`.
-- **Content Type:** `application/json`.
-- **Max File Size:** 1,048,576 bytes (1 MB). Oversized requests return HTTP 413.
+- **Content Type:** `application/json` or `text/json`.
+- **Max File Size:** 1,048,576 bytes (1 MB). Enforced via bounded chunked streaming (aborts immediately with HTTP 413 if exceeded).
 - **Persistence:** Strictly ephemeral in-memory processing. Zero database or disk persistence.
 
 ### Payload Schema (`TestCasePayload`)
@@ -182,10 +182,10 @@ Used by the secure ephemeral test case ingress (`POST /api/investigations/test-c
 | :--- | :--- | :--- | :--- |
 | `case_meta` | `TestCaseMeta` | Optional | Metadata containing case title and description. |
 | `invoice` | `TestCaseInvoice` | **Mandatory** | The invoice under investigation (`id`, `customer_id`, `amount`, `issued_at`, etc.). |
-| `customer` | `TestCaseCustomer` | **Mandatory** | Legal customer record (`id`, `name`, `external_id`). |
-| `contract` | `TestCaseContract` | **Mandatory** | Governing master contract (`id`, `customer_id`, `status`, `effective_from`, etc.). |
-| `exception` | `TestCaseException` | **Mandatory** | Triggering billing exception or discrepancy (`id`, `exception_type`, `actual_amount`). |
-| `approval` | `TestCaseApproval` | Optional | Executive or managerial signoff (`id`, `approver`, `status`, `approved_at`). |
+| `customer` | `TestCaseCustomer` | Optional | Legal customer record (`id`, `name`, `external_id`). When omitted, models unanchored entity scenarios. |
+| `contract` | `TestCaseContract` | Optional | Governing master agreement (`id`, `customer_id`, `status`). When omitted, models missing contract scenarios (`INSUFFICIENT_EVIDENCE`). |
+| `exception` | `TestCaseException` | Optional | Triggering billing exception or discrepancy (`id`, `exception_type`, `actual_amount`). |
+| `approval` | `TestCaseApproval` | Optional | Executive or managerial signoff (`id`, `approver`, `status`). When omitted where required, models missing signoff scenarios (`INSUFFICIENT_EVIDENCE`). |
 | `amendments` | `list[TestCaseAmendment]` | Optional | Contractual amendments (`id`, `amendment_number`, `effective_from`, etc.). |
 | `sows` | `list[TestCaseSOW]` | Optional | Statements of Work (`id`, `reference`, `scope`, etc.). |
 | `evidence` | `list[TestCaseEvidence]` | Optional | Evidentiary clause excerpts and audit records (`id`, `excerpt`, `locator`). |
@@ -193,5 +193,5 @@ Used by the secure ephemeral test case ingress (`POST /api/investigations/test-c
 ### Endpoints
 
 - `GET /api/investigations/test-case/template`: Returns a complete, valid sample JSON test case demonstrating all fields and node structures.
-- `POST /api/investigations/test-case`: Accepts an uploaded `.json` file, validates syntax and schema, runs isolated evaluation through `InvestigationService` and `ValidationEngine`, and returns `InvestigationResponse` with `is_temporary=True` and end-to-end `trace`.
+- `POST /api/investigations/test-case`: Accepts an uploaded `.json` file, validates MIME type and schema, runs isolated evaluation through `InvestigationService` and `ValidationEngine`, and returns `InvestigationResponse` with `is_temporary=True` and end-to-end `trace`.
 

@@ -1,29 +1,32 @@
 import { InvestigationResponse } from "@/types/investigation";
 
 /**
- * Ephemeral In-Memory Storage for "Test Your Own Case".
+ * Single transient in-memory slot for the active "Test Your Own Case" review.
  *
- * CRITICAL ARCHITECTURAL INVARIANT:
- * Uploaded cases are NEVER persisted to localStorage, sessionStorage,
- * IndexedDB, cookies, or any remote/local cache.
- * They live strictly in request/session memory and are released when the
- * tab is closed or navigated away.
+ * CRITICAL ARCHITECTURAL INVARIANTS:
+ * 1. Uploaded case results exist only in transient browser memory for the
+ *    current review session and are NEVER written to localStorage, sessionStorage,
+ *    IndexedDB, or cookies.
+ * 2. Storing a new test investigation immediately replaces and releases the previous one.
+ * 3. Clearing or navigating away releases the transient case from memory.
  */
-const ephemeralInvestigations = new Map<string, InvestigationResponse>();
+let currentEphemeralInvestigation: InvestigationResponse | null = null;
 
 export function storeEphemeralInvestigation(inv: InvestigationResponse): void {
-  if (inv.investigation_id) {
-    ephemeralInvestigations.set(inv.investigation_id, inv);
-  }
-  if (inv.invoice_id) {
-    ephemeralInvestigations.set(inv.invoice_id, inv);
-  }
+  currentEphemeralInvestigation = inv;
 }
 
-export function getEphemeralInvestigation(id: string): InvestigationResponse | undefined {
-  return ephemeralInvestigations.get(id);
+export function getEphemeralInvestigation(id: string): InvestigationResponse | null {
+  if (!currentEphemeralInvestigation) return null;
+  if (
+    currentEphemeralInvestigation.investigation_id === id ||
+    currentEphemeralInvestigation.invoice_id === id
+  ) {
+    return currentEphemeralInvestigation;
+  }
+  return null;
 }
 
-export function clearEphemeralInvestigations(): void {
-  ephemeralInvestigations.clear();
+export function clearEphemeralInvestigation(): void {
+  currentEphemeralInvestigation = null;
 }

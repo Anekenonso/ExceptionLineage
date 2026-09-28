@@ -232,6 +232,17 @@ def test_reject_non_json_extensions(client: TestClient):
         assert "Only .json files are accepted" in resp.json()["detail"]
 
 
+def test_reject_invalid_mime_type(client: TestClient):
+    """Rejects .json file uploaded with non-JSON MIME type (e.g. application/pdf, text/plain)."""
+    resp = client.post(
+        "/api/investigations/test-case",
+        files={"file": ("case.json", io.BytesIO(b'{"invoice": {"id": "INV-1"}}'), "text/plain")},
+    )
+    assert resp.status_code == 400
+    assert "Invalid MIME type" in resp.json()["detail"]
+
+
+
 def test_reject_empty_json_file(client: TestClient):
     """Rejects empty JSON file with HTTP 400."""
     resp = client.post(
@@ -421,3 +432,52 @@ def test_strict_isolation_and_zero_persistence(client: TestClient):
     # 5. Verify the 8 canonical benchmark cases remain intact
     for c_id in ["INV-1001", "INV-1002", "INV-1003", "INV-1004", "INV-1005", "INV-1006", "INV-1007", "INV-1008"]:
         assert c_id in post_invoices
+
+
+def test_consecutive_custom_uploads_isolation(client: TestClient):
+    """Two consecutive test cases do not cross-contaminate or retain each other's data."""
+    # First upload: Case A (VERIFIED)
+    payload_a = build_test_case_payload(invoice_amount="10200.00", approval_status="APPROVED")
+    payload_a["invoice"]["id"] = "INV-TEST-CASE-A"
+    resp_a = client.post(
+        "/api/investigations/test-case",
+        files={"file": ("case_a.json", io.BytesIO(json.dumps(payload_a).encode("utf-8")), "application/json")},
+    )
+    assert resp_a.status_code == 200
+    data_a = resp_a.json()
+    assert data_a["status"] == "VERIFIED"
+    assert data_a["invoice_id"] == "INV-TEST-CASE-A"
+    id_a = data_a["investigation_id"]
+
+    # Second upload: Case B with expired amendment (NOT_VERIFIED)
+    payload_b = build_test_case_payload(
+        invoice_amount="9500.00",
+        invoice_date="2026-04-15T00:00:00Z",
+        amendment_start="2025-01-01T00:00:00Z",
+        amendment_end="2025-12-31T23:59:59Z",
+    )
+    payload_b["invoice"]["id"] = "INV-TEST-CASE-B"
+    resp_b = client.post(
+        "/api/investigations/test-case",
+        files={"file": ("case_b.json", io.BytesIO(json.dumps(payload_b).encode("utf-8")), "application/json")},
+    )
+    assert resp_b.status_code == 200
+    data_b = resp_b.json()
+    assert data_b["status"] == "NOT_VERIFIED"
+    assert data_b["invoice_id"] == "INV-TEST-CASE-B"
+    id_b = data_b["investigation_id"]
+
+    # Invariants: IDs differ and neither bleeds into the other
+    assert id_a != id_b
+    assert data_b["invoice_id"] != data_a["invoice_id"]
+
+    # Neither temporary case is in the persistent investigations ledger
+    ledger_resp = client.get("/api/investigations")
+    ledger_invoices = {c["invoice_id"] for c in ledger_resp.json()}
+    assert "INV-TEST-CASE-A" not in ledger_invoices
+    assert "INV-TEST-CASE-B" not in ledger_invoices
+
+    # Neither temporary ID can be fetched by GET /api/investigations/{id}
+    assert client.get(f"/api/investigations/{id_a}").status_code == 404
+    assert client.get(f"/api/investigations/{id_b}").status_code == 404
+

@@ -413,7 +413,9 @@ export function NewInvestigationModal({
             <div className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 bg-slate-50/70 text-xs">
               <div>
                 <div className="font-semibold text-slate-800">Need a schema template?</div>
-                <div className="text-[11px] text-slate-500">Includes invoice, contract, amendment, approval, and evidence nodes.</div>
+                <div className="text-[11px] text-slate-500">
+                  Mandatory: <span className="font-mono text-slate-700">invoice</span>. Optional: <span className="font-mono text-slate-700">customer, contract, exception, amendments, sows, evidence, approval</span>.
+                </div>
               </div>
               <button
                 type="button"
