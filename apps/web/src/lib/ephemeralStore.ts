@@ -4,11 +4,11 @@ import { InvestigationResponse } from "@/types/investigation";
  * Single transient in-memory slot for the active "Test Your Own Case" review.
  *
  * CRITICAL ARCHITECTURAL INVARIANTS:
- * 1. Uploaded case results exist only in transient browser memory for the
- *    current review session and are NEVER written to localStorage, sessionStorage,
- *    IndexedDB, or cookies.
+ * 1. The result is held only in transient browser memory and is replaced when another
+ *    custom case is tested. It is never written to browser persistence such as
+ *    localStorage, sessionStorage, IndexedDB, or cookies.
  * 2. Storing a new test investigation immediately replaces and releases the previous one.
- * 3. Clearing or navigating away releases the transient case from memory.
+ * 3. Explicit clearing releases the transient case from memory.
  */
 let currentEphemeralInvestigation: InvestigationResponse | null = null;
 

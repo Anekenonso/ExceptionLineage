@@ -130,7 +130,7 @@ The architecture is governed by an inviolable foundational law:
   ```
 - **Quantitative Trace Attributes:**
   - 30 total chronological events
-  - 7 agent decisions, 7 tool calls, 6 graph retrievals, 8 validation checks, 3 cited evidence items
+  - 7 agent decisions, 7 tool calls, 6 graph retrievals, 8 validation checks, 8 cited evidence items
   - `secrets_redacted = true` (automated recursive sanitization of API keys, passwords, and tokens)
   - `authority_boundary_preserved = true` (*"AI investigates. Deterministic logic verifies."*)
 
@@ -205,4 +205,5 @@ The system provides a secure, sandboxed testing ingress that allows evaluators t
    - The response is returned to the client marked with `is_temporary=True`.
    - The ephemeral repository instance is immediately released to Python garbage collection.
    - No records are written to Neo4j, SQLite, PostgreSQL, Redis, disk, uploads folder, or client browser storage (`localStorage`, `sessionStorage`, `cookies`, `IndexedDB`).
+   - The result is held only in transient browser memory (single slot) and is replaced when another custom case is tested. It is never written to browser persistence such as `localStorage`, `sessionStorage`, `IndexedDB`, or cookies.
 

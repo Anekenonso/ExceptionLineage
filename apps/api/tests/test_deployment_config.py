@@ -48,7 +48,7 @@ def test_settings_cors_origin_regex():
 
 
 def test_cors_middleware_allows_cross_origin_requests():
-    """FastAPI app allows preflight OPTIONS request from configured origin."""
+    """FastAPI app allows preflight OPTIONS request from configured origin without credentials."""
     client = TestClient(app)
     response = client.options(
         "/api/investigations",
@@ -59,6 +59,19 @@ def test_cors_middleware_allows_cross_origin_requests():
     )
     assert response.status_code == 200
     assert response.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    assert response.headers.get("access-control-allow-credentials") is None
+
+
+def test_cors_credentials_hardened_to_false():
+    """FastAPI CORS policy strictly disallows credentialed requests."""
+    client = TestClient(app)
+    response = client.get(
+        "/health",
+        headers={"Origin": "http://localhost:3000"},
+    )
+    assert response.status_code == 200
+    assert response.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    assert response.headers.get("access-control-allow-credentials") is None
 
 
 def test_neo4j_aura_connection_settings():
