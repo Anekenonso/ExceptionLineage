@@ -36,12 +36,16 @@
   - Strict zero-persistence guarantee: completely isolated in ephemeral memory, leaving zero traces in Neo4j, relational stores, filesystem, or browser storage.
   - Full Next.js frontend integration: segmented tab control in `NewInvestigationModal`, file drag-and-drop, template download, and dedicated ephemeral sandbox workspace banner.
 
-- **Deployment & Production Readiness**:
-  - Frontend production build succeeds cleanly (`npm run build` / Next.js Turbopack).
+- **Deployment & Production Readiness (Stage 23 — Production Hardened)**:
+  - Frontend production build succeeds cleanly (`npm run build` / Next.js Turbopack) with 0 errors.
   - TypeScript static type check passed (`tsc --noEmit` clean with 0 errors).
   - Backend API health endpoint (`GET /health`) active and responsive.
-  - Safe offline graph fallback (`InMemoryLineageRepository` populated from `data/seed` when Neo4j is offline).
-  - Complete test suite passes: 289 unit/integration tests passing (2 skipped conditional live tests).
+  - Cross-Origin Resource Sharing (CORS) configured via `CORS_ORIGINS` with dynamic Vercel preview domain regex (`^https://.*\.vercel\.app$`).
+  - Render blueprint (`render.yaml`) created with native Python runtime, automatic port binding (`$PORT`), and health check monitoring.
+  - Multi-stage production `Dockerfile` created for both `apps/api` (Python 3.11-slim, non-root user) and `apps/web` (Node 20-alpine).
+  - Neo4j Aura cloud compatibility verified: TLS connection support (`neo4j+s://`), connection pool keepalive tuning (`max_connection_lifetime=200`), and automatic zero-step schema bootstrapping and seed loading on first connection to an empty database.
+  - Frontend API base URL sanitized in `apps/web/src/lib/api.ts` to prevent malformed double slashes on cloud deploys.
+  - Complete test suite passes: 296 unit/integration tests passing (2 skipped conditional live tests).
   - Architectural evaluation verified: Claim A (Adaptive Investigation Value — DEMONSTRATED), Claim B (Relationship-Aware Retrieval — DEMONSTRATED), Claim C (End-to-End Evidence Chain — VERIFIED).
 
 ## Verified Benchmark Scenarios Matrix
@@ -57,16 +61,16 @@
 | **INV-1007** | `INV-1007` | Beta Logistics | $4,500.00 | `INSUFFICIENT_EVIDENCE` | 1 PASS, 0 FAIL, 7 UNKNOWN | Orphaned invoice missing governing master contract |
 | **INV-1008** | `INV-1008` | Beta Logistics | $18,000.00 | `VERIFIED` | 8 PASS, 0 FAIL, 0 UNKNOWN | Multi-tier SOW with verified VP approval |
 
-## Current Limitations & Remaining Deployment Steps
+## Current Limitations & Cloud Deployment Status
 
 - **In-Memory Persistence Only**: The current `InMemoryInvestigationRepository` holds lifecycle state in volatile application memory. Durable persistence (PostgreSQL) will be introduced in future persistence milestones.
 - **Simulated Seed Dataset**: All evidence, contracts, invoices, and approvals are synthetic simulated records created for testing and evaluation. No live enterprise ERP connections exist.
 - **Live LLM Reasoning Benchmark**: While evaluation infrastructure, schemas, adapters, and fail-closed handling are fully implemented and verified, live external LLM calls depend on active provider API quotas. `AGENT_MODEL=heuristic` provides deterministic, offline-reliable demo execution.
-- **Remaining Production Cloud Deployment Steps**:
-  1. Provision Docker container runtime (e.g. AWS ECS / Google Cloud Run) using `docker-compose.yml` or container manifests.
-  2. Configure production domain SSL/TLS certificate and reverse proxy.
-  3. Supply live production environment secrets (`NEO4J_URI`, `NEO4J_PASSWORD`, `AGENT_LLM_API_KEY`, `NEXT_PUBLIC_API_URL`).
-  4. Run container health check against `GET /health`.
+- **Verified Cloud Deployment Architecture**:
+  1. **Next.js Frontend on Vercel**: Connects via `NEXT_PUBLIC_API_URL` to Render backend.
+  2. **FastAPI Backend on Render**: Managed via `render.yaml` or Docker, listening on `$PORT` with CORS enabled for Vercel.
+  3. **Neo4j Aura**: Cloud property graph connected via `neo4j+s://` with automated zero-step schema & seed initialization.
+
 
 ## What Does Not Exist Yet (Intentionally)
 

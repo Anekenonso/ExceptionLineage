@@ -47,9 +47,25 @@ def get_investigation_service() -> InvestigationService:
 
         client = Neo4jClient()
         if client.verify_connectivity():
+            try:
+                # If connected to a fresh, unpopulated Neo4j instance (e.g. Neo4j Aura on first boot),
+                # automatically initialize schema constraints and populate the canonical benchmark dataset.
+                counts = client.get_counts()
+                if counts.get("total_nodes", 0) == 0:
+                    from app.graph.loader import SeedLoader
+
+                    loader = SeedLoader(client)
+                    loader.load_seed_data(init_schema=True)
+            except Exception as seed_err:
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    "Automatic seed loading to Neo4j skipped or failed: %s", seed_err
+                )
             lineage_repo = Neo4jLineageRepository(client=client)
         else:
             lineage_repo = InMemoryLineageRepository(load_seed_lineages())
+
 
         _default_service = InvestigationService(lineage_repository=lineage_repo)
         seed_canonical_demo_data(_default_service)

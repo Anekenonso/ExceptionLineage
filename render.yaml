@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: exceptionlineage-api
+    runtime: python
+    buildCommand: pip install -r apps/api/requirements.txt
+    startCommand: PYTHONPATH=apps/api uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGINS
+        sync: false
+      - key: CORS_ORIGIN_REGEX
+        value: "^https://.*\\.vercel\\.app$"
+      - key: NEO4J_URI
+        sync: false
+      - key: NEO4J_USERNAME
+        sync: false
+      - key: NEO4J_PASSWORD
+        sync: false
+      - key: NEO4J_DATABASE
+        value: neo4j
+      - key: AGENT_MODEL
+        value: heuristic
+      - key: AGENT_LLM_PROVIDER
+        sync: false
+      - key: AGENT_LLM_MODEL
+        sync: false
+      - key: AGENT_LLM_API_KEY
+        sync: false

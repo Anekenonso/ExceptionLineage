@@ -40,12 +40,14 @@ class Neo4jClient:
         return self._driver
 
     def connect(self) -> None:
-        """Establish the Neo4j driver connection."""
+        """Establish the Neo4j driver connection with cloud/Aura connection tuning."""
         if self._driver is None:
             logger.info("Connecting to Neo4j at %s (db: %s)", self.uri, self.database)
             self._driver = GraphDatabase.driver(
                 self.uri,
                 auth=(self.username, self.password),
+                max_connection_lifetime=settings.neo4j_max_connection_lifetime,
+                connection_timeout=settings.neo4j_connection_timeout,
             )
 
     def close(self) -> None:

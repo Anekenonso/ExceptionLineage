@@ -264,13 +264,71 @@ The application will be available at `http://localhost:3000`.
 ### 3. Running Automated Tests
 
 ```bash
-# Run backend test suite from repository root (289 passed, 2 skipped)
+# Run backend test suite from repository root (296 passed, 2 skipped)
 .\apps\api\venv\Scripts\python.exe -m pytest apps/api/tests/ -v
 
 # Run frontend production build & TypeScript validation
 cd apps/web
 npm run build
 ```
+
+---
+
+## Production Deployment Guide
+
+ExceptionLineage is production-hardened for a decoupled cloud architecture:
+
+```text
+                    INTERNET
+                       │
+                       ▼
+              Vercel / Next.js
+                 apps/web
+                       │
+                    HTTPS
+                       │
+                       ▼
+                Render / FastAPI
+                   apps/api
+                       │
+                  Bolt + TLS (neo4j+s://)
+                       │
+                       ▼
+                 Neo4j Aura
+```
+
+### 1. Neo4j Aura (Knowledge Graph Database)
+1. Create a free or professional Neo4j AuraDB instance at [console.neo4j.io](https://console.neo4j.io).
+2. Save your instance connection URI (e.g. `neo4j+s://<dbid>.databases.neo4j.io`), username (`neo4j`), and generated password.
+3. *Zero-step bootstrapping:* On first connection, ExceptionLineage detects if the database is unpopulated and automatically initializes all unique constraints, indexes, and loads the benchmark seed dataset.
+
+### 2. Render (FastAPI Backend)
+Deploy `apps/api` using the included `render.yaml` blueprint or manual setup:
+- **Environment**: Python 3.11+ (or Docker via `apps/api/Dockerfile`)
+- **Build Command**: `pip install -r apps/api/requirements.txt`
+- **Start Command**: `PYTHONPATH=apps/api uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **Health Check Path**: `/health`
+- **Environment Variables**:
+  - `PORT`: Automatically set by Render
+  - `CORS_ORIGINS`: Comma-separated list including your Vercel URL (e.g. `https://exceptionlineage.vercel.app,http://localhost:3000`)
+  - `CORS_ORIGIN_REGEX`: `^https://.*\.vercel\.app$` (supports preview branch deployments)
+  - `NEO4J_URI`: `neo4j+s://<dbid>.databases.neo4j.io`
+  - `NEO4J_USERNAME`: `neo4j`
+  - `NEO4J_PASSWORD`: `<your-neo4j-password>`
+  - `NEO4J_DATABASE`: `neo4j`
+  - `AGENT_MODEL`: `heuristic` (default deterministic) or `llm`
+  - `AGENT_LLM_PROVIDER`: `gemini` or `openai` (optional)
+  - `AGENT_LLM_API_KEY`: `<api-key>` (optional)
+
+### 3. Vercel (Next.js Frontend)
+Deploy `apps/web` to Vercel:
+1. Import repository on [vercel.com/new](https://vercel.com/new).
+2. Set **Root Directory** to `apps/web`.
+3. Set **Framework Preset** to `Next.js`.
+4. Configure **Environment Variables**:
+   - `NEXT_PUBLIC_API_URL`: `https://<your-render-service>.onrender.com` (trailing slashes are automatically sanitized).
+5. Click **Deploy**. The site will build cleanly and connect securely to the Render API.
+
 
 ---
 

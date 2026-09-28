@@ -5,7 +5,9 @@ import {
   LineageData,
 } from "@/types/investigation";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Strip any trailing slash from NEXT_PUBLIC_API_URL so path concatenation is always well-formed
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/+$/, "");
+
 
 export class ApiError extends Error {
   status: number;
