@@ -264,13 +264,42 @@ The application will be available at `http://localhost:3000`.
 ### 3. Running Automated Tests
 
 ```bash
-# Run backend test suite from repository root (278 passed, 2 skipped)
+# Run backend test suite from repository root (289 passed, 2 skipped)
 .\apps\api\venv\Scripts\python.exe -m pytest apps/api/tests/ -v
 
 # Run frontend production build & TypeScript validation
 cd apps/web
 npm run build
 ```
+
+---
+
+## Testing Your Own Case (Secure Ephemeral Sandbox)
+
+ExceptionLineage provides a secure, sandboxed testing path allowing judges and evaluators to test custom invoice exceptions and contractual lineages without altering permanent storage or benchmark records.
+
+### Key Guarantees
+- **Strict Format:** Exclusively `.json` files under 1 MB.
+- **Single Shared Engine:** Runs through the identical `InvestigationService` and `ValidationEngine` pipeline.
+- **Zero Persistence:** Evaluated strictly in request-scoped ephemeral memory. Never written to Neo4j, relational databases, disk, or browser storage.
+
+### Testing via Web UI
+1. Click **"Review an invoice"** in the top navigation.
+2. Select the **"Test Your Own Case"** tab.
+3. Click **"Download Template"** to get a fully populated starter schema, or drag and drop your own `.json` case.
+4. Click **"Run Test Case"** to view the real-time deterministic validation and end-to-end evidence chain.
+
+### Testing via API (CLI / cURL)
+
+```bash
+# 1. Fetch starter template
+curl -s http://localhost:8000/api/investigations/test-case/template > my_case.json
+
+# 2. Upload and evaluate in ephemeral sandbox
+curl -s -X POST http://localhost:8000/api/investigations/test-case \
+  -F "file=@my_case.json;type=application/json" | jq .
+```
+
 
 ---
 

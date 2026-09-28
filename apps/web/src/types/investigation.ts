@@ -224,4 +224,6 @@ export interface InvestigationResponse {
   currency?: string | null;
   duration_seconds?: number | null;
   lineage?: LineageData | null;
+  is_temporary?: boolean;
+  trace?: InvestigationEvidenceTrace | null;
 }

@@ -1,8 +1,8 @@
 # Stage 18 Evaluation Report
 
-- **Suite ID:** `suite-64aca77168b3`
-- **Timestamp:** `2026-09-26T15:39:29.070391+00:00`
-- **Git Commit:** `1c19b1402e2368164d2b6cbe455c4bac0d219e62`
+- **Suite ID:** `suite-ca4ea001476f`
+- **Timestamp:** `2026-09-28T04:26:31.088297+00:00`
+- **Git Commit:** `979914aa926022dd10ada55b88e8b7f45a93bae3`
 - **Dataset Version:** `benchmark-v1`
 
 ---
@@ -21,8 +21,8 @@ Deterministic and heuristic baselines completed successfully. Live LLM evaluatio
 
 | Baseline | Model Provider | Model Name | Status | Accuracy | Mean Evidence Recall | Total Tool Calls | Tool Errors | Mean Duration (ms) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **deterministic_baseline** | deterministic | ValidationEngine | `COMPLETED` | 100.0% (8/8) | 100.0% | 0 | 0 | 1.43 ms |
-| **heuristic_baseline** | heuristic | HeuristicAgentModel | `COMPLETED` | 100.0% (8/8) | 100.0% | 51 | 0 | 0.83 ms |
+| **deterministic_baseline** | deterministic | ValidationEngine | `COMPLETED` | 100.0% (8/8) | 100.0% | 0 | 0 | 0.34 ms |
+| **heuristic_baseline** | heuristic | HeuristicAgentModel | `COMPLETED` | 100.0% (8/8) | 100.0% | 51 | 0 | 0.68 ms |
 
 ---
 

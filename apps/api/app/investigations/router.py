@@ -1,12 +1,10 @@
-"""FastAPI router for investigation endpoints in ExceptionLineage."""
-
-from __future__ import annotations
-
-from fastapi import APIRouter, Depends, status
+import json
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from app.investigations.schemas import (
     InvestigationCreateRequest,
     InvestigationResponse,
+    TestCasePayload,
 )
 from app.investigations.service import InvestigationService
 from app.investigations.trace import InvestigationEvidenceTrace
@@ -127,6 +125,235 @@ def create_investigation(
     lineage = _safe_get_lineage(service, inv.invoice_id)
     return InvestigationResponse.from_investigation(
         inv, events=events, agent_events=agent_events, lineage=lineage
+    )
+
+
+MAX_TEST_CASE_SIZE_BYTES = 1024 * 1024  # 1 MB maximum allowed file size
+
+
+@router.get(
+    "/test-case/template",
+    response_model=dict,
+    summary="Get sample test case template",
+    description="Returns a clean, complete JSON template showing the expected structure for Test Your Own Case.",
+)
+def get_test_case_template() -> dict:
+    """Return a working sample test case JSON structure."""
+    return {
+        "case_meta": {
+            "title": "Sample External Cloud Support Rate Variance Case",
+            "description": "Demonstrates an independently defined test case with governing contract, amendment, approval, and documentary evidence."
+        },
+        "invoice": {
+            "id": "INV-EXT-001",
+            "customer_id": "CUS-EXT-001",
+            "contract_id": "CTR-EXT-001",
+            "exception_id": "EX-EXT-001",
+            "product_id": "PROD-CLOUD-SUP",
+            "amount": "10200.00",
+            "currency": "USD",
+            "issued_at": "2026-03-15T00:00:00Z",
+            "due_at": "2026-04-15T00:00:00Z"
+        },
+        "customer": {
+            "id": "CUS-EXT-001",
+            "name": "Global Test Enterprise Corp",
+            "external_id": "ERP-CUS-991"
+        },
+        "contract": {
+            "id": "CTR-EXT-001",
+            "customer_id": "CUS-EXT-001",
+            "title": "Master Cloud Infrastructure Agreement",
+            "effective_from": "2026-01-01T00:00:00Z",
+            "effective_until": "2026-12-31T23:59:59Z",
+            "status": "ACTIVE",
+            "currency": "USD"
+        },
+        "exception": {
+            "id": "EX-EXT-001",
+            "contract_id": "CTR-EXT-001",
+            "invoice_id": "INV-EXT-001",
+            "exception_type": "RATE_VARIANCE",
+            "description": "Invoice amount $10,200.00 differs from standard contract fee $12,000.00.",
+            "expected_amount": "12000.00",
+            "actual_amount": "10200.00",
+            "currency": "USD"
+        },
+        "approval": {
+            "id": "APR-EXT-001",
+            "exception_id": "EX-EXT-001",
+            "approver": "sarah.chen@acmeglobal.com",
+            "status": "APPROVED",
+            "approved_at": "2026-02-01T14:30:00Z",
+            "context": {
+                "role": "VP Commercial Finance",
+                "authorization_ref": "AUTH-EXT-01"
+            }
+        },
+        "amendments": [
+            {
+                "id": "AMD-EXT-001",
+                "contract_id": "CTR-EXT-001",
+                "amendment_number": "AMD-2026-01",
+                "title": "Cloud Support Volume Discount Amendment",
+                "description": "Adjusts monthly rate from $12,000.00 to $10,200.00 for PROD-CLOUD-SUP.",
+                "effective_from": "2026-01-15T00:00:00Z",
+                "effective_until": "2026-09-30T23:59:59Z"
+            }
+        ],
+        "sows": [],
+        "evidence": [
+            {
+                "id": "EV-EXT-001",
+                "evidence_type": "CONTRACT_CLAUSE",
+                "source": "contracts_repository",
+                "source_id": "CTR-EXT-001",
+                "title": "Base Support Rate Clause",
+                "locator": "Schedule B, Section 1.1",
+                "excerpt": "Standard enterprise cloud support services shall be invoiced at the baseline rate of $12,000.00 USD monthly.",
+                "captured_at": "2026-01-02T10:00:00Z",
+                "effective_from": "2026-01-01T00:00:00Z",
+                "effective_until": "2026-12-31T23:59:59Z",
+                "scope": "enterprise_cloud_support",
+                "confidence": 1.0
+            },
+            {
+                "id": "EV-EXT-002",
+                "evidence_type": "AMENDMENT_TERMS",
+                "source": "contracts_repository",
+                "source_id": "AMD-EXT-001",
+                "title": "Tier-1 Volume Rate Reduction",
+                "locator": "Section 2.1",
+                "excerpt": "The monthly fee for PROD-CLOUD-SUP is amended to $10,200.00 USD effective January 15, 2026 through September 30, 2026.",
+                "captured_at": "2026-01-16T09:00:00Z",
+                "effective_from": "2026-01-15T00:00:00Z",
+                "effective_until": "2026-09-30T23:59:59Z",
+                "scope": "PROD-CLOUD-SUP",
+                "confidence": 0.98
+            },
+            {
+                "id": "EV-EXT-003",
+                "evidence_type": "APPROVAL_RECORD",
+                "source": "approval_system",
+                "source_id": "APR-EXT-001",
+                "title": "VP Commercial Finance Signoff",
+                "locator": "Workflow Audit #88412",
+                "excerpt": "Executive authorization granted by Sarah Chen (VP Commercial Finance) for Tier-1 Support rate variance $10,200.00.",
+                "captured_at": "2026-02-01T15:00:00Z",
+                "effective_from": "2026-02-01T14:30:00Z",
+                "effective_until": None,
+                "scope": "commercial_pricing_waiver",
+                "confidence": 0.99
+            }
+        ]
+    }
+
+
+@router.post(
+    "/test-case",
+    response_model=InvestigationResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Test Your Own Case (Secure Temporary In-Memory Testing)",
+    description=(
+        "Upload ONE structured JSON case to execute through the existing ExceptionLineage "
+        "investigation pipeline. The case is processed in temporary isolated memory and is "
+        "never persisted to database, filesystem, or application caches."
+    ),
+)
+async def test_your_own_case(
+    file: UploadFile = File(..., description="Structured .json test case file"),
+) -> InvestigationResponse:
+    """Execute an independently supplied JSON case in an isolated, temporary in-memory environment."""
+    # 1. Format verification: JSON only
+    if not file.filename or not file.filename.lower().endswith(".json"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported file format. Only .json files are accepted for external case testing.",
+        )
+
+    # 2. Read in-memory buffer with size bounding
+    contents = await file.read()
+    if len(contents) > MAX_TEST_CASE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File exceeds maximum allowed size of 1MB ({MAX_TEST_CASE_SIZE_BYTES} bytes).",
+        )
+    if not contents.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded JSON file is empty.",
+        )
+
+    # 3. JSON parsing
+    try:
+        raw_data = json.loads(contents.decode("utf-8"))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid JSON syntax: {exc}",
+        )
+
+    if not isinstance(raw_data, dict):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="JSON root must be an object representing an enterprise transaction case.",
+        )
+
+    # 4. Schema validation
+    try:
+        payload = TestCasePayload.model_validate(raw_data)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Test case schema validation failed: {exc}",
+        )
+
+    # 5. In-memory normalization to lineage representation
+    lineage_dict = payload.to_lineage_dict()
+
+    # 6. Create temporary, completely isolated repository & engine context
+    from app.agent.factory import create_investigation_agent
+    from app.graph.lineage import InMemoryLineageRepository
+    from app.investigations.repository import InMemoryInvestigationRepository
+    from app.investigations.state_machine import InvestigationStateMachine
+    from app.validation.engine import ValidationEngine
+
+    isolated_lineage_repo = InMemoryLineageRepository()
+    isolated_lineage_repo.add_lineage(invoice_id=payload.invoice.id, lineage=lineage_dict)
+
+    isolated_inv_repo = InMemoryInvestigationRepository()
+    isolated_state_machine = InvestigationStateMachine(repository=isolated_inv_repo)
+
+    agent = create_investigation_agent(lineage_repo=isolated_lineage_repo)
+
+    isolated_service = InvestigationService(
+        repository=isolated_inv_repo,
+        state_machine=isolated_state_machine,
+        validation_engine=ValidationEngine(),
+        lineage_repository=isolated_lineage_repo,
+        agent=agent,
+    )
+
+    # 7. Execute through existing investigation pipeline
+    inv = isolated_service.run_investigation(
+        invoice_id=payload.invoice.id,
+        exception_id=payload.invoice.exception_id or (payload.exception.id if payload.exception else None),
+    )
+
+    # 8. Retrieve events and trace from isolated service
+    events = isolated_service.get_events(inv.id, include_agent_events=False)
+    agent_events = isolated_service.get_agent_events(inv.id)
+    lineage_data = isolated_lineage_repo.get_invoice_lineage(inv.invoice_id)
+    trace = isolated_service.get_evidence_trace(inv.id)
+
+    # 9. Return structured response marked as temporary
+    return InvestigationResponse.from_investigation(
+        inv,
+        events=events,
+        agent_events=agent_events,
+        lineage=lineage_data,
+        is_temporary=True,
+        trace=trace,
     )
 
 

@@ -52,7 +52,7 @@ def extract_dollar_amounts(text: str | None) -> list[Decimal]:
     if not text:
         return []
     # Match patterns like $10,200.00 or $12000.00 or $10500
-    pattern = r"\$\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]{2})?|[0-9]+(?:\.[0-9]{2})?)"
+    pattern = r"\$\s*([0-9]{1,3}(?:,[0-9]{3})+(?:\.[0-9]{2})?|[0-9]+(?:\.[0-9]{2})?)"
     matches = re.findall(pattern, text)
     amounts: list[Decimal] = []
     for m in matches:

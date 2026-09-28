@@ -147,3 +147,62 @@ The architecture is governed by an inviolable foundational law:
 | **Prompt Injection / Ground Truth Leak** | Agent reads test ground truth or mutates database | AST import isolation enforces zero `evaluation/` imports in `app/`; tool registry enforces typed read-only queries. |
 | **Floating-Point Drift** | Dollar amounts drift during math evaluation | Exact `Decimal` and integer cents used throughout pipeline. |
 | **Context Contamination** | Extraneous records pollute validation rules | Neo4j multi-hop directional traversals isolate contract sub-graphs. |
+
+---
+
+## 5. Secure Temporary Case Testing Architecture ("Test Your Own Case")
+
+### 5.1 Architectural Principle: "Two Input Paths. One Investigation Engine."
+
+The system provides a secure, sandboxed testing ingress that allows evaluators to upload an independent JSON case file and run it through the full investigation pipeline without altering any persistent storage or canonical benchmark datasets.
+
+```
++-----------------------------------------------------------------------------------+
+|                                 INGRESS LAYER                                     |
+|                                                                                   |
+|    Path A (Canonical Ingress)                      Path B (Ephemeral Sandbox)     |
+|    POST /api/investigations                        POST /api/investigations/test-case
+|    [invoice_id: "INV-1001"]                        [multipart/form-data: .json]   |
++------------------------+------------------------------------------+---------------+
+                         |                                          |
+                         v                                          v
++------------------------+------------------------------------------+---------------+
+|    Neo4j / Persistent Lineage                     InMemoryLineageRepository       |
+|    Persistent Graph Storage                       Request-Scoped Ephemeral Double |
++------------------------+------------------------------------------+---------------+
+                         |                                          |
+                         +--------------------+---------------------+
+                                              |
+                                              v
++-----------------------------------------------------------------------------------+
+|                        SINGLE SHARED INVESTIGATION ENGINE                         |
+|                                                                                   |
+|    InvestigationService                                                           |
+|      ├── InvestigationAgent (Tool loop: get_invoice, find_contract, etc.)         |
+|      └── ValidationEngine   (Deterministic evaluation: PASS | FAIL | UNKNOWN)     |
+|                                                                                   |
+|    Output: InvestigationResponse (deterministic status, citations, audit trace)   |
++-----------------------------------------------------------------------------------+
+```
+
+### 5.2 Ephemeral Execution Pipeline
+
+1. **Ingress & Format Enforcement:**
+   - The file is received via `UploadFile` strictly checking for `.json` extension and `application/json` MIME type.
+   - Bounded file size verification enforces a hard limit of `MAX_TEST_CASE_SIZE_BYTES = 1,048,576` (1 MB).
+2. **Schema & Semantic Parsing:**
+   - The file payload is parsed through `TestCasePayload` Pydantic models with `strict=False` parsing for strings/numbers.
+   - Validates existence of mandatory core objects: `invoice`, `customer`, `contract`, and `exception`.
+   - Normalizes optional nodes: `amendments`, `sows`, `evidence`, and `approval`.
+3. **Sandbox Population:**
+   - A fresh, request-scoped `InMemoryLineageRepository` instance is allocated.
+   - The normalized nodes and their explicit relationship pointers are populated in memory.
+4. **Engine Traversal & Audit Trace:**
+   - A dedicated `InvestigationService` is constructed with the ephemeral repository and executed.
+   - Deterministic rule checks (`ValidationEngine`) evaluate legal applicability, scope, rates, and authority.
+   - Complete audit events and an end-to-end `InvestigationEvidenceTrace` are generated.
+5. **Zero-Persistence Completion & Dereferencing:**
+   - The response is returned to the client marked with `is_temporary=True`.
+   - The ephemeral repository instance is immediately released to Python garbage collection.
+   - No records are written to Neo4j, SQLite, PostgreSQL, Redis, disk, uploads folder, or client browser storage (`localStorage`, `sessionStorage`, `cookies`, `IndexedDB`).
+

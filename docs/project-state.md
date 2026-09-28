@@ -29,12 +29,19 @@
   - Authority boundary callout: *"AI investigates. Deterministic logic verifies."*
   - Responsive, desktop-first layouts with smooth loading skeletons and zero layout shifts.
 
+- **Secure Temporary Case Testing ("Test Your Own Case")**:
+  - Direct JSON case upload ingress (`POST /api/investigations/test-case`) and template download (`GET /api/investigations/test-case/template`).
+  - Strict format enforcement (.json only, 1 MB max size).
+  - Evaluates independently supplied invoice lineage through the single shared investigation engine (`InvestigationService` + `ValidationEngine`).
+  - Strict zero-persistence guarantee: completely isolated in ephemeral memory, leaving zero traces in Neo4j, relational stores, filesystem, or browser storage.
+  - Full Next.js frontend integration: segmented tab control in `NewInvestigationModal`, file drag-and-drop, template download, and dedicated ephemeral sandbox workspace banner.
+
 - **Deployment & Production Readiness**:
   - Frontend production build succeeds cleanly (`npm run build` / Next.js Turbopack).
   - TypeScript static type check passed (`tsc --noEmit` clean with 0 errors).
   - Backend API health endpoint (`GET /health`) active and responsive.
   - Safe offline graph fallback (`InMemoryLineageRepository` populated from `data/seed` when Neo4j is offline).
-  - Complete test suite passes: 278 unit/integration tests passing (2 skipped conditional live tests).
+  - Complete test suite passes: 289 unit/integration tests passing (2 skipped conditional live tests).
   - Architectural evaluation verified: Claim A (Adaptive Investigation Value — DEMONSTRATED), Claim B (Relationship-Aware Retrieval — DEMONSTRATED), Claim C (End-to-End Evidence Chain — VERIFIED).
 
 ## Verified Benchmark Scenarios Matrix

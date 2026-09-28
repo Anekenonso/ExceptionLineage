@@ -92,3 +92,28 @@ Under this invariant, the system must fail safely under corrupted, missing, adve
 - **Defense:** Automated recursive sanitization (`_sanitize_secrets`) inspects all dictionary arguments, nested lists, and string payloads in `InvestigationEvidenceTrace`, redacting sensitive keys and known credential signatures to `[REDACTED]`.
 - **Tested by:** `apps/api/tests/test_evidence_chain_trace.py::test_trace_secret_redaction`
 
+### FM-015: Non-JSON and Malformed File Ingress in Ephemeral Sandbox
+- **Scenario:** A user attempts to upload a CSV, PDF, executable, or malformed JSON syntax to the test case endpoint (`POST /api/investigations/test-case`).
+- **Risk:** Server crashes, code execution, or unhandled parser exceptions.
+- **Defense:** Strict file extension check (`.json` only) and MIME type validation (`application/json`). `json.loads` syntax parsing isolates malformed syntax and returns an explicit HTTP 400 with exact error details.
+- **Tested by:** `apps/api/tests/test_test_your_own_case.py::test_reject_non_json_extensions` and `test_reject_malformed_json_syntax`
+
+### FM-016: Missing Mandatory Nodes in Uploaded Test Case Schema
+- **Scenario:** An uploaded JSON case omits mandatory contractual lineage entities (e.g., missing `invoice`, `customer`, `contract`, or `exception`).
+- **Risk:** Null-pointer exceptions during relationship resolution or corrupt state transitions.
+- **Defense:** Pydantic schema validation (`TestCasePayload`) rigorously verifies required node structures prior to engine instantiation. Missing mandatory elements return HTTP 422 with exact field locators.
+- **Tested by:** `apps/api/tests/test_test_your_own_case.py::test_reject_schema_missing_required_invoice`
+
+### FM-017: Oversized Test Case Payload Denial-of-Service
+- **Scenario:** An adversary uploads a multi-megabyte or gigabyte JSON file attempting to exhaust server memory.
+- **Risk:** Memory exhaustion (OOM), thread blocking, or server unresponsiveness.
+- **Defense:** Streaming byte boundary verification (`MAX_TEST_CASE_SIZE_BYTES = 1,048,576` / 1 MB). If the byte counter exceeds the threshold, the upload is aborted immediately with HTTP 413 (`Request Entity Too Large`).
+- **Tested by:** `apps/api/tests/test_test_your_own_case.py::test_reject_oversized_file`
+
+### FM-018: Ephemeral Sandbox Persistence Leak
+- **Scenario:** An uploaded temporary case file or its parsed nodes leak into permanent graph storage, global ledger databases, or browser storage.
+- **Risk:** Contamination of canonical benchmarks (`INV-1001` - `INV-1008`), data leakage between tenants, or privacy violations.
+- **Defense:** Complete separation of storage: temporary cases run inside isolated `InMemoryLineageRepository` instances that are discarded after execution. No records are written to Neo4j, disk, or client storage.
+- **Tested by:** `apps/api/tests/test_test_your_own_case.py::test_strict_isolation_and_zero_persistence`
+
+

@@ -100,3 +100,44 @@ export async function createInvestigation(
     }),
   });
 }
+
+export async function fetchTestCaseTemplate(): Promise<Record<string, unknown>> {
+  return request<Record<string, unknown>>("/api/investigations/test-case/template");
+}
+
+export async function uploadTestCase(file: File): Promise<InvestigationResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const url = `${API_BASE}/api/investigations/test-case`;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      body: formData,
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      let errorData: unknown;
+      try {
+        errorData = await res.json();
+      } catch {
+        errorData = await res.text();
+      }
+      const message =
+        typeof errorData === "object" && errorData !== null && "detail" in errorData
+          ? String((errorData as { detail: unknown }).detail)
+          : `Upload failed with status ${res.status}`;
+      throw new ApiError(message, res.status, errorData);
+    }
+
+    return (await res.json()) as InvestigationResponse;
+  } catch (err: unknown) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    const message = err instanceof Error ? err.message : "Network error";
+    throw new ApiError(`Unable to upload test case (${message})`, 0, err);
+  }
+}
+

@@ -13,6 +13,7 @@ import {
   fetchInvestigationTrace,
   fetchInvestigationLineage,
 } from "@/lib/api";
+import { getEphemeralInvestigation } from "@/lib/ephemeralStore";
 import { ALL_FIXTURES, FIXTURE_EVIDENCE_TRACE } from "@/fixtures/investigations";
 import { Navigation } from "@/components/Navigation";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -50,6 +51,18 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
   const loadInvestigation = async () => {
     setLoading(true);
     setError(null);
+
+    // Ephemeral in-memory check for "Test Your Own Case" runs
+    const ephemeral = getEphemeralInvestigation(investigationId);
+    if (ephemeral) {
+      setInvestigation(ephemeral);
+      setTrace(ephemeral.trace || null);
+      setLineage(ephemeral.lineage || null);
+      setUsingFixtures(false);
+      setLoading(false);
+      return;
+    }
+
     try {
       const invData = await fetchInvestigation(investigationId);
       setInvestigation(invData);
@@ -194,13 +207,39 @@ export default function InvestigationWorkspacePage({ params }: PageProps) {
           <LoadingSkeleton title={`Loading invoice review…`} />
         ) : !investigation ? (
           <EmptyState
-            title="Investigation Not Found"
-            description={`Could not find an invoice investigation matching "${investigationId}".`}
+            title={investigationId.startsWith("INV-TEST") ? "Ephemeral Test Case Expired" : "Investigation Not Found"}
+            description={
+              investigationId.startsWith("INV-TEST")
+                ? `Test case "${investigationId}" was evaluated in isolated ephemeral memory and discarded in accordance with our zero-persistence policy. Please upload your JSON case again to re-evaluate.`
+                : `Could not find an invoice investigation matching "${investigationId}".`
+            }
             actionLabel="Return to Investigations"
             onAction={() => window.location.assign("/investigations")}
           />
         ) : (
           <div className="space-y-8">
+            {/* Ephemeral Sandbox Notice Banner */}
+            {investigation.is_temporary && (
+              <div className="rounded-xl border border-emerald-300/80 bg-emerald-50/70 p-4 text-xs text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-600 animate-pulse shrink-0" />
+                  <div>
+                    <div className="font-semibold text-emerald-900 flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider">
+                      <span>Ephemeral Case Execution</span>
+                      <span className="text-emerald-400">·</span>
+                      <span className="text-emerald-700 font-normal">Isolated Sandbox</span>
+                    </div>
+                    <div className="text-[11.5px] text-emerald-800 mt-0.5">
+                      Evaluated strictly in-memory using the deterministic validation engine. Zero records written to database or persistent storage.
+                    </div>
+                  </div>
+                </div>
+                <div className="text-[10px] font-mono uppercase tracking-wider text-emerald-800 bg-emerald-100/90 border border-emerald-200 px-2.5 py-1 rounded font-semibold shrink-0 self-start sm:self-center">
+                  Zero Persistence
+                </div>
+              </div>
+            )}
+
             {/* Top Bar: Back Link & Quick Actions */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-[var(--color-line)]">
               <div className="space-y-1">
